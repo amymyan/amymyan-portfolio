@@ -1,0 +1,152 @@
+/* ============================================
+   AMY MYAN — shared design tokens
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Work+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap');
+
+:root{
+  --paper:   #FAFAF6;   /* base background — warm paper white */
+  --ink:     #201E24;   /* near-black text */
+  --haze:    #BBAFCB;   /* dusty lavender — stage-light haze */
+  --flash:   #E88FB2;   /* flash-pink accent */
+  --gold:    #CDA96E;   /* starlight gold, used sparingly */
+  --line:    #E3DEE8;   /* hairline dividers */
+
+  --display: 'Fraunces', serif;
+  --body:    'Work Sans', sans-serif;
+  --mono:    'Space Mono', monospace;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  -webkit-font-smoothing:antialiased;
+  cursor:url('https://www.pngitem.com/pimgs/m/3-38829_sparkles-regulus-resources-logo-hd-png-download.png') 12 12, auto;
+}
+
+a{ color:inherit; text-decoration:none; }
+a:hover{ color:var(--flash); }
+
+/* ---------- top nav, shared across every page ---------- */
+
+.site-nav{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  padding:1.75rem clamp(1.25rem, 4vw, 3rem);
+  border-bottom:1px solid var(--line);
+}
+
+.wordmark{
+  font-family:var(--display);
+  font-style:italic;
+  font-weight:500;
+  font-size:1.35rem;
+  letter-spacing:0.02em;
+  white-space:nowrap;
+}
+
+.wordmark .spark{ color:var(--gold); font-style:normal; }
+
+.nav-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:1.5rem;
+  font-family:var(--mono);
+  font-size:0.8rem;
+  letter-spacing:0.03em;
+}
+
+.nav-links a{
+  position:relative;
+  padding-bottom:2px;
+  opacity:0.75;
+  transition:opacity 0.2s ease;
+}
+.nav-links a:hover,
+.nav-links a[aria-current="page"]{ opacity:1; }
+.nav-links a[aria-current="page"]::after{
+  content:"";
+  position:absolute;
+  left:0; right:0; bottom:-3px;
+  height:1px;
+  background:var(--ink);
+}
+
+/* ---------- footer ---------- */
+
+.site-footer{
+  padding:2.5rem clamp(1.25rem, 4vw, 3rem) 3rem;
+  border-top:1px solid var(--line);
+  margin-top:4rem;
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:1rem;
+  font-family:var(--mono);
+  font-size:0.75rem;
+  opacity:0.7;
+}
+
+/* ---------- generic page heading ---------- */
+
+.page-head{
+  padding:3rem clamp(1.25rem, 4vw, 3rem) 1.5rem;
+}
+.page-head h1{
+  font-family:var(--display);
+  font-weight:300;
+  font-style:italic;
+  font-size:clamp(2rem, 5vw, 3.25rem);
+  margin:0 0 0.4rem;
+}
+.page-head p{
+  font-family:var(--mono);
+  font-size:0.8rem;
+  opacity:0.65;
+  margin:0;
+}
+
+/* ---------- simple gallery grid (music/portrait/projects/tour pages) ---------- */
+
+.gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+  gap:0.4rem;
+  padding:2rem clamp(1.25rem, 4vw, 3rem) 3rem;
+}
+
+.gallery-grid figure{
+  margin:0;
+  aspect-ratio:4/5;
+  overflow:hidden;
+  background:var(--line);
+}
+
+.gallery-grid img,
+.gallery-grid video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transition:transform 0.5s ease;
+}
+
+.gallery-grid figure:hover img,
+.gallery-grid figure:hover video{
+  transform:scale(1.03);
+}
+
+.empty-note{
+  font-family:var(--mono);
+  font-size:0.8rem;
+  opacity:0.6;
+  padding:0 clamp(1.25rem, 4vw, 3rem) 3rem;
+}

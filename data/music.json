@@ -1,0 +1,8 @@
+[
+  { "id": "p1", "src": "", "caption": "gracie — the greenhouse tour", "x": 12, "y": 18, "rot": -6 },
+  { "id": "p2", "src": "", "caption": "backstage, march", "x": 34, "y": 40, "rot": 4 },
+  { "id": "p3", "src": "", "caption": "crowd surf, red rocks", "x": 58, "y": 15, "rot": -3 },
+  { "id": "p4", "src": "", "caption": "soundcheck", "x": 20, "y": 62, "rot": 7 },
+  { "id": "p5", "src": "", "caption": "encore", "x": 72, "y": 55, "rot": -8 },
+  { "id": "p6", "src": "", "caption": "green room", "x": 48, "y": 72, "rot": 2 }
+]

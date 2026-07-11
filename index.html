@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amy Myan</title>
+<meta name="description" content="Amy Myan — photographer based in Los Angeles, CA">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .home-hero{
+    min-height:70vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:2rem;
+  }
+  .home-hero h1{
+    font-family:var(--display);
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(2.5rem, 8vw, 5rem);
+    margin:0 0 0.5rem;
+  }
+  .home-hero .spark{ color:var(--gold); }
+  .home-links{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:2rem;
+    font-family:var(--mono);
+    font-size:1rem;
+  }
+  .home-links a{ opacity:0.8; transition:opacity 0.2s ease, color 0.2s ease; }
+  .home-links a:hover{ opacity:1; color:var(--flash); }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a class="wordmark" href="index.html"><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></a>
+  <div class="nav-links">
+    <a href="music.html" aria-current="false">music ♪‧₊˚</a>
+    <a href="portrait.html">portrait ✶⋆.˚</a>
+    <a href="projects.html">projects ˚˙✧˖⋆</a>
+    <a href="tour.html">tour ˚˖𓍢ִ໋❀</a>
+    <a href="about.html">about ⋆.˚</a>
+  </div>
+</nav>
+
+<section class="home-hero">
+  <h1><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></h1>
+  <div class="home-links">
+    <a href="music.html">music</a>
+    <a href="portrait.html">portrait</a>
+    <a href="projects.html">projects</a>
+    <a href="tour.html">tour</a>
+    <a href="about.html">about</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <span>&copy; <span id="year"></span> Amy Myan</span>
+  <span>
+    <a href="http://instagram.com/amymyan" target="_blank" rel="noopener">instagram</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:amymyant@gmail.com">email</a>
+  </span>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
