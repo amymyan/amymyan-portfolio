@@ -23,24 +23,23 @@
   }
   .about-lines{
     text-align:center;
-    font-family:var(--display);
+    font-family:var(--body);
     font-style:normal;
-    font-size:clamp(1.2rem, 3vw, 1.6rem);
-    line-height:1.6;
+    font-size:0.95rem;
+    line-height:1.7;
     margin:0 0 2.5rem;
   }
   .about-lines .shoot{
-    font-family:var(--mono);
+    font-family:var(--body);
     font-style:normal;
-    font-size:0.9rem;
-    opacity:0.75;
+    font-size:0.95rem;
     margin-top:1rem;
   }
   .about-contact{
     text-align:center;
-    font-family:var(--mono);
-    font-size:0.85rem;
-    line-height:1.8;
+    font-family:var(--body);
+    font-size:0.95rem;
+    line-height:1.7;
     margin:0 0 3rem;
   }
   .about-contact a{ text-decoration:underline; text-underline-offset:3px; }
@@ -96,6 +95,13 @@
     please email for all booking + tour inquiries<br>
     <a href="mailto:hello@amymyan.com">hello@amymyan.com</a>
   </p>
+
+  <!-- Second photo, shown between the contact info and "featured in".
+       Just save a photo as assets/about/photo2.jpg (same folder as
+       your headshot above) and it'll appear here automatically. -->
+  <div class="about-photo">
+    <img src="assets/about/photo2.jpg" alt="" onerror="this.parentElement.style.display='none'">
+  </div>
 
   <div class="about-section">
     <h2>featured in</h2>
