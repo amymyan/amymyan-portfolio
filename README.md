@@ -1,107 +1,143 @@
 # amy myan — portfolio site
 
 A plain HTML/CSS/JS site, no build step, built to run on GitHub Pages.
+Every file has comments in it (`/* ... */` blocks) explaining what each part
+does — open any file in VS Code and read through them before editing.
 
 ## Structure
 
 ```
-index.html           home
-music.html            draggable photo/video board → reads data/music.json
-portrait.html         gallery page → reads data/portrait.json
-projects.html         gallery page → reads data/projects.json
-tour.html              gallery page → reads data/tour.json
-about.html             bio / contact / credits page
-organizer.html        PRIVATE — your local tool for adding/arranging photos & videos
+index.html              home — 2x2 photo grid linking to each section
+music.html               draggable, resizable photo/video board
+portrait.html            simple photo grid → reads data/portrait.json
+tour.html                 simple photo grid → reads data/tour.json
+projects.html            projects listing — board of cover photos that
+                           link out to each project's own page
+project-example.html    TEMPLATE — duplicate this for each real project
+about.html                bio / contact / credits page
+organizer.html           PRIVATE — your local tool for adding/arranging photos & videos
 
-css/style.css          shared look (colors, fonts, nav, gallery grid, cursor)
-css/board.css          just the music page's draggable board
-js/gallery.js           loads a gallery page's photos from its JSON file
-js/board.js             drag logic for the public music board
-js/organizer.js         the organizer tool's logic
+css/style.css             shared look: colors, fonts, background, nav, footer
+css/board.css             the draggable/resizable board + lightbox (shared by
+                           music.html, projects.html, and every project-*.html)
+js/gallery.js              loads a simple grid page's photos (portrait/tour)
+js/board.js                board logic: drag, resize, lightbox, mobile grid
+js/organizer.js            the organizer tool's logic
 
-data/*.json             one file per page — list of photos/videos + captions
-assets/<page>/           the actual image/video files live here, organized by page
+data/*.json                one file per page — list of photos/videos
+assets/<page>/              the actual image/video files, organized by page
+assets/home/                the 4 fixed home page tile images
+assets/cursor.png          your custom cursor image (see note below)
 ```
+
+## The "board" pages: music, projects, and every project page
+
+`music.html`, `projects.html`, and every `project-*.html` page all use the
+same system (`css/board.css` + `js/board.js`). Here's how it behaves:
+
+- **On a laptop or tablet (wide screen):** photos scatter freely at
+  whatever position and size you set in the organizer. Visitors can drag
+  them around. Clicking a photo (without dragging it) opens it full-size
+  in a **lightbox** — a dark overlay showing the original image.
+- **On a phone (narrow screen, 700px wide or less):** photos lay out in a
+  simple wrapping grid instead of scattering everywhere, so it stays tidy
+  on a small screen. Photos can still be dragged to reorder them relative
+  to each other, just not scattered freely.
+- **Resizing:** every photo's on-screen width is something *you* choose in
+  the organizer (via a slider) — its height then follows automatically so
+  it never looks stretched or squished. This means you can upload a
+  full-resolution photo but have it display smaller on the page; visitors
+  who want to see it at full size just click it to open the lightbox.
+
+### The projects page specifically
+
+`projects.html` is a board too, but with two differences: each cover photo
+shows a visible caption (its project title), and clicking a cover photo (or
+its caption) takes the visitor to that project's own page instead of
+opening a lightbox. That's controlled by an `"href"` field on each entry in
+`data/projects.json`.
+
+Each individual project page (like `project-example.html`) is its own
+regular board — full-size photos/videos, draggable, resizable, with a
+lightbox on click — plus a "← back to projects" link at the top.
+
+### Adding a new project
+
+1. Duplicate `project-example.html`, rename it (e.g. `project-red-rocks.html`)
+2. Duplicate `data/project-example.json`, rename it to match
+   (e.g. `data/project-red-rocks.json`)
+3. In your new HTML file, change `data-source="data/project-example.json"`
+   to point at your new JSON file, and update the `<title>`
+4. Create a new `assets/project-red-rocks/` folder for its photos/videos
+5. Add a new entry to `data/projects.json` with `"href": "project-red-rocks.html"`
+   and `"caption"` set to the project's title — this makes it show up as a
+   cover photo on the projects listing page
+6. In `organizer.html`, add a matching `<option>` to the "board" dropdown
+   (there's a comment right above it in the code showing exactly how)
 
 ## Adding photos & videos (the organizer)
 
 `organizer.html` is your private control panel. **Never link to it from your
 live site's nav** — it isn't password-protected. It doesn't need to be,
-because of *how* it works:
-
-- It uses a browser feature called the File System Access API, which lets a
-  page write files directly onto **your own computer** once you grant it
-  permission — it can't reach anyone else's files or run on someone else's
-  visit. This only works in **Chrome or Edge** (not Firefox or Safari).
-- Only you will ever click "choose project folder" and pick this repo. So
-  even though the file technically loads for anyone with the link, it can't
-  actually do anything without you sitting there granting folder access.
+because it uses a browser feature (the File System Access API) that lets a
+page write files directly onto **your own computer** once you grant it
+permission — it only works because you're the one sitting there granting
+folder access. Only works in **Chrome or Edge** (not Firefox/Safari).
 
 ### To use it:
 
-1. Open `organizer.html` by double-clicking it (or dragging it into Chrome).
-2. Click **"choose project folder"** and select this project's root folder
-   (the one with `index.html` in it).
-3. Under **music board**: click "+ add photos/videos", drag them into
-   place on the mini board, click directly on a caption to edit it.
-4. Under **gallery pages**: pick a page from the dropdown (portrait /
-   projects / tour), add photos/videos, reorder with the ↑/↓ buttons, edit
-   captions.
-5. Everything saves automatically — it copies your files into `assets/` and
-   updates the right `data/*.json` file as you go. No "save" button needed.
-6. Once you're happy, commit and push the changed files to GitHub like normal.
+1. Open `organizer.html` (double-click it, or drag it into Chrome).
+2. Click **"choose project folder"** and select this project's root folder.
+3. **"boards" tab** — pick music / projects / a specific project from the
+   dropdown. Add photos, drag them to position, drag the slider under each
+   one to resize it, click a caption to edit it. On the projects board only,
+   there's also a small text field above each photo for which page it
+   should link to.
+4. **"simple photo grids" tab** — for portrait/tour only. Add photos,
+   reorder with ↑/↓, edit captions.
+5. Everything saves automatically. Commit + push when you're happy.
 
-For the about page's photo, just drop a file named `portrait.jpg` into
-`assets/about/` (no organizer support for that one yet — it's a single
-static image, easiest to just replace the file directly).
+### The 4 home page photos & about page photo
 
-## Adding another gallery page
+These aren't managed by the organizer since there's always exactly one
+fixed photo per spot — just replace the file directly:
+- `assets/home/music.jpg`, `assets/home/portrait.jpg`,
+  `assets/home/projects.jpg`, `assets/home/tour.jpg`
+- `assets/about/portrait.jpg`
 
-`portrait.html`, `projects.html`, and `tour.html` are all the same template.
-To add a new one (say, `bts.html`):
+## Fixing the custom cursor
 
-1. Copy `portrait.html` → `bts.html`.
-2. In `bts.html`, change the `<title>` and
-   `data-source="data/portrait.json"` → `data-source="data/bts.json"`.
-3. Add `<a href="bts.html">bts</a>` to the nav in every page (including this
-   new one, with `aria-current="page"`).
-4. Create an empty `data/bts.json` containing `[]`.
-5. Add a `bts` option to the `<select id="gallery-select">` list in
-   `organizer.html` so the organizer knows about it.
+The cursor points at `assets/cursor.png`, which needs to be added manually
+(hotlinking directly to another website's image is unreliable — many sites
+block it, which is likely why it wasn't showing up):
+
+1. Open the sparkle image in your browser and save it (right-click → Save
+   Image As) as `cursor.png`
+2. Put it directly inside this project's top-level `assets/` folder
+3. Commit and push
+
+If it looks too big or off-center, resize it down to roughly 32x32 pixels
+first (Preview on Mac: Tools → Adjust Size).
 
 ## Deploying to GitHub Pages
 
 1. Push this whole folder to a GitHub repo.
-2. In the repo, go to **Settings → Pages**.
-3. Under "Build and deployment", set **Source** to "Deploy from a branch",
-   pick your main branch and the `/ (root)` folder, then save.
-4. Your site will be live at `https://<username>.github.io/<repo-name>/`
-   within a minute or two.
-5. To use your own domain, add a `CNAME` file at the root containing just
-   your domain name, point your registrar's DNS at GitHub's servers, then
-   enter the domain in Settings → Pages.
-
-Because this is a fully static site (no server, no database), every photo
-and video has to actually exist as a file in `assets/` and be committed to
-the repo — the organizer handles copying them there for you, but *you* still
-need to push those commits for the live site to update.
-
-## A note on the music page's dragging
-
-On the live site, anyone visiting `music.html` can drag the photos around
-for fun — their arrangement is remembered only in *their own* browser. The
-*starting* layout everyone sees on first visit is whatever you set in
-`data/music.json` via the organizer.
+2. **Settings → Pages** → Source: "Deploy from a branch" → `main` branch,
+   `/ (root)` folder → Save.
+3. Live at `https://<username>.github.io/<repo-name>/` within a minute or two.
+4. For your own domain: add a `CNAME` file at the root containing just your
+   domain name, point your registrar's DNS at GitHub's servers, then enter
+   the domain in Settings → Pages.
 
 ## Customizing the look
 
-Almost everything visual is controlled from the top of `css/style.css`:
+Nearly everything visual is controlled from the top of `css/style.css`:
 
-- Colors: the `:root { ... }` block — `--flash` is the pink hover color,
-  `--gold` is the sparkle color, `--paper`/`--ink` are background/text.
-- Fonts: same block, `--display`/`--body`/`--mono` — swap in any font name
-  from [Google Fonts](https://fonts.google.com) and update the `@import`
-  line above it to match.
-- Cursor: the `cursor: url(...)` line on `html,body` — swap in any image URL
-  (ideally a small, locally-hosted PNG for reliability — a hotlinked image
-  can disappear if the source site ever takes it down).
+- **Colors** — the `:root { ... }` block. `--paper` is the background
+  (pure white), `--ink` is text (pure black), `--flash` is the pink hover
+  color, `--line` is light gray used only for empty placeholders/dividers.
+- **Fonts** — same block, currently all set to Times New Roman.
+- **Nav wording** — search each HTML file for `nav-links`.
+- **Cursor** — the `cursor: url(...)` line on `html,body`.
+- **Board behavior** (mobile breakpoint, click-vs-drag sensitivity, default
+  photo size) — the constants explained in comments near the top of `js/board.js`.

@@ -1,10 +1,18 @@
-/* Generic gallery loader. Each gallery page points this script at its own
-   JSON file via data-source on the <script> tag, e.g.:
-   <script src="js/gallery.js" data-source="data/music.json"></script> */
+/* ============================================================
+   GALLERY GRID PAGES (portrait / projects / tour)
+   ============================================================
+   One shared script for all three grid-style pages. Each page's
+   <script> tag tells it which JSON file to load from, e.g.:
+   <script src="js/gallery.js" data-source="data/portrait.json"></script>
+
+   To add a new grid page, copy portrait.html, change its
+   data-source to point at a new (empty) JSON file, and add the
+   matching option in organizer.html's "gallery pages" dropdown.
+   ============================================================ */
 
 (async function () {
   const scriptTag = document.currentScript;
-  const source = scriptTag.dataset.source;
+  const source = scriptTag.dataset.source;   // e.g. "data/portrait.json"
   const grid = document.getElementById('gallery');
   const emptyNote = document.getElementById('empty-note');
 
@@ -16,10 +24,11 @@
     console.error('Could not load', source, err);
   }
 
+  // Skip any entries that don't have a photo yet
   items = items.filter(item => item.src);
 
   if (items.length === 0) {
-    emptyNote.hidden = false;
+    emptyNote.hidden = false;   // shows "no photos yet..." message
     return;
   }
 
@@ -28,6 +37,7 @@
     const isVideo = /\.(mp4|webm|mov)$/i.test(item.src);
 
     if (isVideo) {
+      // Videos autoplay (muted) only while the mouse hovers over them
       const video = document.createElement('video');
       video.src = item.src;
       video.muted = true;
@@ -41,7 +51,7 @@
       const img = document.createElement('img');
       img.src = item.src;
       img.alt = item.caption || '';
-      img.loading = 'lazy';
+      img.loading = 'lazy';   // browser delays loading offscreen images
       figure.appendChild(img);
     }
 

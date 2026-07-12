@@ -1,13 +1,19 @@
-/* Private organizer tool.
-   Uses the File System Access API (Chrome/Edge) to read+write files
-   directly in your project folder. Not supported in Firefox/Safari —
-   the status line will say so if it isn't available. */
+/* ============================================================
+   PRIVATE ORGANIZER TOOL
+   ============================================================
+   Uses the File System Access API (Chrome/Edge only) to read and
+   write files directly in your project folder — that's what makes
+   "choose project folder" below work, and why this only runs on
+   your own computer, not for random visitors.
+   ============================================================ */
 
 let rootHandle = null;
 const statusEl = document.getElementById('status');
 
 function setStatus(msg) { statusEl.textContent = msg; }
 
+/* Walks down into a folder path (creating folders along the way
+   if create:true), starting from your chosen project folder. */
 async function getDir(path, { create = false } = {}) {
   let handle = rootHandle;
   for (const part of path.split('/').filter(Boolean)) {
@@ -37,12 +43,11 @@ async function writeJSON(dirPath, filename, data) {
 
 async function writeMediaFile(dirPath, file) {
   const dir = await getDir(dirPath, { create: true });
-  // avoid collisions by prefixing with a short timestamp if needed
   let filename = file.name;
   try {
-    await dir.getFileHandle(filename); // exists?
-    filename = `${Date.now()}-${filename}`;
-  } catch { /* doesn't exist yet, fine */ }
+    await dir.getFileHandle(filename); // already exists?
+    filename = `${Date.now()}-${filename}`; // avoid overwriting it
+  } catch { /* doesn't exist yet, fine to use the original name */ }
 
   const fileHandle = await dir.getFileHandle(filename, { create: true });
   const writable = await fileHandle.createWritable();
@@ -66,7 +71,7 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
     rootHandle = await window.showDirectoryPicker();
     setStatus('connected to: ' + rootHandle.name);
     document.getElementById('app').style.display = 'block';
-    await initMusicPanel();
+    await initBoardsPanel();
     await initGalleryPanel();
   } catch (err) {
     setStatus('connection cancelled.');
@@ -84,41 +89,61 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* ---------------- music panel ---------------- */
+/* ============================================================
+   BOARDS PANEL — handles music.html, projects.html (the listing
+   page), and every individual project-*.html page. All of these
+   share the same data shape:
+     { id, src, caption, x, y, width, href (only on the projects
+       listing — links to that project's own page) }
 
-let musicData = [];
+   Which board you're editing is picked from the dropdown, and
+   maps directly to data/<board>.json + assets/<board>/. To add a
+   new project page to this list, see the comment in
+   organizer.html above the <select id="board-select">.
+   ============================================================ */
 
-async function initMusicPanel() {
-  musicData = await readJSON('data', 'music.json');
-  renderMusicBoard();
+let boardData = [];
+let currentBoard = 'music';
 
-  document.getElementById('music-add-btn').onclick = () =>
-    document.getElementById('music-file-input').click();
+async function initBoardsPanel() {
+  const select = document.getElementById('board-select');
+  select.value = currentBoard;
+  select.onchange = async () => {
+    currentBoard = select.value;
+    boardData = await readJSON('data', currentBoard + '.json');
+    renderBoardMini();
+  };
 
-  document.getElementById('music-file-input').onchange = async (e) => {
+  boardData = await readJSON('data', currentBoard + '.json');
+  renderBoardMini();
+
+  document.getElementById('boards-add-btn').onclick = () =>
+    document.getElementById('boards-file-input').click();
+
+  document.getElementById('boards-file-input').onchange = async (e) => {
     const files = Array.from(e.target.files);
     for (const file of files) {
-      const savedName = await writeMediaFile('assets/music', file);
-      musicData.push({
+      const savedName = await writeMediaFile('assets/' + currentBoard, file);
+      boardData.push({
         id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
-        src: 'assets/music/' + savedName,
+        src: 'assets/' + currentBoard + '/' + savedName,
         caption: file.name.replace(/\.[^.]+$/, ''),
         x: 10 + Math.random() * 60,
         y: 10 + Math.random() * 60,
-        rot: Math.round((Math.random() * 14) - 7)
+        width: 220 // starting display size in pixels — draggable slider changes this
       });
     }
     e.target.value = '';
-    await writeJSON('data', 'music.json', musicData);
-    renderMusicBoard();
+    await writeJSON('data', currentBoard + '.json', boardData);
+    renderBoardMini();
     setStatus('saved \u2713');
   };
 }
 
-function renderMusicBoard() {
-  const board = document.getElementById('music-board');
+function renderBoardMini() {
+  const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
-  musicData.forEach(photo => {
+  boardData.forEach(photo => {
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
     el.style.left = photo.x + '%';
@@ -143,19 +168,66 @@ function renderMusicBoard() {
     cap.textContent = photo.caption || '';
     cap.addEventListener('blur', async () => {
       photo.caption = cap.textContent.trim();
-      await writeJSON('data', 'music.json', musicData);
+      await writeJSON('data', currentBoard + '.json', boardData);
       setStatus('saved \u2713');
     });
     el.appendChild(cap);
+
+    /* ---- size slider ----
+       Sets how wide this photo displays on the real site (its
+       height follows automatically to keep it in proportion).
+       Range: 100px (small) to 500px (large). */
+    const sizeControl = document.createElement('div');
+    sizeControl.className = 'size-control';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 100;
+    slider.max = 500;
+    slider.step = 10;
+    slider.value = photo.width || 220;
+
+    const sizeLabel = document.createElement('span');
+    sizeLabel.textContent = (photo.width || 220) + 'px';
+
+    slider.addEventListener('input', () => {
+      sizeLabel.textContent = slider.value + 'px';
+    });
+    slider.addEventListener('change', async () => {
+      photo.width = parseInt(slider.value, 10);
+      await writeJSON('data', currentBoard + '.json', boardData);
+      setStatus('saved \u2713');
+    });
+
+    sizeControl.appendChild(slider);
+    sizeControl.appendChild(sizeLabel);
+    el.appendChild(sizeControl);
+
+    /* ---- href (projects listing only) ----
+       If this board is the projects listing page, show a small
+       text field for which project page this cover links to. */
+    if (currentBoard === 'projects') {
+      const hrefRow = document.createElement('input');
+      hrefRow.type = 'text';
+      hrefRow.value = photo.href || '';
+      hrefRow.placeholder = 'links to: project-example.html';
+      hrefRow.style.cssText = 'position:absolute;top:-24px;left:0;right:0;font-size:0.55rem;padding:2px 4px;font-family:var(--mono);';
+      hrefRow.addEventListener('blur', async () => {
+        photo.href = hrefRow.value.trim();
+        await writeJSON('data', currentBoard + '.json', boardData);
+        setStatus('saved \u2713');
+      });
+      el.appendChild(hrefRow);
+    }
 
     const del = document.createElement('button');
     del.className = 'del';
     del.textContent = '\u00d7';
     del.title = 'remove from board (file stays on disk)';
     del.addEventListener('click', async () => {
-      musicData = musicData.filter(p => p.id !== photo.id);
-      await writeJSON('data', 'music.json', musicData);
-      renderMusicBoard();
+      boardData = boardData.filter(p => p.id !== photo.id);
+      await writeJSON('data', currentBoard + '.json', boardData);
+      renderBoardMini();
       setStatus('saved \u2713');
     });
     el.appendChild(del);
@@ -169,7 +241,7 @@ function makeMiniDraggable(el, board, photo) {
   let startX, startY, originLeft, originTop;
 
   el.addEventListener('mousedown', (e) => {
-    if (e.target.isContentEditable || e.target.classList.contains('del')) return;
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.classList.contains('del')) return;
     e.preventDefault();
     el.classList.add('dragging');
     board.appendChild(el);
@@ -192,7 +264,7 @@ function makeMiniDraggable(el, board, photo) {
       document.removeEventListener('mouseup', up);
       photo.x = parseFloat(el.style.left);
       photo.y = parseFloat(el.style.top);
-      await writeJSON('data', 'music.json', musicData);
+      await writeJSON('data', currentBoard + '.json', boardData);
       setStatus('saved \u2713');
     }
     document.addEventListener('mousemove', move);
@@ -200,7 +272,11 @@ function makeMiniDraggable(el, board, photo) {
   });
 }
 
-/* ---------------- gallery panel ---------------- */
+/* ============================================================
+   SIMPLE PHOTO GRID PANEL — for portrait.html and tour.html.
+   These are plain ordered lists (no position/size), unlike the
+   boards above.
+   ============================================================ */
 
 let galleryData = [];
 let currentGalleryPage = 'portrait';

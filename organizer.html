@@ -9,7 +9,7 @@
   body{ padding-bottom:4rem; }
   .wrap{ max-width:960px; margin:0 auto; padding:0 clamp(1.25rem, 4vw, 3rem); }
   .warn{
-    background:#FFF7E6; border:1px solid var(--gold); border-radius:10px;
+    background:#FFF7E6; border:1px solid #D9B968; border-radius:10px;
     padding:1rem 1.25rem; font-family:var(--mono); font-size:0.78rem;
     line-height:1.5; margin:1.5rem 0;
   }
@@ -44,7 +44,7 @@
     border-radius:8px; overflow:hidden;
   }
   .mini-polaroid{
-    position:absolute; width:110px; padding:8px 8px 26px;
+    position:absolute; width:110px; padding:8px 8px 46px;
     background:#FCFCF9; box-shadow:0 4px 10px rgba(0,0,0,0.3);
     cursor:grab; user-select:none;
   }
@@ -55,7 +55,7 @@
   }
   .mini-polaroid img, .mini-polaroid video{ width:100%; height:100%; object-fit:cover; }
   .mini-polaroid .cap{
-    position:absolute; bottom:6px; left:6px; right:6px;
+    position:absolute; bottom:22px; left:6px; right:6px;
     font-family:var(--mono); font-size:0.55rem; text-align:center;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
@@ -63,6 +63,16 @@
     position:absolute; top:-8px; right:-8px; width:20px; height:20px;
     border-radius:50%; background:var(--flash); color:white; border:none;
     font-size:0.7rem; line-height:1; cursor:pointer; padding:0;
+  }
+  .mini-polaroid .size-control{
+    position:absolute; bottom:4px; left:6px; right:6px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .mini-polaroid .size-control input[type="range"]{
+    flex:1; height:3px;
+  }
+  .mini-polaroid .size-control span{
+    font-family:var(--mono); font-size:0.5rem; opacity:0.6; width:28px; text-align:right;
   }
 
   .item-row{
@@ -107,29 +117,49 @@
 <div id="app" style="display:none;">
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="music">music board</button>
-    <button class="tab-btn" data-tab="gallery">gallery pages</button>
+    <button class="tab-btn active" data-tab="boards">boards</button>
+    <button class="tab-btn" data-tab="gallery">simple photo grids</button>
   </div>
 
-  <!-- POLAROID PANEL -->
-  <section id="panel-music" class="panel active">
+  <!-- BOARDS PANEL — for music.html, projects.html, and every
+       individual project-*.html page. Each of these is a
+       freeform, resizable, draggable board (with a lightbox on
+       the public site, or navigation for the projects listing).
+
+       To add a NEW project page to this dropdown after you've
+       created it (see comments in project-example.html for those
+       steps), add a matching <option> below, e.g.:
+       <option value="project-red-rocks">project: red rocks</option>
+       The value must exactly match your data/<value>.json filename
+       and your assets/<value>/ folder name. -->
+  <section id="panel-boards" class="panel active">
+    <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+      <label style="font-family:var(--mono); font-size:0.78rem;">board:</label>
+      <select id="board-select">
+        <option value="music">music</option>
+        <option value="projects">projects (listing page)</option>
+        <option value="project-example">project: example</option>
+      </select>
+    </div>
     <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;">
-      drag photos to arrange them, edit captions below, and everything saves automatically.
+      drag photos to arrange them, drag the slider under each one to resize it,
+      click a caption to edit it — everything saves automatically.
     </p>
     <div class="add-row">
-      <input type="file" id="music-file-input" accept="image/*,video/*" multiple style="display:none;">
-      <button id="music-add-btn">+ add photos / videos</button>
+      <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">
+      <button id="boards-add-btn">+ add photos / videos</button>
     </div>
-    <div id="music-board" class="mini-board"></div>
+    <div id="boards-mini-board" class="mini-board"></div>
   </section>
 
-  <!-- GALLERY PANEL -->
+  <!-- SIMPLE PHOTO GRID PANEL — for portrait.html and tour.html
+       only. These are plain grids (no dragging, no resizing) —
+       just a reorderable list of photos. -->
   <section id="panel-gallery" class="panel">
     <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
       <label style="font-family:var(--mono); font-size:0.78rem;">page:</label>
       <select id="gallery-select">
         <option value="portrait">portrait</option>
-        <option value="projects">projects</option>
         <option value="tour">tour</option>
       </select>
     </div>

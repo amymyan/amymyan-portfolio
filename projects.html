@@ -5,23 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Projects — Amy Myan</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/board.css">
 </head>
 <body>
 
 <nav class="site-nav">
   <a class="wordmark" href="index.html"><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></a>
   <div class="nav-links">
-    <a href="music.html">music ♪‧₊˚</a>
-    <a href="portrait.html">portrait ✶⋆.˚</a>
-    <a href="projects.html" aria-current="page">projects ˚˙✧˖⋆</a>
-    <a href="tour.html">tour ˚˖𓍢ִ໋❀</a>
-    <a href="about.html">about ⋆.˚</a>
+    <a href="music.html">music</a>
+    <a href="portrait.html">portrait</a>
+    <a href="projects.html" aria-current="page">projects</a>
+    <a href="tour.html">tour</a>
+    <a href="about.html">about</a>
   </div>
 </nav>
 
+<!-- ============================================================
+     This page is a BOARD, same system as music.html, EXCEPT:
+       - data-show-captions="true" — each cover photo shows its
+         project title underneath it
+       - each entry in data/projects.json has an "href" pointing
+         at that project's own page, so CLICKING a cover photo (or
+         its caption) navigates there instead of opening a lightbox
 
-<div id="gallery" class="gallery-grid"></div>
-<p id="empty-note" class="empty-note" hidden>no photos yet — open organizer.html to add some.</p>
+     To add a new project:
+       1. Duplicate project-example.html, rename it (e.g. project-tour-2026.html)
+       2. Duplicate data/project-example.json, rename it to match
+       3. Change the new HTML file's <script> data-source to point
+          at your new JSON file
+       4. Create a new assets/<your-project-name>/ folder for its photos
+       5. Add a new entry to data/projects.json with an "href"
+          pointing at your new page, and a "caption" as its title
+       6. In organizer.html, add your project to both dropdowns
+          (see the comments in js/organizer.js)
+     ============================================================ -->
+
+<main id="board" class="board" data-source="data/projects.json" data-show-captions="true"></main>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy Myan</span>
@@ -32,7 +51,7 @@
   </span>
 </footer>
 
-<script src="js/gallery.js" data-source="data/projects.json"></script>
+<script src="js/board.js"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>

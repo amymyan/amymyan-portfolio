@@ -1,91 +1,123 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&display=swap');
+/* ============================================================
+   BOARD STYLES — used by music.html, projects.html, and every
+   individual project-*.html page (see js/board.js for the logic).
+   ============================================================ */
+
+/* ---- WIDE MODE (default): scattered freeform board ---- */
 
 .board{
-  position:relative;
+  position:relative;    /* required so photos can be positioned freely inside it */
   width:100%;
-  height:80vh;
+  height:80vh;           /* board takes up 80% of the browser window's height —
+                              change this number to make the board taller/shorter */
   min-height:520px;
   overflow:hidden;
   background:var(--paper);
-  touch-action:none;
+  touch-action:none;     /* lets dragging work properly on phones/tablets */
 }
 
+/* Each photo/video tile. Width comes from an inline style set in
+   board.js (based on the "width" field you set per-photo in
+   organizer.html) — height is automatic, so photos keep their
+   correct proportions instead of getting stretched or cropped. */
 .polaroid{
-  position:absolute;
-  width:180px;
-  padding:12px 12px 42px;
-  background:#FCFCF9;
-  box-shadow:0 6px 16px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.4) inset;
   cursor:grab;
   user-select:none;
-  transition:box-shadow 0.15s ease;
   will-change:transform;
+  max-width:90vw;        /* safety cap so a very wide chosen size never
+                              overflows off a smaller screen */
 }
-
 .polaroid.dragging{
   cursor:grabbing;
-  box-shadow:0 18px 30px rgba(0,0,0,0.35);
-  z-index:999 !important;
-  transition:none;
+  z-index:999 !important; /* whatever you're dragging stays on top */
 }
-
-.polaroid .frame{
+.polaroid img,
+.polaroid video{
+  display:block;
   width:100%;
-  aspect-ratio:1/1;
-  background:linear-gradient(135deg, #E7DCEA, #D9CBE0 60%, #CDBBD8);
+  height:auto;
+  pointer-events:none;   /* clicks pass through to the .polaroid div itself */
+}
+.polaroid .placeholder{
   display:flex;
   align-items:center;
   justify-content:center;
-  overflow:hidden;
-}
-
-.polaroid .frame img,
-.polaroid .frame video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-  pointer-events:none;
-}
-
-.polaroid .frame .placeholder{
+  background:var(--line);
   font-family:var(--mono);
-  font-size:0.6rem;
+  font-size:0.65rem;
   text-align:center;
-  color:#6b5f74;
+  color:var(--ink);
   opacity:0.6;
   padding:0 10px;
-  pointer-events:none;
 }
 
+/* Captions are invisible by default (music.html, project pages).
+   They're only shown when the page sets data-show-captions="true"
+   on the #board element (projects.html does this, so each cover
+   photo shows its project title). */
 .polaroid .caption{
-  position:absolute;
-  bottom:12px;
-  left:12px;
-  right:12px;
-  font-family:'Caveat', var(--display);
-  font-size:1rem;
-  color:#3a3540;
-  text-align:center;
-  pointer-events:none;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  display:none;
+}
+.board[data-show-captions="true"] .polaroid .caption{
+  display:block;
+  margin:0.4rem 0 0;
+  text-align:left;
+  font-family:var(--mono);
+  font-size:0.9rem;
+  color:var(--ink);
 }
 
-.polaroid::before{
-  content:"";
-  position:absolute;
-  top:-10px;
-  left:50%;
-  width:46px;
-  height:18px;
-  transform:translateX(-50%) rotate(-3deg);
-  background:rgba(240, 225, 190, 0.75);
-  box-shadow:0 1px 2px rgba(0,0,0,0.15);
+/* ---- NARROW MODE (phones, 700px window width or under):
+   wrapping grid instead of scattered, added via a class board.js
+   applies automatically — you don't need to add this class
+   yourself anywhere. ---- */
+
+.board.board--narrow{
+  display:flex;
+  flex-wrap:wrap;
+  align-content:flex-start;
+  gap:12px;
+  height:auto;
+  min-height:0;
+  overflow:visible;
+  padding:1.5rem clamp(1rem, 4vw, 2rem);
+}
+.board--narrow .polaroid{
+  max-width:46vw;   /* roughly 2 per row on a typical phone screen */
 }
 
-@media (max-width:600px){
-  .polaroid{ width:130px; padding:8px 8px 32px; }
-  .board{ height:70vh; }
+/* ---- lightbox: full-size photo view, used on any board page
+   where a photo doesn't have an "href" link (i.e. everywhere
+   except the projects listing page) ---- */
+
+.lightbox-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+.lightbox-overlay.open{ display:flex; }
+
+.lightbox-content img,
+.lightbox-content video{
+  max-width:92vw;
+  max-height:92vh;
+  object-fit:contain;
+  display:block;
+}
+
+.lightbox-close{
+  position:fixed;
+  top:1.25rem;
+  right:1.5rem;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:2.25rem;
+  line-height:1;
+  cursor:pointer;
+  padding:0.25rem 0.5rem;
 }

@@ -1,0 +1,5 @@
+[
+  { "id": "e1", "src": "", "caption": "photo 1", "x": 10, "y": 15, "width": 240 },
+  { "id": "e2", "src": "", "caption": "photo 2", "x": 45, "y": 30, "width": 240 },
+  { "id": "e3", "src": "", "caption": "photo 3", "x": 20, "y": 55, "width": 240 }
+]

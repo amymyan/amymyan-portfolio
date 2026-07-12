@@ -7,33 +7,56 @@
 <meta name="description" content="Amy Myan — photographer based in Los Angeles, CA">
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .home-hero{
-    min-height:70vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:2rem;
+  /* ============================================================
+     HOME PAGE — 2x2 photo grid
+     ============================================================
+     Four tiles, each linking to one section of the site. Each
+     tile is one photo + one left-aligned caption underneath it.
+     To change how big the tiles are, edit .home-grid below.
+     ============================================================ */
+
+  .home-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;   /* 2 columns = 2x2 layout */
+    gap:2px;
+    max-width:900px;
+    margin:2.5rem auto;
+    padding:0 clamp(1rem, 4vw, 2rem);
   }
-  .home-hero h1{
-    font-family:var(--display);
-    font-style:italic;
-    font-weight:500;
-    font-size:clamp(2.5rem, 8vw, 5rem);
-    margin:0 0 0.5rem;
+
+  /* On narrow phone screens, stack into a single column instead
+     of squeezing 2 tiny columns side by side. */
+  @media (max-width:560px){
+    .home-grid{ grid-template-columns:1fr; }
   }
-  .home-hero .spark{ color:var(--gold); }
-  .home-links{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:2rem;
+
+  .home-tile{
+    display:block;
+  }
+
+  .home-tile-photo{
+    aspect-ratio:1/1;         /* keeps each tile square — change to
+                                   4/5 or 3/4 for a taller rectangle */
+    background:var(--line);  /* light gray shown until you add a photo */
+    overflow:hidden;
+  }
+
+  .home-tile-photo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;         /* fills the square without stretching */
+    display:block;
+    transition:opacity 0.2s ease;
+  }
+
+  .home-tile:hover .home-tile-photo img{ opacity:0.85; }
+
+  .home-tile-caption{
+    text-align:left;          /* caption sits left-aligned under the photo */
     font-family:var(--mono);
-    font-size:1rem;
+    font-size:0.85rem;
+    padding:0.6rem 0.2rem 0;
   }
-  .home-links a{ opacity:0.8; transition:opacity 0.2s ease, color 0.2s ease; }
-  .home-links a:hover{ opacity:1; color:var(--flash); }
 </style>
 </head>
 <body>
@@ -41,24 +64,62 @@
 <nav class="site-nav">
   <a class="wordmark" href="index.html"><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></a>
   <div class="nav-links">
-    <a href="music.html" aria-current="false">music ♪‧₊˚</a>
-    <a href="portrait.html">portrait ✶⋆.˚</a>
-    <a href="projects.html">projects ˚˙✧˖⋆</a>
-    <a href="tour.html">tour ˚˖𓍢ִ໋❀</a>
-    <a href="about.html">about ⋆.˚</a>
-  </div>
-</nav>
-
-<section class="home-hero">
-  <h1><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></h1>
-  <div class="home-links">
-    <a href="music.html">music</a>
+    <a href="music.html" aria-current="false">music</a>
     <a href="portrait.html">portrait</a>
     <a href="projects.html">projects</a>
     <a href="tour.html">tour</a>
     <a href="about.html">about</a>
   </div>
-</section>
+</nav>
+
+<!-- ============================================================
+     Each tile below points at a fixed image file:
+       assets/home/music.jpg
+       assets/home/portrait.jpg
+       assets/home/projects.jpg
+       assets/home/tour.jpg
+     Just save your photo with that exact name into assets/home/
+     (overwriting the old one) — no organizer tool needed for
+     these 4, since there's always exactly one photo per tile.
+     If the file doesn't exist yet, the tile just shows a plain
+     gray box instead of a broken image icon.
+     ============================================================ -->
+
+<div class="home-grid">
+
+  <a class="home-tile" href="music.html">
+    <div class="home-tile-photo">
+      <img src="assets/home/music.jpg" alt="music"
+           onerror="this.style.display='none'">
+    </div>
+    <p class="home-tile-caption">live music ♪‧₊˚</p>
+  </a>
+
+  <a class="home-tile" href="portrait.html">
+    <div class="home-tile-photo">
+      <img src="assets/home/portrait.jpg" alt="portrait"
+           onerror="this.style.display='none'">
+    </div>
+    <p class="home-tile-caption">portraits ✶⋆.˚</p>
+  </a>
+
+  <a class="home-tile" href="projects.html">
+    <div class="home-tile-photo">
+      <img src="assets/home/projects.jpg" alt="projects"
+           onerror="this.style.display='none'">
+    </div>
+    <p class="home-tile-caption">projects ˚˙✧˖⋆</p>
+  </a>
+
+  <a class="home-tile" href="tour.html">
+    <div class="home-tile-photo">
+      <img src="assets/home/tour.jpg" alt="tour"
+           onerror="this.style.display='none'">
+    </div>
+    <p class="home-tile-caption">tour ˚˖𓍢ִ໋❀</p>
+  </a>
+
+</div>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy Myan</span>

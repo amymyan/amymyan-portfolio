@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example Project — Amy Myan</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/board.css">
+<style>
+  /* Small "back to projects" link shown above the board on every
+     individual project page. */
+  .back-link{
+    display:inline-block;
+    padding:1rem clamp(1.25rem, 4vw, 3rem) 0;
+    font-family:var(--mono);
+    font-size:0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a class="wordmark" href="index.html"><span class="spark">✮⋆˙</span> Amy MyAn <span class="spark">˙⋆✮</span></a>
+  <div class="nav-links">
+    <a href="music.html">music</a>
+    <a href="portrait.html">portrait</a>
+    <a href="projects.html">projects</a>
+    <a href="tour.html">tour</a>
+    <a href="about.html">about</a>
+  </div>
+</nav>
+
+<!-- This is the button that takes visitors back to the projects
+     listing page — every project page should have one of these. -->
+<a class="back-link" href="projects.html">&larr; back to projects</a>
+
+<!-- ============================================================
+     THIS IS A TEMPLATE. To create a new project page:
+       1. Copy this whole file, rename it (e.g. project-red-rocks.html)
+       2. Copy data/project-example.json, rename it to match
+          (e.g. data/project-red-rocks.json)
+       3. Change data-source below to point at your new JSON file
+       4. Create assets/<your-project-name>/ for its photos
+       5. Update <title> above to your project's name
+       6. Add this new project to organizer.html so you can upload
+          to it (see comments in js/organizer.js)
+     ============================================================ -->
+
+<main id="board" class="board" data-source="data/project-example.json" data-show-captions="false"></main>
+
+<footer class="site-footer">
+  <span>&copy; <span id="year"></span> Amy Myan</span>
+  <span>
+    <a href="http://instagram.com/amymyan" target="_blank" rel="noopener">instagram</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:amymyant@gmail.com">email</a>
+  </span>
+</footer>
+
+<script src="js/board.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

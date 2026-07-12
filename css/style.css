@@ -1,22 +1,36 @@
-/* ============================================
-   AMY MYAN — shared design tokens
-   ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Work+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap');
+/* ============================================================
+   AMY MYAN — shared design settings
+   ============================================================
+   This file controls the look of EVERY page (fonts, colors,
+   background, nav bar, footer, and the photo grid pages).
+   Change something here and it updates the whole site at once.
+   ============================================================ */
 
 :root{
-  --paper:   #FAFAF6;   /* base background — warm paper white */
-  --ink:     #201E24;   /* near-black text */
-  --haze:    #BBAFCB;   /* dusty lavender — stage-light haze */
-  --flash:   #E88FB2;   /* flash-pink accent */
-  --gold:    #CDA96E;   /* starlight gold, used sparingly */
-  --line:    #E3DEE8;   /* hairline dividers */
+  /* ---- COLORS ----
+     Every color on the site is named here once, so you only
+     ever need to change it in ONE place. */
+  --paper:   #FFFFFF;   /* page background — pure white */
+  --ink:     #000000;   /* all normal text — pure black */
+  --line:    #E7E7E7;   /* light gray used ONLY for empty photo
+                             placeholders and thin divider lines
+                             (kept slightly gray on purpose —
+                             pure white would make them invisible) */
+  --flash:   #E88FB2;   /* pink — ONLY used when you hover over a
+                             link. Change this hex code to change
+                             the hover color site-wide. */
 
-  --display: 'Fraunces', serif;
-  --body:    'Work Sans', sans-serif;
-  --mono:    'Space Mono', monospace;
+  /* ---- FONTS ----
+     All three are set to Times New Roman. If you ever want a
+     different font for headings vs body text, change these to
+     two different values (e.g. --display: 'Georgia', serif;) */
+  --display: 'Times New Roman', Times, serif;
+  --body:    'Times New Roman', Times, serif;
+  --mono:    'Times New Roman', Times, serif;
 }
 
+/* Reset: makes sure padding/borders don't make elements bigger
+   than the width/height you set on them. Leave this alone. */
 *{ box-sizing:border-box; }
 
 html,body{
@@ -26,11 +40,24 @@ html,body{
   color:var(--ink);
   font-family:var(--body);
   -webkit-font-smoothing:antialiased;
-  cursor:url('https://www.pngitem.com/pimgs/m/3-38829_sparkles-regulus-resources-logo-hd-png-download.png') 12 12, auto;
+
+  /* ---- CURSOR ----
+     Points at assets/cursor.png — put your sparkle image there
+     (see the README for how to save it locally). "auto" after
+     the comma is the fallback normal arrow, used only if the
+     image fails to load. The two numbers (12 12) are the pixel
+     inside the image that counts as the actual click point —
+     leave them roughly in the middle of the image. */
+  cursor:url('assets/cursor.png') 12 12, auto;
 }
 
-a{ color:inherit; text-decoration:none; }
-a:hover{ color:var(--flash); }
+a{
+  color:inherit;       /* links start out the same color as normal text (black) */
+  text-decoration:none;
+}
+a:hover{
+  color:var(--flash);  /* every link on the site turns pink on hover */
+}
 
 /* ---------- top nav, shared across every page ---------- */
 
@@ -46,21 +73,23 @@ a:hover{ color:var(--flash); }
 
 .wordmark{
   font-family:var(--display);
-  font-style:italic;
-  font-weight:500;
+  font-style:normal;   /* no italics anywhere on the site */
+  font-weight:bold;
   font-size:1.35rem;
   letter-spacing:0.02em;
   white-space:nowrap;
 }
 
-.wordmark .spark{ color:var(--gold); font-style:normal; }
+/* the little ✮⋆˙ ˙⋆✮ star symbols around the logo — kept, but
+   just black now like the rest of the text (no gold/pink) */
+.wordmark .spark{ font-style:normal; }
 
 .nav-links{
   display:flex;
   flex-wrap:wrap;
   gap:1.5rem;
   font-family:var(--mono);
-  font-size:0.8rem;
+  font-size:0.85rem;
   letter-spacing:0.03em;
 }
 
@@ -72,6 +101,8 @@ a:hover{ color:var(--flash); }
 }
 .nav-links a:hover,
 .nav-links a[aria-current="page"]{ opacity:1; }
+
+/* underline under whichever nav link matches the current page */
 .nav-links a[aria-current="page"]::after{
   content:"";
   position:absolute;
@@ -95,15 +126,16 @@ a:hover{ color:var(--flash); }
   opacity:0.7;
 }
 
-/* ---------- generic page heading ---------- */
+/* ---------- generic page heading (currently only used by
+   organizer.html — the public pages no longer show a title) ---------- */
 
 .page-head{
   padding:3rem clamp(1.25rem, 4vw, 3rem) 1.5rem;
 }
 .page-head h1{
   font-family:var(--display);
-  font-weight:300;
-  font-style:italic;
+  font-weight:bold;
+  font-style:normal;
   font-size:clamp(2rem, 5vw, 3.25rem);
   margin:0 0 0.4rem;
 }
@@ -114,7 +146,9 @@ a:hover{ color:var(--flash); }
   margin:0;
 }
 
-/* ---------- simple gallery grid (music/portrait/projects/tour pages) ---------- */
+/* ---------- simple gallery grid (portrait/projects/tour pages) ----------
+   To change how many photos fit per row, edit the "240px" below —
+   a bigger number = fewer, larger photos per row. */
 
 .gallery-grid{
   display:grid;
@@ -127,7 +161,7 @@ a:hover{ color:var(--flash); }
   margin:0;
   aspect-ratio:4/5;
   overflow:hidden;
-  background:var(--line);
+  background:var(--line); /* light gray box shown while a photo loads */
 }
 
 .gallery-grid img,
@@ -141,7 +175,7 @@ a:hover{ color:var(--flash); }
 
 .gallery-grid figure:hover img,
 .gallery-grid figure:hover video{
-  transform:scale(1.03);
+  transform:scale(1.03); /* subtle zoom-in on hover */
 }
 
 .empty-note{
