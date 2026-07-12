@@ -12,16 +12,27 @@
      ============================================================
      Four tiles, each linking to one section of the site. Each
      tile is one photo + one left-aligned caption underneath it.
-     To change how big the tiles are, edit .home-grid below.
+
+     --home-gutter controls ALL the spacing at once — the gap
+     between the 2 columns/rows AND the space on the left/right
+     edges of the screen. Because both use the same variable,
+     the spacing stays equal on both sides and in the middle no
+     matter what number you pick. Raise it for more breathing
+     room between photos, lower it to pack them tighter.
      ============================================================ */
 
   .home-grid{
+    --home-gutter: clamp(1.5rem, 4vw, 4rem);
+
     display:grid;
     grid-template-columns:1fr 1fr;   /* 2 columns = 2x2 layout */
-    gap:2px;
-    max-width:900px;
-    margin:2.5rem auto;
-    padding:0 clamp(1rem, 4vw, 2rem);
+    gap:var(--home-gutter);
+    width:100%;                      /* full width of the screen, not a
+                                           narrow centered column anymore */
+    margin:2.5rem 0;
+    padding:0 var(--home-gutter);    /* same spacing as the gap above,
+                                           so the left/right edges match
+                                           the middle gap exactly */
   }
 
   /* On narrow phone screens, stack into a single column instead
@@ -54,8 +65,9 @@
   .home-tile-caption{
     text-align:left;          /* caption sits left-aligned under the photo */
     font-family:var(--mono);
-    font-size:0.85rem;
-    padding:0.6rem 0.2rem 0;
+    font-size:1.25rem;        /* bumped up from 0.85rem so captions read
+                                   clearly against the bigger photos */
+    padding:0.75rem 0 0;
   }
 </style>
 </head>

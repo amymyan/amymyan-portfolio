@@ -35,15 +35,56 @@
 <a class="back-link" href="projects.html">&larr; back to projects</a>
 
 <!-- ============================================================
-     THIS IS A TEMPLATE. To create a new project page:
-       1. Copy this whole file, rename it (e.g. project-red-rocks.html)
-       2. Copy data/project-example.json, rename it to match
-          (e.g. data/project-red-rocks.json)
-       3. Change data-source below to point at your new JSON file
-       4. Create assets/<your-project-name>/ for its photos
-       5. Update <title> above to your project's name
-       6. Add this new project to organizer.html so you can upload
-          to it (see comments in js/organizer.js)
+     THIS IS A TEMPLATE. To create a new project page from it:
+
+       1. Duplicate this whole file and rename it, e.g.
+            project-red-rocks.html
+
+       2. Duplicate data/project-example.json and rename it to
+          match, e.g.
+            data/project-red-rocks.json
+
+       3. In your new HTML file, change data-source below so it
+          points at your new JSON file instead:
+            data-source="data/project-red-rocks.json"
+
+       4. Update the <title> tag near the top of this file to your
+          project's real name.
+
+       5. Create a new folder for this project's photos/videos:
+            assets/project-red-rocks/
+          (matching whatever name you used in steps 1-3)
+
+       6. Go to data/projects.json (the PROJECTS LISTING page's
+          data file) and add a new entry there so this project
+          shows up as a cover photo on projects.html, e.g.:
+            {
+              "id": "proj2",
+              "src": "",
+              "caption": "Red Rocks",
+              "href": "project-red-rocks.html",
+              "x": 50, "y": 20, "width": 260
+            }
+
+       7. In organizer.html, add a matching <option> to the
+          "board" dropdown so you can upload photos to this new
+          project page — there's a comment right above that
+          dropdown showing exactly how.
+
+     ------------------------------------------------------------
+     WANT VISIBLE CAPTIONS ON THIS PAGE?
+     ------------------------------------------------------------
+     By default, individual project pages hide captions (same as
+     music.html) so the photos speak for themselves. If you'd
+     like each photo's caption to show up as visible text
+     underneath it on THIS specific project page, change the line
+     below from:
+       data-show-captions="false"
+     to:
+       data-show-captions="true"
+     Then set each photo's caption text in organizer.html the same
+     way you'd edit any other caption. This only affects this one
+     page — every project can make its own choice independently.
      ============================================================ -->
 
 <main id="board" class="board" data-source="data/project-example.json" data-show-captions="false"></main>
