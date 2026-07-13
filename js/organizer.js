@@ -144,23 +144,37 @@ function renderBoardMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
   boardData.forEach(photo => {
+    const width = photo.width || 220;
+
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
     el.style.left = photo.x + '%';
     el.style.top = photo.y + '%';
+    el.style.width = width + 'px'; // real width — same number that's used on the live site
 
-    const frame = document.createElement('div');
-    frame.className = 'frame';
-    if (isVideoFile(photo.src)) {
-      const v = document.createElement('video');
-      v.src = photo.src; v.muted = true;
-      frame.appendChild(v);
+    /* ---- the actual photo preview ----
+       This part is deliberately styled with NO border, card, or
+       shadow, so what you see here matches music.html exactly. */
+    if (photo.src) {
+      if (isVideoFile(photo.src)) {
+        const v = document.createElement('video');
+        v.src = photo.src; v.muted = true;
+        el.appendChild(v);
+      } else {
+        const img = document.createElement('img');
+        img.src = photo.src;
+        el.appendChild(img);
+      }
     } else {
-      const img = document.createElement('img');
-      img.src = photo.src;
-      frame.appendChild(img);
+      const frame = document.createElement('div');
+      frame.className = 'frame';
+      frame.textContent = 'no photo';
+      el.appendChild(frame);
     }
-    el.appendChild(frame);
+
+    /* ---- edit toolbar (organizer-only — not part of the live site) ---- */
+    const editBar = document.createElement('div');
+    editBar.className = 'edit-bar';
 
     const cap = document.createElement('div');
     cap.className = 'cap';
@@ -171,7 +185,7 @@ function renderBoardMini() {
       await writeJSON('data', currentBoard + '.json', boardData);
       setStatus('saved \u2713');
     });
-    el.appendChild(cap);
+    editBar.appendChild(cap);
 
     /* ---- size slider ----
        Sets how wide this photo displays on the real site (its
@@ -185,12 +199,15 @@ function renderBoardMini() {
     slider.min = 100;
     slider.max = 500;
     slider.step = 10;
-    slider.value = photo.width || 220;
+    slider.value = width;
 
     const sizeLabel = document.createElement('span');
-    sizeLabel.textContent = (photo.width || 220) + 'px';
+    sizeLabel.textContent = width + 'px';
 
     slider.addEventListener('input', () => {
+      // live-resize the preview as you drag the slider, so you can
+      // see the real size before it's even saved
+      el.style.width = slider.value + 'px';
       sizeLabel.textContent = slider.value + 'px';
     });
     slider.addEventListener('change', async () => {
@@ -201,7 +218,7 @@ function renderBoardMini() {
 
     sizeControl.appendChild(slider);
     sizeControl.appendChild(sizeLabel);
-    el.appendChild(sizeControl);
+    editBar.appendChild(sizeControl);
 
     /* ---- href (projects listing only) ----
        If this board is the projects listing page, show a small
@@ -211,14 +228,16 @@ function renderBoardMini() {
       hrefRow.type = 'text';
       hrefRow.value = photo.href || '';
       hrefRow.placeholder = 'links to: project-example.html';
-      hrefRow.style.cssText = 'position:absolute;top:-24px;left:0;right:0;font-size:0.55rem;padding:2px 4px;font-family:var(--mono);';
+      hrefRow.style.cssText = 'font-size:0.55rem;padding:2px 4px;font-family:var(--mono);width:100%;box-sizing:border-box;';
       hrefRow.addEventListener('blur', async () => {
         photo.href = hrefRow.value.trim();
         await writeJSON('data', currentBoard + '.json', boardData);
         setStatus('saved \u2713');
       });
-      el.appendChild(hrefRow);
+      editBar.appendChild(hrefRow);
     }
+
+    el.appendChild(editBar);
 
     const del = document.createElement('button');
     del.className = 'del';
