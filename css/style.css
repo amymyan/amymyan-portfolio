@@ -54,9 +54,22 @@ html,body{
 a{
   color:inherit;       /* links start out the same color as normal text (black) */
   text-decoration:none;
+
+  /* A different sparkle cursor specifically for anything clickable.
+     This is set directly on links (rather than just relying on the
+     one on html/body above) because browsers often show their own
+     built-in "pointer" cursor over links, which can silently
+     override an inherited custom cursor. Save your second sparkle
+     image as assets/cursor-hover.png to use here. */
+  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
 }
 a:hover{
   color:var(--flash);  /* every link on the site turns pink on hover */
+}
+
+/* Buttons (e.g. in organizer.html) get the same hover cursor. */
+button{
+  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
 }
 
 /* ---------- top nav, shared across every page ---------- */
