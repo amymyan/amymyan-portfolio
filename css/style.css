@@ -48,7 +48,7 @@ html,body{
      image fails to load. The two numbers (12 12) are the pixel
      inside the image that counts as the actual click point —
      leave them roughly in the middle of the image. */
-  cursor:url('assets/cursor.png') 12 12, auto;
+  cursor:url('../assets/cursor.png') 12 12, auto;
 }
 
 a{
