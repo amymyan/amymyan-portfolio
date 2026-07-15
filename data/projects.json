@@ -3,9 +3,9 @@
     "id": "proj1",
     "src": "",
     "caption": "example project",
-    "href": "project-example.html",
     "x": 15,
     "y": 20,
-    "width": 260
+    "width": 22,
+    "href": "project-example.html"
   }
 ]
