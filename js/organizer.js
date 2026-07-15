@@ -190,7 +190,7 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
 });
 
 /* ============================================================
-   BOARDS PANEL — all content pages (music, portrait, tour,
+   BOARDS PANEL — all content pages (music, portrait, video,
    projects, and every project-*.html page). Each maps to
    data/<page>.json + assets/<page>/. Files in the asset folder
    are synced automatically; drag to place, slider to resize.

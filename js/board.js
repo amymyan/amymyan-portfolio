@@ -124,6 +124,10 @@ function createTile(photo) {
       video.preload = 'metadata';
       if (photo.poster) video.poster = mediaSrc(photo.poster);
       video.addEventListener('loadedmetadata', scheduleBoardRefit);
+      video.addEventListener('ended', () => {
+        video.pause();
+        video.load();
+      });
       el.appendChild(video);
     } else {
       const img = document.createElement('img');
