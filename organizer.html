@@ -64,6 +64,30 @@
     pointer-events:none;
     z-index:500;
   }
+  .snap-guides{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:400;
+  }
+  .snap-guide-v{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:1px;
+    background:var(--flash);
+    opacity:0.55;
+    transform:translateX(-50%);
+  }
+  .snap-guide-h{
+    position:absolute;
+    left:0;
+    right:0;
+    height:1px;
+    background:var(--flash);
+    opacity:0.55;
+    transform:translateY(-50%);
+  }
   .mini-polaroid img, .mini-polaroid video{
     display:block; width:100%; height:auto;
   }
@@ -168,15 +192,17 @@
     <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;">
       <strong>adding media:</strong> upload files to R2 in <code>assets/&lt;page&gt;/</code>, then click
       <em>register R2 file</em> to add them to the page. Or add locally via
-      <em>+ add photos / videos</em> / <em>sync from folder</em> (then upload those files to R2 too).<br>
+      <em>sync from folder</em> only runs when you click it — removing a photo (×) keeps it off the page even if the file is still on disk or R2.<br>
       drag to arrange, slider = % of page width. click a caption to edit — it shows centered under the video on the live site.<br>
+      <em>undo</em> button or ⌘Z (ctrl+Z on windows) reverses your last change on this page.<br>
       video thumbnails: click <em>upload thumb</em>, pick an image, then upload that same file to R2 in <code>assets/&lt;page&gt;/</code> — one upload, R2 only.
     </p>
-    <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+    <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
       <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">
       <button id="boards-add-btn">+ add photos / videos</button>
       <button id="boards-sync-btn" class="ghost">sync from folder</button>
       <button id="boards-register-btn" class="ghost">register R2 file</button>
+      <button id="boards-undo-btn" class="ghost" disabled>undo</button>
     </div>
     <div id="boards-mini-board" class="mini-board"></div>
   </section>

@@ -8,6 +8,7 @@ const DATA_SOURCE = boardEl.dataset.source;
 const SHOW_CAPTIONS = boardEl.dataset.showCaptions === 'true';
 
 const STORAGE_KEY = 'amy-board-layout-v3::' + DATA_SOURCE;
+const COORDS_KEY = 'amy-board-coords-v2::' + DATA_SOURCE;
 const MOBILE_ORDER_KEY = 'amy-board-mobile-order-v1::' + DATA_SOURCE;
 const MOBILE_BREAKPOINT = 700;
 const CLICK_VS_DRAG_THRESHOLD = 6;
@@ -18,7 +19,9 @@ async function loadPhotos() {
   const res = await fetch(DATA_SOURCE);
   if (!res.ok) throw new Error(DATA_SOURCE + ' returned ' + res.status);
   const raw = await res.json();
-  return raw.map((item, index) => ({
+  return raw
+    .filter(item => item.src?.trim() || item.href)
+    .map((item, index) => ({
     id: item.id || ('p' + index + '-' + (item.src || 'empty').split('/').pop()),
     src: item.src || '',
     caption: item.caption || '',
@@ -113,7 +116,7 @@ function createTile(photo) {
   el.dataset.id = photo.id;
 
   const width = photo.width || DEFAULT_WIDTH_PERCENT;
-  el.style.width = width + '%';
+  el.style.width = width + '%'; // placeholder until applyTileLayout runs
 
   const isVideo = isVideoPath(photo.src);
 
@@ -125,6 +128,7 @@ function createTile(photo) {
       video.preload = 'metadata';
       if (photo.poster) video.poster = mediaSrc(photo.poster);
       video.addEventListener('loadedmetadata', scheduleBoardRefit);
+      video.addEventListener('error', () => el.remove());
       video.addEventListener('ended', () => {
         video.pause();
         video.load();
@@ -135,6 +139,7 @@ function createTile(photo) {
       img.src = mediaSrc(photo.src);
       img.alt = photo.caption || '';
       img.addEventListener('load', scheduleBoardRefit);
+      img.addEventListener('error', () => el.remove());
       el.appendChild(img);
     }
   } else {
@@ -178,17 +183,23 @@ function createTile(photo) {
 
 function layoutWide(board, layout) {
   board.classList.remove('board--narrow');
+  const legacy = !localStorage.getItem(COORDS_KEY);
+
   photos.forEach(photo => {
     const el = createTile(photo);
     const saved = layout[photo.id];
-    const x = saved ? saved.x : photo.x;
-    const y = saved ? saved.y : photo.y;
+    let x = saved ? saved.x : photo.x;
+    let y = saved ? saved.y : photo.y;
+    const width = photo.width || DEFAULT_WIDTH_PERCENT;
+    if (legacy) ({ x, y } = migrateLegacyCoords(x, y, board));
+
     el.style.position = 'absolute';
-    el.style.left = x + '%';
-    el.style.top = y + '%';
+    applyTileLayout(el, board, { x, y, width });
     board.appendChild(el);
     makeFreeformDraggable(el, board, photo);
   });
+
+  if (legacy) localStorage.setItem(COORDS_KEY, '1');
 }
 
 function shouldSkipDrag(e) {
@@ -196,14 +207,33 @@ function shouldSkipDrag(e) {
 }
 
 function makeFreeformDraggable(el, board, photo) {
-  let startClientX, startClientY, moved, shiftHeld, dragGroup, origins;
+  let startClientX, startClientY, moved, shiftHeld, dragGroup, originLeftPx, originTopPx;
 
-  function toPercent(px, total) { return (px / total) * 100; }
+  function applyDragPositions(point) {
+    const dx = point.clientX - startClientX;
+    const dy = point.clientY - startClientY;
+
+    const { positions, guideX, guideY } = snapDragGroup(
+      dragGroup,
+      originLeftPx,
+      originTopPx,
+      dx,
+      dy,
+      board
+    );
+
+    positions.forEach(({ tile, x, y }) => {
+      tile.classList.add('dragging');
+      board.appendChild(tile);
+      applyTileLayout(tile, board, { x, y, width: parseFloat(tile.dataset.w) });
+    });
+    setBoardSnapGuides(board, guideX, guideY);
+    fitBoardHeight(board, { allowShrink: false, adjustScroll: false });
+  }
 
   function onPointerDown(e) {
     if (shouldSkipDrag(e)) return;
     e.preventDefault();
-    const boardRect = board.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
     startClientX = point.clientX;
     startClientY = point.clientY;
@@ -217,7 +247,8 @@ function makeFreeformDraggable(el, board, photo) {
     }
 
     dragGroup = tileSelection.getDragGroup(board, el);
-    origins = tileSelection.captureOrigins(dragGroup);
+    originLeftPx = captureOriginLeftPx(dragGroup);
+    originTopPx = captureOriginTopPx(dragGroup);
 
     function onMove(e) {
       const point = e.touches ? e.touches[0] : e;
@@ -226,37 +257,31 @@ function makeFreeformDraggable(el, board, photo) {
       moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        dragGroup.forEach(tile => {
-          tile.classList.add('dragging');
-          board.appendChild(tile);
-          const origin = origins.get(tile.dataset.id);
-          let newLeft = origin.left + toPercent(dx, boardRect.width);
-          let newTop = origin.top + toPercent(dy, boardRect.height);
-          newLeft = Math.max(-5, Math.min(95, newLeft));
-          newTop = Math.max(-5, Math.min(95, newTop));
-          tile.style.left = newLeft + '%';
-          tile.style.top = newTop + '%';
-        });
+        applyDragPositions(point);
       }
     }
 
-    function onUp() {
+    function onUp(e) {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
       dragGroup.forEach(tile => tile.classList.remove('dragging'));
+      clearBoardSnapGuides(board);
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
+        const point = e.changedTouches ? e.changedTouches[0] : e;
+        applyDragPositions(point);
+        fitBoardHeight(board, { allowShrink: false });
+
         const layout = getSavedLayout();
         dragGroup.forEach(tile => {
           layout[tile.dataset.id] = {
-            x: parseFloat(tile.style.left),
-            y: parseFloat(tile.style.top)
+            x: parseFloat(tile.dataset.x),
+            y: parseFloat(tile.dataset.y)
           };
         });
         saveLayout(layout);
-        fitBoardHeight(board, { allowShrink: false });
       } else if (!shiftHeld) {
         el.dispatchEvent(new CustomEvent('tile-activate'));
       }
@@ -396,6 +421,7 @@ async function initBoard() {
       lastIsNarrow = nowNarrow;
       renderBoard();
     } else if (!nowNarrow && board) {
+      reflowBoardTiles(board);
       fitBoardHeight(board);
     }
   });

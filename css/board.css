@@ -50,6 +50,30 @@
   pointer-events:none;
   z-index:500;
 }
+.snap-guides{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:400;
+}
+.snap-guide-v{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:1px;
+  background:var(--flash);
+  opacity:0.55;
+  transform:translateX(-50%);
+}
+.snap-guide-h{
+  position:absolute;
+  left:0;
+  right:0;
+  height:1px;
+  background:var(--flash);
+  opacity:0.55;
+  transform:translateY(-50%);
+}
 .polaroid img,
 .polaroid video{
   display:block;

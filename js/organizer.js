@@ -69,7 +69,31 @@ function isBrowserDisplayable(name) {
 }
 
 function filenameFromSrc(src) {
-  return src.split('/').pop();
+  return (src || '').split('/').pop();
+}
+
+function purgeEmptyEntries(boardData) {
+  return boardData.filter(item => item.src?.trim() || item.href);
+}
+
+async function readIgnoreList(pageName) {
+  const list = await readJSON('data', pageName + '.ignore.json');
+  return new Set(Array.isArray(list) ? list : []);
+}
+
+async function addToIgnoreList(pageName, filename) {
+  if (!filename) return;
+  const ignored = await readIgnoreList(pageName);
+  if (ignored.has(filename)) return;
+  ignored.add(filename);
+  await writeJSON('data', pageName + '.ignore.json', [...ignored].sort());
+}
+
+async function removeFromIgnoreList(pageName, filename) {
+  if (!filename) return;
+  const ignored = await readIgnoreList(pageName);
+  if (!ignored.delete(filename)) return;
+  await writeJSON('data', pageName + '.ignore.json', [...ignored].sort());
 }
 
 function captionFromFilename(filename) {
@@ -134,11 +158,12 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
   thumbInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    pushUndoSnapshot();
     photo.poster = 'assets/' + currentBoard + '/' + file.name;
     const blobUrl = URL.createObjectURL(file);
     preview.src = blobUrl;
     if (videoEl) videoEl.poster = blobUrl;
-    await writeJSON('data', currentBoard + '.json', boardData);
+    await saveBoardData();
     setStatus('saved \u2713 — now upload ' + file.name + ' to R2 in assets/' + currentBoard + '/');
     e.target.value = '';
   });
@@ -150,6 +175,7 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
 
 async function syncBoardFromFolder(pageName, boardData) {
   const filesOnDisk = await listMediaFiles(pageName);
+  const ignored = await readIgnoreList(pageName);
   const registered = new Set(
     boardData.filter(i => i.src).map(i => filenameFromSrc(i.src))
   );
@@ -158,18 +184,35 @@ async function syncBoardFromFolder(pageName, boardData) {
   const unsupported = [];
 
   for (const filename of filesOnDisk) {
-    if (!registered.has(filename)) {
-      boardData.push(newEntryAtTop({
-        src: 'assets/' + pageName + '/' + filename,
-        caption: captionFromFilename(filename)
-      }, pageName, boardData.length + added));
-      if (!isBrowserDisplayable(filename)) unsupported.push(filename);
-      added++;
-    }
+    if (ignored.has(filename) || registered.has(filename)) continue;
+    boardData.push(newEntryAtTop({
+      src: 'assets/' + pageName + '/' + filename,
+      caption: captionFromFilename(filename)
+    }, pageName, boardData.length + added));
+    if (!isBrowserDisplayable(filename)) unsupported.push(filename);
+    added++;
   }
 
-  boardData = boardData.map((item, i) => normalizeBoardEntry(item, pageName, i));
+  boardData = purgeEmptyEntries(boardData).map((item, i) => normalizeBoardEntry(item, pageName, i));
   return { boardData, added, unsupported };
+}
+
+async function loadBoard(pageName) {
+  let data = await readJSON('data', pageName + '.json');
+  const purged = purgeEmptyEntries(data);
+  if (JSON.stringify(data) !== JSON.stringify(purged)) {
+    await writeJSON('data', pageName + '.json', purged);
+    data = purged;
+  }
+  return data.map((item, i) => normalizeBoardEntry(item, pageName, i));
+}
+
+async function syncBoardWithFolder(pageName, boardData) {
+  const { boardData: synced, added, unsupported } = await syncBoardFromFolder(pageName, [...boardData]);
+  if (JSON.stringify(boardData) !== JSON.stringify(synced)) {
+    await writeJSON('data', pageName + '.json', synced);
+  }
+  return { data: synced, added, unsupported };
 }
 
 /* ---------------- connect ---------------- */
@@ -203,14 +246,48 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
 
 let boardData = [];
 let currentBoard = 'music';
+const undoStacks = {};
+const MAX_UNDO = 50;
+let recordingUndo = true;
+
+function pushUndoSnapshot() {
+  if (!recordingUndo || !currentBoard) return;
+  if (!undoStacks[currentBoard]) undoStacks[currentBoard] = [];
+  const stack = undoStacks[currentBoard];
+  const snapshot = JSON.stringify(boardData);
+  if (stack.length && stack[stack.length - 1] === snapshot) return;
+  stack.push(snapshot);
+  if (stack.length > MAX_UNDO) stack.shift();
+  updateUndoButton();
+}
+
+function updateUndoButton() {
+  const btn = document.getElementById('boards-undo-btn');
+  if (!btn) return;
+  const stack = undoStacks[currentBoard] || [];
+  btn.disabled = stack.length === 0;
+}
+
+async function undoBoardChange() {
+  const stack = undoStacks[currentBoard];
+  if (!stack || !stack.length) return;
+
+  recordingUndo = false;
+  boardData = JSON.parse(stack.pop());
+  await writeJSON('data', currentBoard + '.json', boardData);
+  renderBoardMini();
+  setStatus('undo \u2713');
+  recordingUndo = true;
+  updateUndoButton();
+}
+
+async function saveBoardData() {
+  await writeJSON('data', currentBoard + '.json', boardData);
+}
 
 async function loadAndSyncBoard(pageName) {
-  const data = await readJSON('data', pageName + '.json');
-  const { boardData: synced, added, unsupported } = await syncBoardFromFolder(pageName, data);
-  if (JSON.stringify(data) !== JSON.stringify(synced)) {
-    await writeJSON('data', pageName + '.json', synced);
-  }
-  return { data: synced, added, unsupported };
+  const data = await loadBoard(pageName);
+  return { data, added: 0, unsupported: [] };
 }
 
 function reportSyncStatus(added, unsupported) {
@@ -232,6 +309,7 @@ async function initBoardsPanel() {
     boardData = data;
     reportSyncStatus(added, unsupported);
     renderBoardMini();
+    updateUndoButton();
   };
 
   const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
@@ -240,11 +318,23 @@ async function initBoardsPanel() {
   renderBoardMini();
 
   document.getElementById('boards-sync-btn').onclick = async () => {
-    const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
+    pushUndoSnapshot();
+    const { data, added, unsupported } = await syncBoardWithFolder(currentBoard, boardData);
     boardData = data;
     reportSyncStatus(added, unsupported);
     renderBoardMini();
   };
+
+  document.getElementById('boards-undo-btn').onclick = () => undoBoardChange();
+
+  document.addEventListener('keydown', (e) => {
+    if (!(e.metaKey || e.ctrlKey) || e.key !== 'z' || e.shiftKey) return;
+    if (document.getElementById('app').style.display === 'none') return;
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+    e.preventDefault();
+    undoBoardChange();
+  });
 
   document.getElementById('boards-register-btn').onclick = async () => {
     const name = prompt(
@@ -256,8 +346,10 @@ async function initBoardsPanel() {
       setStatus('already on this page — scroll the preview to find it, or pick a different file');
       return;
     }
+    pushUndoSnapshot();
     boardData.push(newEntryAtTop({ src, caption: captionFromFilename(name.trim()) }, currentBoard, boardData.length));
-    await writeJSON('data', currentBoard + '.json', boardData);
+    await removeFromIgnoreList(currentBoard, name.trim());
+    await saveBoardData();
     renderBoardMini();
     setStatus('registered ' + name.trim() + ' \u2713 — commit & push data/' + currentBoard + '.json');
   };
@@ -267,34 +359,54 @@ async function initBoardsPanel() {
 
   document.getElementById('boards-file-input').onchange = async (e) => {
     const files = Array.from(e.target.files);
+    if (!files.length) return;
+    pushUndoSnapshot();
     for (const file of files) {
       const savedName = await writeMediaFile('assets/' + currentBoard, file);
+      await removeFromIgnoreList(currentBoard, savedName);
       boardData.push(newEntryAtTop({
         src: 'assets/' + currentBoard + '/' + savedName,
         caption: file.name.replace(/\.[^.]+$/, '')
       }, currentBoard, boardData.length));
     }
     e.target.value = '';
-    await writeJSON('data', currentBoard + '.json', boardData);
+    await saveBoardData();
     renderBoardMini();
     setStatus('saved \u2713');
   };
+
+  updateUndoButton();
+
+  if (!window._organizerResizeBound) {
+    window._organizerResizeBound = true;
+    window.addEventListener('resize', () => {
+      const board = document.getElementById('boards-mini-board');
+      if (!board || !board.querySelector('.mini-polaroid')) return;
+      reflowBoardTiles(board);
+      fitBoardHeight(board, { minHeight: 520, padding: 80 });
+    });
+  }
 }
 
 function renderBoardMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
   miniSelection.clear(board);
+  const legacy = board.dataset.coordPage !== currentBoard;
   const refit = () => fitBoardHeight(board, { minHeight: 520, padding: 80 });
   boardData.forEach(photo => {
+    if (!photo.src?.trim() && !photo.href) return;
     const width = normalizeWidthPercent(photo.width);
 
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
     el.dataset.id = photo.id;
-    el.style.left = photo.x + '%';
-    el.style.top = photo.y + '%';
-    el.style.width = width + '%';
+    el.style.position = 'absolute';
+
+    let x = photo.x;
+    let y = photo.y;
+    if (legacy) ({ x, y } = migrateLegacyCoords(x, y, board));
+    applyTileLayout(el, board, { x, y, width });
 
     /* ---- the actual photo preview ----
        This part is deliberately styled with NO border, card, or
@@ -306,11 +418,13 @@ function renderBoardMini() {
         v.muted = true;
         if (photo.poster) v.poster = mediaSrc(photo.poster);
         v.addEventListener('loadedmetadata', () => requestAnimationFrame(refit));
+        v.addEventListener('error', () => el.remove());
         el.appendChild(v);
       } else {
         const img = document.createElement('img');
         img.src = mediaSrc(photo.src);
         img.addEventListener('load', () => requestAnimationFrame(refit));
+        img.addEventListener('error', () => el.remove());
         el.appendChild(img);
       }
     } else {
@@ -329,8 +443,11 @@ function renderBoardMini() {
     cap.contentEditable = true;
     cap.textContent = photo.caption || '';
     cap.addEventListener('blur', async () => {
-      photo.caption = cap.textContent.trim();
-      await writeJSON('data', currentBoard + '.json', boardData);
+      const next = cap.textContent.trim();
+      if (next === photo.caption) return;
+      pushUndoSnapshot();
+      photo.caption = next;
+      await saveBoardData();
       setStatus('saved \u2713');
     });
     editBar.appendChild(cap);
@@ -350,12 +467,20 @@ function renderBoardMini() {
     sizeLabel.textContent = width + '%';
 
     slider.addEventListener('input', () => {
-      el.style.width = slider.value + '%';
-      sizeLabel.textContent = slider.value + '%';
+      const w = parseInt(slider.value, 10);
+      sizeLabel.textContent = w + '%';
+      applyTileLayout(el, board, {
+        x: parseFloat(el.dataset.x),
+        y: parseFloat(el.dataset.y),
+        width: w
+      });
     });
     slider.addEventListener('change', async () => {
-      photo.width = parseInt(slider.value, 10);
-      await writeJSON('data', currentBoard + '.json', boardData);
+      const next = parseInt(slider.value, 10);
+      if (next === photo.width) return;
+      pushUndoSnapshot();
+      photo.width = next;
+      await saveBoardData();
       setStatus('saved \u2713');
       refit();
     });
@@ -378,8 +503,11 @@ function renderBoardMini() {
       hrefRow.placeholder = 'links to: project-example.html';
       hrefRow.style.cssText = 'font-size:0.55rem;padding:2px 4px;font-family:var(--mono);width:100%;box-sizing:border-box;';
       hrefRow.addEventListener('blur', async () => {
-        photo.href = hrefRow.value.trim();
-        await writeJSON('data', currentBoard + '.json', boardData);
+        const next = hrefRow.value.trim();
+        if (next === (photo.href || '')) return;
+        pushUndoSnapshot();
+        photo.href = next;
+        await saveBoardData();
         setStatus('saved \u2713');
       });
       editBar.appendChild(hrefRow);
@@ -392,10 +520,13 @@ function renderBoardMini() {
     del.textContent = '\u00d7';
     del.title = 'remove from board (file stays on disk)';
     del.addEventListener('click', async () => {
+      pushUndoSnapshot();
+      const filename = filenameFromSrc(photo.src);
+      if (filename) await addToIgnoreList(currentBoard, filename);
       boardData = boardData.filter(p => p.id !== photo.id);
-      await writeJSON('data', currentBoard + '.json', boardData);
+      await saveBoardData();
       renderBoardMini();
-      setStatus('saved \u2713');
+      setStatus('removed \u2713 — won\u2019t reappear on sync');
     });
     el.appendChild(del);
 
@@ -403,12 +534,47 @@ function renderBoardMini() {
     board.appendChild(el);
   });
   requestAnimationFrame(refit);
+  board.dataset.coordSystem = 'width';
+  board.dataset.coordPage = currentBoard;
+
+  if (legacy) {
+    boardData.forEach(photo => {
+      const tile = board.querySelector(`[data-id="${photo.id}"]`);
+      if (!tile) return;
+      photo.x = parseFloat(tile.dataset.x);
+      photo.y = parseFloat(tile.dataset.y);
+    });
+    saveBoardData();
+  }
 
   enableBoardMarquee(board, miniSelection, 'mini-polaroid');
 }
 
 function makeMiniDraggable(el, board, photo) {
-  let startX, startY, shiftHeld, dragGroup, origins;
+  let startX, startY, shiftHeld, dragGroup, originLeftPx, originTopPx;
+
+  function applyDragPositions(clientX, clientY) {
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+
+    const { positions, guideX, guideY } = snapDragGroup(
+      dragGroup,
+      originLeftPx,
+      originTopPx,
+      dx,
+      dy,
+      board,
+      { clampMax: 90 }
+    );
+
+    positions.forEach(({ tile, x, y }) => {
+      tile.classList.add('dragging');
+      board.appendChild(tile);
+      applyTileLayout(tile, board, { x, y, width: parseFloat(tile.dataset.w) });
+    });
+    setBoardSnapGuides(board, guideX, guideY);
+    fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false, adjustScroll: false });
+  }
 
   el.addEventListener('mousedown', (e) => {
     if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control')) return;
@@ -422,46 +588,40 @@ function makeMiniDraggable(el, board, photo) {
     }
 
     dragGroup = miniSelection.getDragGroup(board, el);
-    origins = miniSelection.captureOrigins(dragGroup);
+    originLeftPx = captureOriginLeftPx(dragGroup);
+    originTopPx = captureOriginTopPx(dragGroup);
 
     board.appendChild(el);
-    const rect = board.getBoundingClientRect();
     startX = e.clientX;
     startY = e.clientY;
     let moved = 0;
 
     function move(e) {
-      const dx = ((e.clientX - startX) / rect.width) * 100;
-      const dy = ((e.clientY - startY) / rect.height) * 100;
       moved = Math.max(moved, Math.abs(e.clientX - startX), Math.abs(e.clientY - startY));
 
       if (moved > 6) {
-        dragGroup.forEach(tile => {
-          tile.classList.add('dragging');
-          board.appendChild(tile);
-          const origin = origins.get(tile.dataset.id);
-          const newLeft = Math.max(-5, Math.min(90, origin.left + dx));
-          const newTop = Math.max(-5, Math.min(95, origin.top + dy));
-          tile.style.left = newLeft + '%';
-          tile.style.top = newTop + '%';
-        });
+        applyDragPositions(e.clientX, e.clientY);
       }
     }
-    async function up() {
+    async function up(e) {
       dragGroup.forEach(tile => tile.classList.remove('dragging'));
+      clearBoardSnapGuides(board);
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
 
       if (moved > 6) {
+        applyDragPositions(e.clientX, e.clientY);
+        fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false });
+
+        pushUndoSnapshot();
         dragGroup.forEach(tile => {
           const item = boardData.find(p => p.id === tile.dataset.id);
           if (item) {
-            item.x = parseFloat(tile.style.left);
-            item.y = parseFloat(tile.style.top);
+            item.x = parseFloat(tile.dataset.x);
+            item.y = parseFloat(tile.dataset.y);
           }
         });
-        await writeJSON('data', currentBoard + '.json', boardData);
-        fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false });
+        await saveBoardData();
         setStatus('saved \u2713');
       }
     }

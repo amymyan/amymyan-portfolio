@@ -24,40 +24,79 @@ function normalizeWidthPercent(value, referenceWidthPx = 1200) {
   return Math.max(5, Math.min(95, Math.round(n)));
 }
 
-/* Grows a board to fit the lowest item — works with % top positions. */
-function fitBoardHeight(board, { minHeight = 520, padding = 100, allowShrink = true } = {}) {
+function boardUnit(board) {
+  return board.offsetWidth / 100;
+}
+
+/* x, y, width are all % of board width so layout scales uniformly on resize. */
+function migrateLegacyCoords(x, y, board) {
+  const w = board.offsetWidth || 1200;
+  const h = board.offsetHeight || Math.max(520, window.innerHeight * 0.75);
+  return { x, y: ((y / 100) * h / w) * 100 };
+}
+
+function applyTileLayout(el, board, { x, y, width }) {
+  const u = boardUnit(board);
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = width;
+  el.style.left = (x * u) + 'px';
+  el.style.top = (y * u) + 'px';
+  el.style.width = (width * u) + 'px';
+}
+
+function readTileCoords(el) {
+  return {
+    x: parseFloat(el.dataset.x),
+    y: parseFloat(el.dataset.y),
+    width: parseFloat(el.dataset.w)
+  };
+}
+
+function reflowBoardTiles(board, tileSelector = '.polaroid, .mini-polaroid') {
+  board.querySelectorAll(tileSelector).forEach(el => {
+    const { x, y, width } = readTileCoords(el);
+    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(width)) {
+      applyTileLayout(el, board, { x, y, width });
+    }
+  });
+}
+
+/* Grows a board to fit the lowest item. */
+function fitBoardHeight(board, { minHeight = 520, padding = 100, allowShrink = true, adjustScroll = true } = {}) {
   if (board.classList.contains('board--narrow')) return;
 
   const floor = Math.max(minHeight, window.innerHeight * 0.75);
   const prevHeight = board.offsetHeight || floor;
   const scrollY = window.scrollY;
+  const boardRect = board.getBoundingClientRect();
 
-  let required = floor;
+  let maxBottom = 0;
   board.querySelectorAll('.polaroid, .mini-polaroid').forEach(el => {
-    const elH = el.offsetHeight || el.getBoundingClientRect().height || 0;
-    if (!elH) return;
-
-    const topPct = parseFloat(el.style.top);
-    if (!Number.isFinite(topPct)) return;
-
-    const denom = 1 - topPct / 100;
-    if (denom > 0.05) {
-      required = Math.max(required, (elH + padding) / denom);
-    } else {
-      required = Math.max(required, elH + padding + floor);
-    }
+    const rect = el.getBoundingClientRect();
+    maxBottom = Math.max(maxBottom, rect.bottom - boardRect.top);
   });
 
-  let newHeight = Math.ceil(Math.max(required, floor));
+  let newHeight = Math.ceil(Math.max(maxBottom + padding, floor));
   if (!allowShrink) newHeight = Math.max(newHeight, prevHeight);
   if (newHeight === prevHeight) return;
 
   board.style.height = newHeight + 'px';
 
   const delta = newHeight - prevHeight;
-  if (delta > 0 && scrollY > 0) {
+  if (delta > 0 && adjustScroll && scrollY > 0) {
     window.scrollTo(0, scrollY + delta);
   }
+
+  return newHeight;
+}
+
+function captureOriginLeftPx(tiles) {
+  return new Map(tiles.map(t => [t.dataset.id, parseFloat(t.style.left) || 0]));
+}
+
+function captureOriginTopPx(tiles) {
+  return new Map(tiles.map(t => [t.dataset.id, parseFloat(t.style.top) || 0]));
 }
 
 function createTileSelection(tileClass) {
@@ -100,10 +139,7 @@ function createTileSelection(tileClass) {
   }
 
   function captureOrigins(tiles) {
-    return new Map(tiles.map(t => [t.dataset.id, {
-      left: parseFloat(t.style.left),
-      top: parseFloat(t.style.top)
-    }]));
+    return new Map(tiles.map(t => [t.dataset.id, readTileCoords(t)]));
   }
 
   return { clear, toggle, selectOnly, selectAdd, getDragGroup, captureOrigins };
@@ -111,6 +147,166 @@ function createTileSelection(tileClass) {
 
 function rectsIntersect(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function isNearbyBox(a, b, radiusPx) {
+  const expanded = {
+    left: a.left - radiusPx,
+    top: a.top - radiusPx,
+    right: a.right + radiusPx,
+    bottom: a.bottom + radiusPx
+  };
+  return rectsIntersect(expanded, b);
+}
+
+function findAxisSnap(movingValues, otherValues, thresholdPx) {
+  let best = null;
+  for (const moving of movingValues) {
+    for (const other of otherValues) {
+      const diff = other - moving;
+      if (Math.abs(diff) <= thresholdPx && (!best || Math.abs(diff) < Math.abs(best.diff))) {
+        best = { diff, guide: other };
+      }
+    }
+  }
+  return best;
+}
+
+function tileRectInBoard(el, board) {
+  const br = board.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const left = r.left - br.left;
+  const top = r.top - br.top;
+  return {
+    left,
+    top,
+    right: left + r.width,
+    bottom: top + r.height,
+    centerX: left + r.width / 2,
+    centerY: top + r.height / 2,
+    width: r.width,
+    height: r.height
+  };
+}
+
+function proposedGroupBox(dragTiles, originLeftPx, originTopPx, dx, dy) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  dragTiles.forEach(tile => {
+    const id = tile.dataset.id;
+    const left = originLeftPx.get(id) + dx;
+    const top = originTopPx.get(id) + dy;
+    const w = tile.offsetWidth || 0;
+    const h = tile.offsetHeight || 0;
+    minX = Math.min(minX, left);
+    minY = Math.min(minY, top);
+    maxX = Math.max(maxX, left + w);
+    maxY = Math.max(maxY, top + h);
+  });
+  return {
+    left: minX,
+    top: minY,
+    right: maxX,
+    bottom: maxY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+}
+
+/* Snap a drag group to nearby tiles (left/center/right, top/middle/bottom). */
+function snapDragGroup(dragTiles, originLeftPx, originTopPx, dx, dy, board, {
+  tileSelector = '.polaroid, .mini-polaroid',
+  thresholdPx = 10,
+  nearbyPx = 150,
+  clampMin = -5,
+  clampMax = 95
+} = {}) {
+  const u = boardUnit(board);
+  const dragSet = new Set(dragTiles);
+  const groupBox = proposedGroupBox(dragTiles, originLeftPx, originTopPx, dx, dy);
+
+  const movingX = [groupBox.left, groupBox.right, groupBox.centerX];
+  const movingY = [groupBox.top, groupBox.bottom, groupBox.centerY];
+
+  let bestSnapX = null;
+  let bestSnapY = null;
+
+  board.querySelectorAll(tileSelector).forEach(other => {
+    if (dragSet.has(other)) return;
+    const otherRect = tileRectInBoard(other, board);
+    if (!isNearbyBox(groupBox, otherRect, nearbyPx)) return;
+
+    const snapX = findAxisSnap(
+      movingX,
+      [otherRect.left, otherRect.right, otherRect.centerX],
+      thresholdPx
+    );
+    if (snapX && (!bestSnapX || Math.abs(snapX.diff) < Math.abs(bestSnapX.diff))) {
+      bestSnapX = snapX;
+    }
+
+    const snapY = findAxisSnap(
+      movingY,
+      [otherRect.top, otherRect.bottom, otherRect.centerY],
+      thresholdPx
+    );
+    if (snapY && (!bestSnapY || Math.abs(snapY.diff) < Math.abs(bestSnapY.diff))) {
+      bestSnapY = snapY;
+    }
+  });
+
+  const adjustX = bestSnapX?.diff ?? 0;
+  const adjustY = bestSnapY?.diff ?? 0;
+
+  const positions = dragTiles.map(tile => {
+    const id = tile.dataset.id;
+    const leftPx = originLeftPx.get(id) + dx + adjustX;
+    const topPx = originTopPx.get(id) + dy + adjustY;
+    return {
+      tile,
+      x: clamp(leftPx / u, clampMin, clampMax),
+      y: clamp(topPx / u, clampMin, clampMax * 4)
+    };
+  });
+
+  return {
+    positions,
+    guideX: bestSnapX?.guide ?? null,
+    guideY: bestSnapY?.guide ?? null
+  };
+}
+
+function setBoardSnapGuides(board, guideX, guideY) {
+  board.querySelector('.snap-guides')?.remove();
+  if (guideX == null && guideY == null) return;
+
+  const container = document.createElement('div');
+  container.className = 'snap-guides';
+
+  if (guideX != null) {
+    const line = document.createElement('div');
+    line.className = 'snap-guide-v';
+    line.style.left = guideX + 'px';
+    container.appendChild(line);
+  }
+  if (guideY != null) {
+    const line = document.createElement('div');
+    line.className = 'snap-guide-h';
+    line.style.top = guideY + 'px';
+    container.appendChild(line);
+  }
+
+  board.appendChild(container);
+}
+
+function clearBoardSnapGuides(board) {
+  board.querySelector('.snap-guides')?.remove();
 }
 
 function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIfNarrow = false } = {}) {
