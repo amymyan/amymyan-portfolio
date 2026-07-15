@@ -49,9 +49,10 @@
      correct, same as the live site. */
   .mini-polaroid{
     position:absolute;
-    cursor:grab; user-select:none;
+    cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+    user-select:none;
   }
-  .mini-polaroid.dragging{ cursor:grabbing; z-index:999; }
+  .mini-polaroid.dragging{ z-index:999; }
   .mini-polaroid img, .mini-polaroid video{
     display:block; width:100%; height:auto;
   }

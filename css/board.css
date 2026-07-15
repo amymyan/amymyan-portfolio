@@ -32,12 +32,11 @@
 /* Each photo/video tile. Width is a % of the board (set in
    organizer.html) — height follows automatically. */
 .polaroid{
-  cursor:grab;
+  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
   user-select:none;
   will-change:transform;
 }
 .polaroid.dragging{
-  cursor:grabbing;
   z-index:999 !important;
 }
 .polaroid img,
