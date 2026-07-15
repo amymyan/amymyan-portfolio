@@ -39,10 +39,6 @@
 .polaroid.dragging{
   z-index:999 !important;
 }
-.polaroid.selected{
-  outline:2px solid var(--flash);
-  outline-offset:3px;
-}
 .board-marquee{
   position:absolute;
   border:1px solid var(--flash);

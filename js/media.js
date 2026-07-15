@@ -99,41 +99,58 @@ function captureOriginTopPx(tiles) {
   return new Map(tiles.map(t => [t.dataset.id, parseFloat(t.style.top) || 0]));
 }
 
-function createTileSelection(tileClass) {
+function createTileSelection(tileClass, { showOutline = true } = {}) {
   const selectedIds = new Set();
+  const outlineClass = showOutline ? 'selected' : null;
+
+  function setOutline(el, on) {
+    if (!outlineClass) return;
+    el.classList.toggle(outlineClass, on);
+  }
 
   function clear(board) {
     selectedIds.clear();
-    board.querySelectorAll('.' + tileClass + '.selected').forEach(el => el.classList.remove('selected'));
+    if (outlineClass) {
+      board.querySelectorAll('.' + tileClass + '.' + outlineClass).forEach(el => {
+        el.classList.remove(outlineClass);
+      });
+    }
   }
 
   function toggle(el) {
     const id = el.dataset.id;
     if (selectedIds.has(id)) {
       selectedIds.delete(id);
-      el.classList.remove('selected');
+      setOutline(el, false);
     } else {
       selectedIds.add(id);
-      el.classList.add('selected');
+      setOutline(el, true);
     }
   }
 
   function selectOnly(el, board) {
     clear(board);
     selectedIds.add(el.dataset.id);
-    el.classList.add('selected');
+    setOutline(el, true);
   }
 
   function selectAdd(el) {
     if (!selectedIds.has(el.dataset.id)) {
       selectedIds.add(el.dataset.id);
-      el.classList.add('selected');
+      setOutline(el, true);
     }
+  }
+
+  function isSelected(el) {
+    return selectedIds.has(el.dataset.id);
   }
 
   function getDragGroup(board, el) {
     if (selectedIds.has(el.dataset.id) && selectedIds.size > 1) {
-      return Array.from(board.querySelectorAll('.' + tileClass + '.selected'));
+      if (outlineClass) {
+        return Array.from(board.querySelectorAll('.' + tileClass + '.' + outlineClass));
+      }
+      return Array.from(board.querySelectorAll('.' + tileClass)).filter(t => selectedIds.has(t.dataset.id));
     }
     return [el];
   }
@@ -142,7 +159,7 @@ function createTileSelection(tileClass) {
     return new Map(tiles.map(t => [t.dataset.id, readTileCoords(t)]));
   }
 
-  return { clear, toggle, selectOnly, selectAdd, getDragGroup, captureOrigins };
+  return { clear, toggle, selectOnly, selectAdd, isSelected, getDragGroup, captureOrigins };
 }
 
 function rectsIntersect(a, b) {

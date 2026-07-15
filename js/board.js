@@ -101,7 +101,7 @@ function buildLightbox() {
 }
 
 const lightbox = buildLightbox();
-const tileSelection = createTileSelection('polaroid');
+const tileSelection = createTileSelection('polaroid', { showOutline: false });
 
 function scheduleBoardRefit() {
   const board = document.getElementById('board');
@@ -242,7 +242,7 @@ function makeFreeformDraggable(el, board, photo) {
 
     if (shiftHeld) {
       tileSelection.toggle(el);
-    } else if (!el.classList.contains('selected')) {
+    } else if (!tileSelection.isSelected(el)) {
       tileSelection.selectOnly(el, board);
     }
 
