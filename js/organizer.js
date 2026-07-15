@@ -101,7 +101,7 @@ function normalizeBoardEntry(item, pageName, index) {
   return entry;
 }
 
-function appendVideoPosterControls(editBar, photo) {
+function appendVideoPosterControls(editBar, photo, videoEl) {
   const row = document.createElement('div');
   row.className = 'poster-control';
 
@@ -113,27 +113,33 @@ function appendVideoPosterControls(editBar, photo) {
   const uploadBtn = document.createElement('button');
   uploadBtn.type = 'button';
   uploadBtn.textContent = 'upload thumb';
-  uploadBtn.title = 'upload a custom thumbnail image';
+  uploadBtn.title = 'pick a thumbnail image — upload the same file to R2 only (not saved on your computer)';
 
   const thumbInput = document.createElement('input');
   thumbInput.type = 'file';
   thumbInput.accept = 'image/*';
   thumbInput.style.display = 'none';
 
-  uploadBtn.addEventListener('click', () => thumbInput.click());
+  uploadBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+  uploadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    thumbInput.click();
+  });
 
   thumbInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const savedName = await writeMediaFile('assets/' + currentBoard, file);
-    photo.poster = 'assets/' + currentBoard + '/' + savedName;
-    preview.src = mediaSrc(photo.poster);
+    photo.poster = 'assets/' + currentBoard + '/' + file.name;
+    const blobUrl = URL.createObjectURL(file);
+    preview.src = blobUrl;
+    if (videoEl) videoEl.poster = blobUrl;
     await writeJSON('data', currentBoard + '.json', boardData);
-    setStatus('thumbnail saved \u2713 — upload to R2 if needed');
+    setStatus('saved \u2713 — now upload ' + file.name + ' to R2 in assets/' + currentBoard + '/');
     e.target.value = '';
   });
 
-  row.append(uploadBtn, thumbInput);
+  row.appendChild(uploadBtn);
+  row.appendChild(thumbInput);
   editBar.appendChild(row);
 }
 
@@ -348,7 +354,7 @@ function renderBoardMini() {
     editBar.appendChild(sizeControl);
 
     if (photo.src && isVideoFile(photo.src)) {
-      appendVideoPosterControls(editBar, photo);
+      appendVideoPosterControls(editBar, photo, el.querySelector('video'));
     }
 
     /* ---- href (projects listing only) ----
@@ -391,7 +397,7 @@ function makeMiniDraggable(el, board, photo) {
   let startX, startY, originLeft, originTop;
 
   el.addEventListener('mousedown', (e) => {
-    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del')) return;
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control')) return;
     e.preventDefault();
     el.classList.add('dragging');
     board.appendChild(el);
