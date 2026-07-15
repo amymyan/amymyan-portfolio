@@ -22,8 +22,8 @@ async function loadPhotos() {
     id: item.id || ('p' + index + '-' + (item.src || 'empty').split('/').pop()),
     src: item.src || '',
     caption: item.caption || '',
-    x: typeof item.x === 'number' ? item.x : 10 + (index % 4) * 18,
-    y: typeof item.y === 'number' ? item.y : 10 + Math.floor(index / 4) * 15,
+    x: typeof item.x === 'number' ? item.x : 10,
+    y: typeof item.y === 'number' ? item.y : 5,
     width: normalizeWidthPercent(item.width),
     ...(item.href ? { href: item.href } : {}),
     ...(item.poster ? { poster: item.poster } : {})
@@ -98,6 +98,7 @@ function buildLightbox() {
 }
 
 const lightbox = buildLightbox();
+const tileSelection = createTileSelection('polaroid');
 
 function scheduleBoardRefit() {
   const board = document.getElementById('board');
@@ -195,7 +196,7 @@ function shouldSkipDrag(e) {
 }
 
 function makeFreeformDraggable(el, board, photo) {
-  let startClientX, startClientY, originLeft, originTop, moved;
+  let startClientX, startClientY, moved, shiftHeld, dragGroup, origins;
 
   function toPercent(px, total) { return (px / total) * 100; }
 
@@ -206,9 +207,17 @@ function makeFreeformDraggable(el, board, photo) {
     const point = e.touches ? e.touches[0] : e;
     startClientX = point.clientX;
     startClientY = point.clientY;
-    originLeft = parseFloat(el.style.left);
-    originTop = parseFloat(el.style.top);
     moved = 0;
+    shiftHeld = e.shiftKey;
+
+    if (shiftHeld) {
+      tileSelection.toggle(el);
+    } else if (!el.classList.contains('selected')) {
+      tileSelection.selectOnly(el, board);
+    }
+
+    dragGroup = tileSelection.getDragGroup(board, el);
+    origins = tileSelection.captureOrigins(dragGroup);
 
     function onMove(e) {
       const point = e.touches ? e.touches[0] : e;
@@ -217,14 +226,17 @@ function makeFreeformDraggable(el, board, photo) {
       moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        el.classList.add('dragging');
-        board.appendChild(el);
-        let newLeft = originLeft + toPercent(dx, boardRect.width);
-        let newTop = originTop + toPercent(dy, boardRect.height);
-        newLeft = Math.max(-5, Math.min(95, newLeft));
-        newTop = Math.max(-5, Math.min(95, newTop));
-        el.style.left = newLeft + '%';
-        el.style.top = newTop + '%';
+        dragGroup.forEach(tile => {
+          tile.classList.add('dragging');
+          board.appendChild(tile);
+          const origin = origins.get(tile.dataset.id);
+          let newLeft = origin.left + toPercent(dx, boardRect.width);
+          let newTop = origin.top + toPercent(dy, boardRect.height);
+          newLeft = Math.max(-5, Math.min(95, newLeft));
+          newTop = Math.max(-5, Math.min(95, newTop));
+          tile.style.left = newLeft + '%';
+          tile.style.top = newTop + '%';
+        });
       }
     }
 
@@ -233,17 +245,19 @@ function makeFreeformDraggable(el, board, photo) {
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
-      el.classList.remove('dragging');
+      dragGroup.forEach(tile => tile.classList.remove('dragging'));
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
         const layout = getSavedLayout();
-        layout[el.dataset.id] = {
-          x: parseFloat(el.style.left),
-          y: parseFloat(el.style.top)
-        };
+        dragGroup.forEach(tile => {
+          layout[tile.dataset.id] = {
+            x: parseFloat(tile.style.left),
+            y: parseFloat(tile.style.top)
+          };
+        });
         saveLayout(layout);
-        fitBoardHeight(board);
-      } else {
+        fitBoardHeight(board, { allowShrink: false });
+      } else if (!shiftHeld) {
         el.dispatchEvent(new CustomEvent('tile-activate'));
       }
     }
@@ -333,6 +347,7 @@ function makeReorderDraggable(el, board) {
 function renderBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
+  tileSelection.clear(board);
   const layout = getSavedLayout();
 
   if (isNarrowScreen()) {
@@ -358,6 +373,12 @@ async function initBoard() {
   try {
     photos = await loadPhotos();
     renderBoard();
+    enableBoardMarquee(
+      document.getElementById('board'),
+      tileSelection,
+      'polaroid',
+      { skipIfNarrow: true }
+    );
   } catch (err) {
     console.error('Board load failed:', err);
     showBoardError(

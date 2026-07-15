@@ -9,6 +9,7 @@
 
 let rootHandle = null;
 const statusEl = document.getElementById('status');
+const miniSelection = createTileSelection('mini-polaroid');
 
 function setStatus(msg) { statusEl.textContent = msg; }
 
@@ -92,13 +93,17 @@ function normalizeBoardEntry(item, pageName, index) {
     id: item.id || ('p' + Date.now() + Math.floor(Math.random() * 1000) + index),
     src,
     caption: item.caption || (src ? captionFromFilename(filenameFromSrc(src)) : ''),
-    x: typeof item.x === 'number' ? item.x : 10 + (index % 4) * 18,
-    y: typeof item.y === 'number' ? item.y : 10 + Math.floor(index / 4) * 15,
+    x: typeof item.x === 'number' ? item.x : 10,
+    y: typeof item.y === 'number' ? item.y : 5,
     width: normalizeWidthPercent(item.width)
   };
   if (item.href) entry.href = item.href;
   if (item.poster) entry.poster = item.poster;
   return entry;
+}
+
+function newEntryAtTop(pageName, partial, index) {
+  return normalizeBoardEntry({ ...partial, x: 10, y: 5 }, pageName, index);
 }
 
 function appendVideoPosterControls(editBar, photo, videoEl) {
@@ -154,7 +159,7 @@ async function syncBoardFromFolder(pageName, boardData) {
 
   for (const filename of filesOnDisk) {
     if (!registered.has(filename)) {
-      boardData.push(normalizeBoardEntry({
+      boardData.push(newEntryAtTop({
         src: 'assets/' + pageName + '/' + filename,
         caption: captionFromFilename(filename)
       }, pageName, boardData.length + added));
@@ -243,15 +248,15 @@ async function initBoardsPanel() {
 
   document.getElementById('boards-register-btn').onclick = async () => {
     const name = prompt(
-      'filename already uploaded to R2 in assets/' + currentBoard + '/\n(e.g. my-video.MOV):'
+      'Enter the exact filename on R2 in assets/' + currentBoard + '/\n(e.g. DSC00205.jpg):'
     );
     if (!name || !name.trim()) return;
     const src = 'assets/' + currentBoard + '/' + name.trim();
     if (boardData.some(i => i.src === src)) {
-      setStatus('that file is already on the page');
+      setStatus('already on this page — scroll the preview to find it, or pick a different file');
       return;
     }
-    boardData.push(normalizeBoardEntry({ src, caption: captionFromFilename(name.trim()) }, currentBoard, boardData.length));
+    boardData.push(newEntryAtTop({ src, caption: captionFromFilename(name.trim()) }, currentBoard, boardData.length));
     await writeJSON('data', currentBoard + '.json', boardData);
     renderBoardMini();
     setStatus('registered ' + name.trim() + ' \u2713 — commit & push data/' + currentBoard + '.json');
@@ -264,7 +269,7 @@ async function initBoardsPanel() {
     const files = Array.from(e.target.files);
     for (const file of files) {
       const savedName = await writeMediaFile('assets/' + currentBoard, file);
-      boardData.push(normalizeBoardEntry({
+      boardData.push(newEntryAtTop({
         src: 'assets/' + currentBoard + '/' + savedName,
         caption: file.name.replace(/\.[^.]+$/, '')
       }, currentBoard, boardData.length));
@@ -279,12 +284,14 @@ async function initBoardsPanel() {
 function renderBoardMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
+  miniSelection.clear(board);
   const refit = () => fitBoardHeight(board, { minHeight: 520, padding: 80 });
   boardData.forEach(photo => {
     const width = normalizeWidthPercent(photo.width);
 
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
+    el.dataset.id = photo.id;
     el.style.left = photo.x + '%';
     el.style.top = photo.y + '%';
     el.style.width = width + '%';
@@ -396,38 +403,67 @@ function renderBoardMini() {
     board.appendChild(el);
   });
   requestAnimationFrame(refit);
+
+  enableBoardMarquee(board, miniSelection, 'mini-polaroid');
 }
 
 function makeMiniDraggable(el, board, photo) {
-  let startX, startY, originLeft, originTop;
+  let startX, startY, shiftHeld, dragGroup, origins;
 
   el.addEventListener('mousedown', (e) => {
     if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control')) return;
     e.preventDefault();
-    el.classList.add('dragging');
+    shiftHeld = e.shiftKey;
+
+    if (shiftHeld) {
+      miniSelection.toggle(el);
+    } else if (!el.classList.contains('selected')) {
+      miniSelection.selectOnly(el, board);
+    }
+
+    dragGroup = miniSelection.getDragGroup(board, el);
+    origins = miniSelection.captureOrigins(dragGroup);
+
     board.appendChild(el);
     const rect = board.getBoundingClientRect();
-    startX = e.clientX; startY = e.clientY;
-    originLeft = parseFloat(el.style.left);
-    originTop = parseFloat(el.style.top);
+    startX = e.clientX;
+    startY = e.clientY;
+    let moved = 0;
 
     function move(e) {
       const dx = ((e.clientX - startX) / rect.width) * 100;
       const dy = ((e.clientY - startY) / rect.height) * 100;
-      const newLeft = Math.max(-5, Math.min(90, originLeft + dx));
-      const newTop = Math.max(-5, Math.min(95, originTop + dy));
-      el.style.left = newLeft + '%';
-      el.style.top = newTop + '%';
+      moved = Math.max(moved, Math.abs(e.clientX - startX), Math.abs(e.clientY - startY));
+
+      if (moved > 6) {
+        dragGroup.forEach(tile => {
+          tile.classList.add('dragging');
+          board.appendChild(tile);
+          const origin = origins.get(tile.dataset.id);
+          const newLeft = Math.max(-5, Math.min(90, origin.left + dx));
+          const newTop = Math.max(-5, Math.min(95, origin.top + dy));
+          tile.style.left = newLeft + '%';
+          tile.style.top = newTop + '%';
+        });
+      }
     }
     async function up() {
-      el.classList.remove('dragging');
+      dragGroup.forEach(tile => tile.classList.remove('dragging'));
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
-      photo.x = parseFloat(el.style.left);
-      photo.y = parseFloat(el.style.top);
-      await writeJSON('data', currentBoard + '.json', boardData);
-      refit();
-      setStatus('saved \u2713');
+
+      if (moved > 6) {
+        dragGroup.forEach(tile => {
+          const item = boardData.find(p => p.id === tile.dataset.id);
+          if (item) {
+            item.x = parseFloat(tile.style.left);
+            item.y = parseFloat(tile.style.top);
+          }
+        });
+        await writeJSON('data', currentBoard + '.json', boardData);
+        fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false });
+        setStatus('saved \u2713');
+      }
     }
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
