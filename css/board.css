@@ -27,7 +27,7 @@
                               change this number to make the board taller/shorter */
   min-height:520px;
   overflow:hidden;
-  background:var(--paper);
+  background:rgba(255,255,255,0.55);
   touch-action:none;     /* lets dragging work properly on phones/tablets */
 }
 

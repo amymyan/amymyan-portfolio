@@ -66,7 +66,18 @@
   .mini-polaroid .edit-bar{
     margin-top:4px; display:flex; flex-direction:column; gap:3px;
     background:rgba(255,255,255,0.96); border:1px solid var(--line);
-    border-radius:5px; padding:4px 6px; width:140px;
+    border-radius:5px; padding:4px 6px; width:160px;
+  }
+  .poster-control{ display:flex; flex-direction:column; gap:3px; margin-top:2px; }
+  .poster-preview{
+    width:100%; height:48px; object-fit:cover; background:#eee; border-radius:4px;
+  }
+  .poster-preview:not([src]), .poster-preview[src=""]{ display:none; }
+  .video-scrub{ width:100%; height:3px; }
+  .poster-btns{ display:flex; gap:3px; flex-wrap:wrap; }
+  .poster-btns button{
+    font-size:0.48rem; padding:2px 5px; border-radius:999px;
+    background:var(--ink); color:var(--paper); border:none; cursor:pointer;
   }
   .mini-polaroid .cap{
     font-family:var(--mono); font-size:0.55rem;
@@ -108,7 +119,7 @@
   .add-row{ margin:1.2rem 0; }
 </style>
 </head>
-<body>
+<body class="organizer">
 <div class="wrap">
 
 <div class="page-head" style="padding-left:0;padding-right:0;">
@@ -144,14 +155,17 @@
         <option value="project-example">project: example</option>
       </select>
     </div>
-    <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;">
-      photos &amp; videos in each page's <code>assets/</code> folder are picked up automatically.
-      drag to arrange, use the slider to resize (% of page width), click a caption to edit — everything saves automatically.
+    <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;">
+      <strong>adding media:</strong> upload files to R2 in <code>assets/&lt;page&gt;/</code>, then click
+      <em>register R2 file</em> to add them to the page. Or add locally via
+      <em>+ add photos / videos</em> / <em>sync from folder</em> (then upload those files to R2 too).<br>
+      drag to arrange, slider = % of page width. videos: scrub → <em>use frame</em>, or <em>upload thumb</em>.
     </p>
     <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
       <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">
       <button id="boards-add-btn">+ add photos / videos</button>
       <button id="boards-sync-btn" class="ghost">sync from folder</button>
+      <button id="boards-register-btn" class="ghost">register R2 file</button>
     </div>
     <div id="boards-mini-board" class="mini-board"></div>
   </section>
@@ -162,5 +176,6 @@
 <script src="js/config.js"></script>
 <script src="js/media.js"></script>
 <script src="js/organizer.js"></script>
+<script src="js/galaxy.js" defer></script>
 </body>
 </html>

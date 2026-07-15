@@ -1,0 +1,39 @@
+#galaxy-canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+}
+
+body{
+  position:relative;
+}
+
+.site-nav,
+.site-footer,
+.board,
+.home-grid,
+.gallery-grid,
+.page-head,
+.wrap,
+main,
+.empty-note{
+  position:relative;
+  z-index:1;
+}
+
+.board{
+  background:rgba(255,255,255,0.55);
+}
+
+.site-nav{
+  background:rgba(255,255,255,0.72);
+  backdrop-filter:blur(4px);
+}
+
+.organizer .wrap,
+.organizer .warn,
+.organizer .connect{
+  position:relative;
+  z-index:1;
+}

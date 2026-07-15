@@ -6,6 +6,8 @@
    Change something here and it updates the whole site at once.
    ============================================================ */
 
+@import url('galaxy.css');
+
 :root{
   /* ---- COLORS ----
      Every color on the site is named here once, so you only

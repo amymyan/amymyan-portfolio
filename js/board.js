@@ -25,7 +25,8 @@ async function loadPhotos() {
     x: typeof item.x === 'number' ? item.x : 10 + (index % 4) * 18,
     y: typeof item.y === 'number' ? item.y : 10 + Math.floor(index / 4) * 15,
     width: normalizeWidthPercent(item.width),
-    ...(item.href ? { href: item.href } : {})
+    ...(item.href ? { href: item.href } : {}),
+    ...(item.poster ? { poster: item.poster } : {})
   }));
 }
 
@@ -114,6 +115,7 @@ function createTile(photo) {
       video.src = mediaSrc(photo.src);
       video.playsInline = true;
       video.preload = 'metadata';
+      if (photo.poster) video.poster = mediaSrc(photo.poster);
       el.appendChild(video);
       attachVideoControls(el, video);
     } else {

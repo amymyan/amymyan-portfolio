@@ -97,10 +97,107 @@ function normalizeBoardEntry(item, pageName, index) {
     width: normalizeWidthPercent(item.width)
   };
   if (item.href) entry.href = item.href;
+  if (item.poster) entry.poster = item.poster;
   return entry;
 }
 
-async function syncBoardFromFolder(pageName, boardData) {
+async function writeBlobAsFile(dirPath, filename, blob) {
+  const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+  return writeMediaFile(dirPath, file);
+}
+
+async function saveVideoPosterFromFrame(video, pageName, videoSrc) {
+  if (!video.videoWidth) throw new Error('video not loaded yet — wait a moment and try again');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('could not capture frame')), 'image/jpeg', 0.88);
+  });
+  const base = captionFromFilename(filenameFromSrc(videoSrc)).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 40);
+  const savedName = await writeBlobAsFile('assets/' + pageName, base + '-poster.jpg', blob);
+  return 'assets/' + pageName + '/' + savedName;
+}
+
+function appendVideoPosterControls(editBar, photo, videoEl) {
+  const row = document.createElement('div');
+  row.className = 'poster-control';
+
+  const preview = document.createElement('img');
+  preview.className = 'poster-preview';
+  if (photo.poster) preview.src = mediaSrc(photo.poster);
+  row.appendChild(preview);
+
+  const scrub = document.createElement('input');
+  scrub.type = 'range';
+  scrub.className = 'video-scrub';
+  scrub.min = 0;
+  scrub.max = 1000;
+  scrub.value = 0;
+  scrub.title = 'scrub video to pick a frame';
+  row.appendChild(scrub);
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'poster-btns';
+
+  const frameBtn = document.createElement('button');
+  frameBtn.type = 'button';
+  frameBtn.textContent = 'use frame';
+  frameBtn.title = 'save current video frame as thumbnail';
+
+  const uploadBtn = document.createElement('button');
+  uploadBtn.type = 'button';
+  uploadBtn.textContent = 'upload thumb';
+  uploadBtn.title = 'upload a custom thumbnail image';
+
+  const thumbInput = document.createElement('input');
+  thumbInput.type = 'file';
+  thumbInput.accept = 'image/*';
+  thumbInput.style.display = 'none';
+
+  videoEl.crossOrigin = 'anonymous';
+  videoEl.preload = 'metadata';
+
+  videoEl.addEventListener('loadedmetadata', () => {
+    scrub.max = Math.max(1, Math.floor((videoEl.duration || 1) * 10));
+  });
+
+  scrub.addEventListener('input', () => {
+    if (videoEl.duration) {
+      videoEl.currentTime = (scrub.value / scrub.max) * videoEl.duration;
+    }
+  });
+
+  frameBtn.addEventListener('click', async () => {
+    try {
+      photo.poster = await saveVideoPosterFromFrame(videoEl, currentBoard, photo.src);
+      preview.src = mediaSrc(photo.poster);
+      await writeJSON('data', currentBoard + '.json', boardData);
+      setStatus('thumbnail saved \u2713 — upload the jpg to R2 too');
+    } catch (err) {
+      setStatus('frame capture failed: ' + err.message + ' — try upload thumb instead');
+    }
+  });
+
+  uploadBtn.addEventListener('click', () => thumbInput.click());
+
+  thumbInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const savedName = await writeMediaFile('assets/' + currentBoard, file);
+    photo.poster = 'assets/' + currentBoard + '/' + savedName;
+    preview.src = mediaSrc(photo.poster);
+    await writeJSON('data', currentBoard + '.json', boardData);
+    setStatus('thumbnail saved \u2713 — upload to R2 if needed');
+    e.target.value = '';
+  });
+
+  btnRow.append(frameBtn, uploadBtn, thumbInput);
+  row.appendChild(btnRow);
+  editBar.appendChild(row);
+}
+
   const filesOnDisk = await listMediaFiles(pageName);
   const registered = new Set(
     boardData.filter(i => i.src).map(i => filenameFromSrc(i.src))
@@ -198,6 +295,22 @@ async function initBoardsPanel() {
     renderBoardMini();
   };
 
+  document.getElementById('boards-register-btn').onclick = async () => {
+    const name = prompt(
+      'filename already uploaded to R2 in assets/' + currentBoard + '/\n(e.g. my-video.MOV):'
+    );
+    if (!name || !name.trim()) return;
+    const src = 'assets/' + currentBoard + '/' + name.trim();
+    if (boardData.some(i => i.src === src)) {
+      setStatus('that file is already on the page');
+      return;
+    }
+    boardData.push(normalizeBoardEntry({ src, caption: captionFromFilename(name.trim()) }, currentBoard, boardData.length));
+    await writeJSON('data', currentBoard + '.json', boardData);
+    renderBoardMini();
+    setStatus('registered ' + name.trim() + ' \u2713 — commit & push data/' + currentBoard + '.json');
+  };
+
   document.getElementById('boards-add-btn').onclick = () =>
     document.getElementById('boards-file-input').click();
 
@@ -235,7 +348,9 @@ function renderBoardMini() {
     if (photo.src) {
       if (isVideoFile(photo.src)) {
         const v = document.createElement('video');
-        v.src = mediaSrc(photo.src); v.muted = true;
+        v.src = mediaSrc(photo.src);
+        v.muted = true;
+        if (photo.poster) v.poster = mediaSrc(photo.poster);
         el.appendChild(v);
       } else {
         const img = document.createElement('img');
@@ -292,6 +407,11 @@ function renderBoardMini() {
     sizeControl.appendChild(sizeLabel);
     editBar.appendChild(sizeControl);
 
+    if (photo.src && isVideoFile(photo.src)) {
+      const videoEl = el.querySelector('video');
+      appendVideoPosterControls(editBar, photo, videoEl);
+    }
+
     /* ---- href (projects listing only) ----
        If this board is the projects listing page, show a small
        text field for which project page this cover links to. */
@@ -332,7 +452,7 @@ function makeMiniDraggable(el, board, photo) {
   let startX, startY, originLeft, originTop;
 
   el.addEventListener('mousedown', (e) => {
-    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.classList.contains('del')) return;
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del')) return;
     e.preventDefault();
     el.classList.add('dragging');
     board.appendChild(el);
