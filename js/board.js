@@ -99,6 +99,13 @@ function buildLightbox() {
 
 const lightbox = buildLightbox();
 
+function scheduleBoardRefit() {
+  const board = document.getElementById('board');
+  if (board && !board.classList.contains('board--narrow')) {
+    requestAnimationFrame(() => fitBoardHeight(board));
+  }
+}
+
 function createTile(photo) {
   const el = document.createElement('div');
   el.className = 'polaroid';
@@ -116,11 +123,13 @@ function createTile(photo) {
       video.playsInline = true;
       video.preload = 'metadata';
       if (photo.poster) video.poster = mediaSrc(photo.poster);
+      video.addEventListener('loadedmetadata', scheduleBoardRefit);
       el.appendChild(video);
     } else {
       const img = document.createElement('img');
       img.src = mediaSrc(photo.src);
       img.alt = photo.caption || '';
+      img.addEventListener('load', scheduleBoardRefit);
       el.appendChild(img);
     }
   } else {
@@ -229,6 +238,7 @@ function makeFreeformDraggable(el, board, photo) {
           y: parseFloat(el.style.top)
         };
         saveLayout(layout);
+        fitBoardHeight(board);
       } else {
         el.dispatchEvent(new CustomEvent('tile-activate'));
       }
@@ -323,8 +333,10 @@ function renderBoard() {
 
   if (isNarrowScreen()) {
     layoutNarrow(board);
+    board.style.height = 'auto';
   } else {
     layoutWide(board, layout);
+    requestAnimationFrame(() => fitBoardHeight(board));
   }
 }
 
@@ -354,9 +366,12 @@ async function initBoard() {
   let lastIsNarrow = isNarrowScreen();
   window.addEventListener('resize', () => {
     const nowNarrow = isNarrowScreen();
+    const board = document.getElementById('board');
     if (nowNarrow !== lastIsNarrow) {
       lastIsNarrow = nowNarrow;
       renderBoard();
+    } else if (!nowNarrow && board) {
+      fitBoardHeight(board);
     }
   });
 }

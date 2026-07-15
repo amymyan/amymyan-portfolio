@@ -2,10 +2,19 @@
   {
     "id": "p17840521053242861",
     "src": "assets/tour/version 2 video.MOV",
-    "caption": "5SOS - live at the forum",
-    "x": 5.08331,
-    "y": 10.3846,
+    "caption": "5SOS - Live in Los Angeles at the Kia Forum",
+    "x": 3.69442,
+    "y": 6.34614,
     "width": 63,
     "poster": "assets/tour/Screenshot 2026-07-14 at 11.52.47 AM.png"
+  },
+  {
+    "id": "p17841066837613861",
+    "src": "assets/tour/AmyMyAn_ClaireRosinkranz_Kiss.mp4",
+    "caption": "Claire Rosinkranz - Local Wolves Cover BTS",
+    "x": 70.7083,
+    "y": 31.1539,
+    "width": 25,
+    "poster": "assets/tour/Screenshot 2026-07-15 at 2.04.14 AM.png"
   }
 ]

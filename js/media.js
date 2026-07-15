@@ -23,3 +23,25 @@ function normalizeWidthPercent(value, referenceWidthPx = 1200) {
   if (n > 100) return Math.min(95, Math.round((n / referenceWidthPx) * 100));
   return Math.max(5, Math.min(95, Math.round(n)));
 }
+
+/* Grows a board to fit the lowest item — used on live pages and organizer preview. */
+function fitBoardHeight(board, { minHeight = 520, padding = 100 } = {}) {
+  const floor = Math.max(minHeight, window.innerHeight * 0.75);
+  let height = floor;
+
+  for (let i = 0; i < 10; i++) {
+    board.style.height = height + 'px';
+    let maxBottom = 0;
+    board.querySelectorAll('.polaroid, .mini-polaroid').forEach(el => {
+      maxBottom = Math.max(maxBottom, el.offsetTop + el.offsetHeight);
+    });
+    const next = Math.max(floor, maxBottom + padding);
+    if (Math.abs(next - height) < 3) {
+      height = next;
+      break;
+    }
+    height = next;
+  }
+
+  board.style.height = height + 'px';
+}

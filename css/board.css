@@ -21,14 +21,12 @@
 }
 
 .board{
-  position:relative;    /* required so photos can be positioned freely inside it */
+  position:relative;
   width:100%;
-  height:80vh;           /* board takes up 80% of the browser window's height —
-                              change this number to make the board taller/shorter */
-  min-height:520px;
-  overflow:hidden;
+  min-height:75vh;
+  overflow:visible;
   background:rgba(255,255,255,0.55);
-  touch-action:none;     /* lets dragging work properly on phones/tablets */
+  touch-action:pan-y;
 }
 
 /* Each photo/video tile. Width is a % of the board (set in

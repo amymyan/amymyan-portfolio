@@ -279,6 +279,7 @@ async function initBoardsPanel() {
 function renderBoardMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
+  const refit = () => fitBoardHeight(board, { minHeight: 520, padding: 80 });
   boardData.forEach(photo => {
     const width = normalizeWidthPercent(photo.width);
 
@@ -297,10 +298,12 @@ function renderBoardMini() {
         v.src = mediaSrc(photo.src);
         v.muted = true;
         if (photo.poster) v.poster = mediaSrc(photo.poster);
+        v.addEventListener('loadedmetadata', () => requestAnimationFrame(refit));
         el.appendChild(v);
       } else {
         const img = document.createElement('img');
         img.src = mediaSrc(photo.src);
+        img.addEventListener('load', () => requestAnimationFrame(refit));
         el.appendChild(img);
       }
     } else {
@@ -347,6 +350,7 @@ function renderBoardMini() {
       photo.width = parseInt(slider.value, 10);
       await writeJSON('data', currentBoard + '.json', boardData);
       setStatus('saved \u2713');
+      refit();
     });
 
     sizeControl.appendChild(slider);
@@ -391,6 +395,7 @@ function renderBoardMini() {
     makeMiniDraggable(el, board, photo);
     board.appendChild(el);
   });
+  requestAnimationFrame(refit);
 }
 
 function makeMiniDraggable(el, board, photo) {
@@ -410,7 +415,7 @@ function makeMiniDraggable(el, board, photo) {
       const dx = ((e.clientX - startX) / rect.width) * 100;
       const dy = ((e.clientY - startY) / rect.height) * 100;
       const newLeft = Math.max(-5, Math.min(90, originLeft + dx));
-      const newTop = Math.max(-5, Math.min(85, originTop + dy));
+      const newTop = Math.max(-5, Math.min(95, originTop + dy));
       el.style.left = newLeft + '%';
       el.style.top = newTop + '%';
     }
@@ -421,6 +426,7 @@ function makeMiniDraggable(el, board, photo) {
       photo.x = parseFloat(el.style.left);
       photo.y = parseFloat(el.style.top);
       await writeJSON('data', currentBoard + '.json', boardData);
+      refit();
       setStatus('saved \u2713');
     }
     document.addEventListener('mousemove', move);
