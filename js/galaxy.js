@@ -7,6 +7,7 @@
   document.body.prepend(canvas);
 
   const ctx = canvas.getContext('2d');
+  const PINKS = ['#B8437A', '#C95888', '#D66A96', '#E88FB2'];
   let width = 0;
   let height = 0;
   const particles = [];
@@ -15,23 +16,27 @@
     return min + Math.random() * (max - min);
   }
 
+  function pickPink() {
+    return PINKS[Math.floor(Math.random() * PINKS.length)];
+  }
+
   function createParticles() {
     particles.length = 0;
-    const count = Math.min(160, Math.floor((width * height) / 9000));
+    const count = Math.min(180, Math.floor((width * height) / 8000));
     for (let i = 0; i < count; i++) {
       const roll = Math.random();
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: roll < 0.65 ? rand(0.6, 1.8) : rand(1.5, 3.2),
-        kind: roll < 0.55 ? 'dot' : roll < 0.82 ? 'sparkle' : 'star',
+        size: roll < 0.5 ? rand(1, 2.4) : rand(2, 4.5),
+        kind: roll < 0.45 ? 'dot' : roll < 0.78 ? 'sparkle' : 'star',
         angle: Math.random() * Math.PI * 2,
-        spin: rand(-0.025, 0.025),
-        vx: rand(-0.12, 0.12),
-        vy: rand(-0.12, 0.12),
+        spin: rand(-0.03, 0.03),
+        vx: rand(-0.14, 0.14),
+        vy: rand(-0.14, 0.14),
         phase: Math.random() * Math.PI * 2,
-        pulse: rand(0.4, 1.6),
-        hue: roll < 0.2 ? 330 : 0
+        pulse: rand(0.5, 1.8),
+        color: pickPink()
       });
     }
   }
@@ -49,13 +54,14 @@
     if (p.y > height + 20) p.y = -20;
   }
 
-  function drawSparkle(x, y, size, angle, alpha, hue) {
+  function drawSparkle(x, y, size, angle, alpha, color) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = hue ? 'rgba(232,143,178,' + alpha + ')' : 'rgba(120,120,140,' + alpha + ')';
-    ctx.lineWidth = Math.max(0.6, size * 0.35);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, size * 0.45);
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(-size, 0);
     ctx.lineTo(size, 0);
@@ -65,16 +71,16 @@
     ctx.restore();
   }
 
-  function drawStar(x, y, size, angle, alpha) {
+  function drawStar(x, y, size, angle, alpha, color) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(90,90,110,' + alpha + ')';
+    ctx.fillStyle = color;
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
       const a = (Math.PI / 2) * i;
-      const r = i % 2 === 0 ? size : size * 0.35;
+      const r = i % 2 === 0 ? size : size * 0.38;
       ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
     }
     ctx.closePath();
@@ -91,18 +97,18 @@
       p.angle += p.spin;
       wrap(p);
 
-      const alpha = 0.08 + 0.35 * (0.5 + 0.5 * Math.sin(time * 0.001 * p.pulse + p.phase));
+      const alpha = 0.28 + 0.52 * (0.5 + 0.5 * Math.sin(time * 0.001 * p.pulse + p.phase));
 
       if (p.kind === 'dot') {
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = p.hue ? '#E88FB2' : '#888899';
+        ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
       } else if (p.kind === 'sparkle') {
-        drawSparkle(p.x, p.y, p.size * 2.2, p.angle, alpha, p.hue);
+        drawSparkle(p.x, p.y, p.size * 2.4, p.angle, alpha, p.color);
       } else {
-        drawStar(p.x, p.y, p.size * 1.6, p.angle, alpha);
+        drawStar(p.x, p.y, p.size * 1.7, p.angle, alpha, p.color);
       }
     });
 

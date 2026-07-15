@@ -117,7 +117,6 @@ function createTile(photo) {
       video.preload = 'metadata';
       if (photo.poster) video.poster = mediaSrc(photo.poster);
       el.appendChild(video);
-      attachVideoControls(el, video);
     } else {
       const img = document.createElement('img');
       img.src = mediaSrc(photo.src);
@@ -135,6 +134,13 @@ function createTile(photo) {
   if (SHOW_CAPTIONS && photo.caption) {
     const cap = document.createElement('p');
     cap.className = 'caption';
+    cap.textContent = photo.caption;
+    el.appendChild(cap);
+  }
+
+  if (isVideo && photo.caption) {
+    const cap = document.createElement('p');
+    cap.className = 'video-caption';
     cap.textContent = photo.caption;
     el.appendChild(cap);
   }
@@ -172,7 +178,7 @@ function layoutWide(board, layout) {
 }
 
 function shouldSkipDrag(e) {
-  return e.target.closest('.video-controls, .video-play-btn, .video-progress');
+  return e.target.closest('.video-caption');
 }
 
 function makeFreeformDraggable(el, board, photo) {

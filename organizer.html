@@ -73,9 +73,7 @@
     width:100%; height:48px; object-fit:cover; background:#eee; border-radius:4px;
   }
   .poster-preview:not([src]), .poster-preview[src=""]{ display:none; }
-  .video-scrub{ width:100%; height:3px; }
-  .poster-btns{ display:flex; gap:3px; flex-wrap:wrap; }
-  .poster-btns button{
+  .poster-control button{
     font-size:0.48rem; padding:2px 5px; border-radius:999px;
     background:var(--ink); color:var(--paper); border:none; cursor:pointer;
   }
@@ -159,7 +157,7 @@
       <strong>adding media:</strong> upload files to R2 in <code>assets/&lt;page&gt;/</code>, then click
       <em>register R2 file</em> to add them to the page. Or add locally via
       <em>+ add photos / videos</em> / <em>sync from folder</em> (then upload those files to R2 too).<br>
-      drag to arrange, slider = % of page width. videos: scrub → <em>use frame</em>, or <em>upload thumb</em>.
+      drag to arrange, slider = % of page width. click a caption to edit — it shows centered under the video on the live site.
     </p>
     <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
       <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">

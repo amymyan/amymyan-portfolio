@@ -101,26 +101,7 @@ function normalizeBoardEntry(item, pageName, index) {
   return entry;
 }
 
-async function writeBlobAsFile(dirPath, filename, blob) {
-  const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
-  return writeMediaFile(dirPath, file);
-}
-
-async function saveVideoPosterFromFrame(video, pageName, videoSrc) {
-  if (!video.videoWidth) throw new Error('video not loaded yet — wait a moment and try again');
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  const blob = await new Promise((resolve, reject) => {
-    canvas.toBlob(b => b ? resolve(b) : reject(new Error('could not capture frame')), 'image/jpeg', 0.88);
-  });
-  const base = captionFromFilename(filenameFromSrc(videoSrc)).replace(/[^a-z0-9-_]+/gi, '-').slice(0, 40);
-  const savedName = await writeBlobAsFile('assets/' + pageName, base + '-poster.jpg', blob);
-  return 'assets/' + pageName + '/' + savedName;
-}
-
-function appendVideoPosterControls(editBar, photo, videoEl) {
+function appendVideoPosterControls(editBar, photo) {
   const row = document.createElement('div');
   row.className = 'poster-control';
 
@@ -128,23 +109,6 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
   preview.className = 'poster-preview';
   if (photo.poster) preview.src = mediaSrc(photo.poster);
   row.appendChild(preview);
-
-  const scrub = document.createElement('input');
-  scrub.type = 'range';
-  scrub.className = 'video-scrub';
-  scrub.min = 0;
-  scrub.max = 1000;
-  scrub.value = 0;
-  scrub.title = 'scrub video to pick a frame';
-  row.appendChild(scrub);
-
-  const btnRow = document.createElement('div');
-  btnRow.className = 'poster-btns';
-
-  const frameBtn = document.createElement('button');
-  frameBtn.type = 'button';
-  frameBtn.textContent = 'use frame';
-  frameBtn.title = 'save current video frame as thumbnail';
 
   const uploadBtn = document.createElement('button');
   uploadBtn.type = 'button';
@@ -155,30 +119,6 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
   thumbInput.type = 'file';
   thumbInput.accept = 'image/*';
   thumbInput.style.display = 'none';
-
-  videoEl.crossOrigin = 'anonymous';
-  videoEl.preload = 'metadata';
-
-  videoEl.addEventListener('loadedmetadata', () => {
-    scrub.max = Math.max(1, Math.floor((videoEl.duration || 1) * 10));
-  });
-
-  scrub.addEventListener('input', () => {
-    if (videoEl.duration) {
-      videoEl.currentTime = (scrub.value / scrub.max) * videoEl.duration;
-    }
-  });
-
-  frameBtn.addEventListener('click', async () => {
-    try {
-      photo.poster = await saveVideoPosterFromFrame(videoEl, currentBoard, photo.src);
-      preview.src = mediaSrc(photo.poster);
-      await writeJSON('data', currentBoard + '.json', boardData);
-      setStatus('thumbnail saved \u2713 — upload the jpg to R2 too');
-    } catch (err) {
-      setStatus('frame capture failed: ' + err.message + ' — try upload thumb instead');
-    }
-  });
 
   uploadBtn.addEventListener('click', () => thumbInput.click());
 
@@ -193,11 +133,11 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
     e.target.value = '';
   });
 
-  btnRow.append(frameBtn, uploadBtn, thumbInput);
-  row.appendChild(btnRow);
+  row.append(uploadBtn, thumbInput);
   editBar.appendChild(row);
 }
 
+async function syncBoardFromFolder(pageName, boardData) {
   const filesOnDisk = await listMediaFiles(pageName);
   const registered = new Set(
     boardData.filter(i => i.src).map(i => filenameFromSrc(i.src))
@@ -408,8 +348,7 @@ function renderBoardMini() {
     editBar.appendChild(sizeControl);
 
     if (photo.src && isVideoFile(photo.src)) {
-      const videoEl = el.querySelector('video');
-      appendVideoPosterControls(editBar, photo, videoEl);
+      appendVideoPosterControls(editBar, photo);
     }
 
     /* ---- href (projects listing only) ----

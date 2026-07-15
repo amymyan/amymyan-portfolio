@@ -49,48 +49,16 @@
   height:auto;
   pointer-events:none;
 }
-.polaroid.has-video{
-  cursor:default;
-}
-.polaroid .video-controls{
-  display:flex;
-  align-items:center;
-  gap:0.45rem;
-  margin-top:0.35rem;
-  padding:0.35rem 0.4rem;
-  background:rgba(255,255,255,0.96);
-  border:1px solid var(--line);
-  border-radius:6px;
-  pointer-events:auto;
-  touch-action:none;
-}
-.polaroid .video-play-btn{
-  flex-shrink:0;
-  width:1.6rem;
-  height:1.6rem;
-  border:1px solid var(--ink);
-  border-radius:50%;
-  background:var(--paper);
+.polaroid .video-caption{
+  display:block;
+  text-align:center;
+  font-family:var(--body);
+  font-size:0.85rem;
+  letter-spacing:0.03em;
   color:var(--ink);
-  font-size:0.55rem;
-  line-height:1;
-  cursor:pointer;
-  padding:0;
-}
-.polaroid .video-progress{
-  flex:1;
-  min-width:0;
-  height:4px;
-  accent-color:var(--ink);
-  cursor:pointer;
-}
-.polaroid .video-time{
-  flex-shrink:0;
-  font-family:var(--mono);
-  font-size:0.62rem;
   opacity:0.75;
-  min-width:2.2rem;
-  text-align:right;
+  margin:0.35rem 0 0;
+  pointer-events:none;
 }
 .polaroid .placeholder{
   display:flex;
