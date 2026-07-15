@@ -1,0 +1,13 @@
+.DS_Store
+
+# Large media — host on Cloudflare R2, not in git
+assets/**/*.MOV
+assets/**/*.mov
+assets/**/*.mp4
+assets/**/*.MP4
+assets/**/*.webm
+assets/**/*.WEBM
+assets/**/*.tif
+assets/**/*.tiff
+assets/**/*.TIF
+assets/**/*.TIFF

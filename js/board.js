@@ -1,63 +1,36 @@
 /* ============================================================
    BOARD SCRIPT — used by music.html, projects.html, and every
    individual project-*.html page.
-   ============================================================
-   One shared script drives all "board" pages. Each page tells it
-   what to do via attributes on the <main id="board"> element:
-
-     data-source        which JSON file to load, e.g. "data/music.json"
-     data-show-captions "true" to show each photo's caption as
-                          visible text (used on projects.html so you
-                          can see each project's title). Leave this
-                          off (or "false") to keep captions invisible,
-                          which is what music.html and project pages do.
-
-   BEHAVIOR:
-   - On wide screens (tablet/laptop, wider than 700px): photos are
-     scattered freely at whatever x/y position and width you set in
-     the organizer, and a visitor can drag them anywhere. Clicking a
-     photo (without dragging it) opens it full-size in a lightbox —
-     UNLESS that photo has an "href" in its JSON entry, in which case
-     clicking it navigates to that link instead (this is how the
-     projects listing page works: cover photos link to a project page
-     instead of opening a lightbox).
-   - On narrow screens (phones, 700px or under): photos lay out in a
-     simple wrapping grid instead of scattered around. You can still
-     drag a photo to reorder it relative to the others, but you can't
-     scatter it anywhere — that's intentional, so it stays tidy on a
-     small screen.
    ============================================================ */
 
 const boardEl = document.getElementById('board');
 const DATA_SOURCE = boardEl.dataset.source;
 const SHOW_CAPTIONS = boardEl.dataset.showCaptions === 'true';
 
-/* Each board page gets its own separate "remember where I dragged
-   things" storage, based on its data file's name, so dragging on
-   the music page doesn't affect the projects page and so on. */
 const STORAGE_KEY = 'amy-board-layout-v3::' + DATA_SOURCE;
 const MOBILE_ORDER_KEY = 'amy-board-mobile-order-v1::' + DATA_SOURCE;
-
-/* The screen-width cutoff for switching from scattered (wide) to
-   grid (narrow/phone) mode. Lower this number to switch to grid
-   mode on more devices (e.g. small tablets); raise it to only use
-   grid mode on very small phones. */
 const MOBILE_BREAKPOINT = 700;
-
-/* If a visitor drags a photo less than this many pixels, we treat
-   it as a "click" (open the lightbox / follow the link) instead of
-   a drag. Raise this if clicks are being mistaken for tiny drags. */
 const CLICK_VS_DRAG_THRESHOLD = 6;
-
-const DEFAULT_WIDTH = 220; // used if a photo's JSON entry has no "width"
 
 let photos = [];
 
-/* ---------------- loading data ---------------- */
-
 async function loadPhotos() {
   const res = await fetch(DATA_SOURCE);
-  return res.json();
+  if (!res.ok) throw new Error(DATA_SOURCE + ' returned ' + res.status);
+  const raw = await res.json();
+  return raw.map((item, index) => ({
+    id: item.id || ('p' + index + '-' + (item.src || 'empty').split('/').pop()),
+    src: item.src || '',
+    caption: item.caption || '',
+    x: typeof item.x === 'number' ? item.x : 10 + (index % 4) * 18,
+    y: typeof item.y === 'number' ? item.y : 10 + Math.floor(index / 4) * 15,
+    width: normalizeWidthPercent(item.width),
+    ...(item.href ? { href: item.href } : {})
+  }));
+}
+
+function showBoardError(messageHtml) {
+  document.getElementById('board').innerHTML = '<p class="board-error">' + messageHtml + '</p>';
 }
 
 function getSavedLayout() {
@@ -80,10 +53,6 @@ function isNarrowScreen() {
   return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
 }
 
-/* ---------------- lightbox ----------------
-   One overlay, shared by every photo on the page. Opening it swaps
-   in whichever photo/video was clicked. */
-
 function buildLightbox() {
   const overlay = document.createElement('div');
   overlay.className = 'lightbox-overlay';
@@ -99,7 +68,7 @@ function buildLightbox() {
   }
 
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close(); // clicking the dark backdrop closes it
+    if (e.target === overlay) close();
   });
   overlay.querySelector('.lightbox-close').addEventListener('click', close);
   document.addEventListener('keydown', (e) => {
@@ -110,15 +79,15 @@ function buildLightbox() {
     open(photo) {
       const content = overlay.querySelector('.lightbox-content');
       content.innerHTML = '';
-      if (/\.(mp4|webm|mov)$/i.test(photo.src)) {
+      if (isVideoPath(photo.src)) {
         const video = document.createElement('video');
-        video.src = photo.src;
+        video.src = mediaSrc(photo.src);
         video.controls = true;
         video.autoplay = true;
         content.appendChild(video);
       } else {
         const img = document.createElement('img');
-        img.src = photo.src;
+        img.src = mediaSrc(photo.src);
         img.alt = photo.caption || '';
         content.appendChild(img);
       }
@@ -129,37 +98,34 @@ function buildLightbox() {
 
 const lightbox = buildLightbox();
 
-/* ---------------- building each photo tile ---------------- */
-
 function createTile(photo) {
   const el = document.createElement('div');
   el.className = 'polaroid';
   el.dataset.id = photo.id;
 
-  const width = photo.width || DEFAULT_WIDTH;
-  el.style.width = width + 'px';
+  const width = photo.width || DEFAULT_WIDTH_PERCENT;
+  el.style.width = width + '%';
+
+  const isVideo = isVideoPath(photo.src);
 
   if (photo.src) {
-    const isVideo = /\.(mp4|webm|mov)$/i.test(photo.src);
     if (isVideo) {
       const video = document.createElement('video');
-      video.src = photo.src;
-      video.muted = true;
-      video.loop = true;
+      video.src = mediaSrc(photo.src);
       video.playsInline = true;
-      video.autoplay = true;
+      video.preload = 'metadata';
       el.appendChild(video);
+      attachVideoControls(el, video);
     } else {
       const img = document.createElement('img');
-      img.src = photo.src;
+      img.src = mediaSrc(photo.src);
       img.alt = photo.caption || '';
       el.appendChild(img);
     }
   } else {
     const placeholder = document.createElement('div');
     placeholder.className = 'placeholder';
-    placeholder.style.width = width + 'px';
-    placeholder.style.height = width + 'px';
+    placeholder.style.aspectRatio = '1';
     placeholder.textContent = 'add photo via organizer.html';
     el.appendChild(placeholder);
   }
@@ -171,12 +137,15 @@ function createTile(photo) {
     el.appendChild(cap);
   }
 
-  /* What happens when this tile is clicked (not dragged):
-     - if it has an "href" in its JSON entry, go to that page
-     - otherwise, open it in the lightbox */
   el.addEventListener('tile-activate', () => {
     if (photo.href) {
       window.location.href = photo.href;
+    } else if (isVideo) {
+      const video = el.querySelector('video');
+      if (video) {
+        if (video.paused) video.play();
+        else video.pause();
+      }
     } else if (photo.src) {
       lightbox.open(photo);
     }
@@ -184,8 +153,6 @@ function createTile(photo) {
 
   return el;
 }
-
-/* ---------------- WIDE MODE: freeform scatter + drag ---------------- */
 
 function layoutWide(board, layout) {
   board.classList.remove('board--narrow');
@@ -202,12 +169,17 @@ function layoutWide(board, layout) {
   });
 }
 
+function shouldSkipDrag(e) {
+  return e.target.closest('.video-controls, .video-play-btn, .video-progress');
+}
+
 function makeFreeformDraggable(el, board, photo) {
   let startClientX, startClientY, originLeft, originTop, moved;
 
   function toPercent(px, total) { return (px / total) * 100; }
 
   function onPointerDown(e) {
+    if (shouldSkipDrag(e)) return;
     e.preventDefault();
     const boardRect = board.getBoundingClientRect();
     const point = e.touches ? e.touches[0] : e;
@@ -225,7 +197,7 @@ function makeFreeformDraggable(el, board, photo) {
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
         el.classList.add('dragging');
-        board.appendChild(el); // bring to front
+        board.appendChild(el);
         let newLeft = originLeft + toPercent(dx, boardRect.width);
         let newTop = originTop + toPercent(dy, boardRect.height);
         newLeft = Math.max(-5, Math.min(95, newLeft));
@@ -243,7 +215,6 @@ function makeFreeformDraggable(el, board, photo) {
       el.classList.remove('dragging');
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        // it was a real drag — remember the new position for this visitor
         const layout = getSavedLayout();
         layout[el.dataset.id] = {
           x: parseFloat(el.style.left),
@@ -251,7 +222,6 @@ function makeFreeformDraggable(el, board, photo) {
         };
         saveLayout(layout);
       } else {
-        // it was just a click/tap — open the lightbox or navigate
         el.dispatchEvent(new CustomEvent('tile-activate'));
       }
     }
@@ -266,14 +236,9 @@ function makeFreeformDraggable(el, board, photo) {
   el.addEventListener('touchstart', onPointerDown, { passive: false });
 }
 
-/* ---------------- NARROW MODE: wrapping grid + reorder drag ---------------- */
-
 function layoutNarrow(board) {
   board.classList.add('board--narrow');
 
-  // work out display order: saved order first, then any photos
-  // not yet in that saved order (e.g. newly-added ones), in their
-  // original data-file order
   const savedOrder = getSavedMobileOrder();
   const byId = Object.fromEntries(photos.map(p => [p.id, p]));
   const ordered = [
@@ -283,7 +248,7 @@ function layoutNarrow(board) {
 
   ordered.forEach(photo => {
     const el = createTile(photo);
-    el.style.position = 'static'; // normal grid flow, not scattered
+    el.style.position = 'static';
     board.appendChild(el);
     makeReorderDraggable(el, board);
   });
@@ -293,6 +258,7 @@ function makeReorderDraggable(el, board) {
   let startClientX, startClientY, moved;
 
   function onPointerDown(e) {
+    if (shouldSkipDrag(e)) return;
     e.preventDefault();
     const point = e.touches ? e.touches[0] : e;
     startClientX = point.clientX;
@@ -307,8 +273,6 @@ function makeReorderDraggable(el, board) {
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
         el.classList.add('dragging');
-        // find whichever OTHER tile is currently under the pointer,
-        // and move this tile to sit right before/after it
         const target = document.elementFromPoint(point.clientX, point.clientY);
         const targetTile = target ? target.closest('.polaroid') : null;
         if (targetTile && targetTile !== el && board.contains(targetTile)) {
@@ -327,7 +291,6 @@ function makeReorderDraggable(el, board) {
       el.classList.remove('dragging');
 
       if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        // save the new order everyone's tiles ended up in
         const idsInOrder = Array.from(board.querySelectorAll('.polaroid')).map(t => t.dataset.id);
         saveMobileOrder(idsInOrder);
       } else {
@@ -345,8 +308,6 @@ function makeReorderDraggable(el, board) {
   el.addEventListener('touchstart', onPointerDown, { passive: false });
 }
 
-/* ---------------- put it all together ---------------- */
-
 function renderBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -360,11 +321,28 @@ function renderBoard() {
 }
 
 async function initBoard() {
-  photos = await loadPhotos();
-  renderBoard();
+  if (window.location.protocol === 'file:') {
+    showBoardError(
+      'photos can\u2019t load when you double-click an html file.<br><br>' +
+      'start a local server in your project folder, then open the site in your browser:<br>' +
+      '<code>python3 -m http.server 8000</code><br><br>' +
+      'then go to <strong>http://localhost:8000</strong>'
+    );
+    return;
+  }
 
-  // if the visitor resizes their window (or rotates their phone)
-  // across the mobile breakpoint, rebuild the board in the new mode
+  try {
+    photos = await loadPhotos();
+    renderBoard();
+  } catch (err) {
+    console.error('Board load failed:', err);
+    showBoardError(
+      'couldn\u2019t load photos from <code>' + DATA_SOURCE + '</code>.<br><br>' +
+      'open the site through a local server (not by double-clicking the html file).'
+    );
+    return;
+  }
+
   let lastIsNarrow = isNarrowScreen();
   window.addEventListener('resize', () => {
     const nowNarrow = isNarrowScreen();

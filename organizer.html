@@ -35,8 +35,7 @@
     border:1px solid var(--ink); border-radius:8px; background:var(--paper);
   }
 
-  .panel{ display:none; }
-  .panel.active{ display:block; }
+  .panel{ display:block; }
 
   .mini-board{
     position:relative; width:100%; height:520px; margin:1rem 0 2rem;
@@ -130,63 +129,38 @@
 
 <div id="app" style="display:none;">
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="boards">boards</button>
-    <button class="tab-btn" data-tab="gallery">simple photo grids</button>
-  </div>
-
-  <!-- BOARDS PANEL — for music.html, projects.html, and every
-       individual project-*.html page. Each of these is a
-       freeform, resizable, draggable board (with a lightbox on
-       the public site, or navigation for the projects listing).
-
-       To add a NEW project page to this dropdown after you've
-       created it (see comments in project-example.html for those
-       steps), add a matching <option> below, e.g.:
-       <option value="project-red-rocks">project: red rocks</option>
-       The value must exactly match your data/<value>.json filename
-       and your assets/<value>/ folder name. -->
-  <section id="panel-boards" class="panel active">
+  <!-- All content pages share one board editor. Each page maps to
+       data/<name>.json + assets/<name>/. Files dropped into the
+       assets folder are picked up automatically on connect or via
+       "sync from folder". -->
+  <section id="panel-boards" class="panel">
     <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-      <label style="font-family:var(--mono); font-size:0.78rem;">board:</label>
+      <label style="font-family:var(--mono); font-size:0.78rem;">page:</label>
       <select id="board-select">
         <option value="music">music</option>
+        <option value="portrait">portrait</option>
+        <option value="tour">tour (video)</option>
         <option value="projects">projects (listing page)</option>
         <option value="project-example">project: example</option>
       </select>
     </div>
     <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;">
-      drag photos to arrange them, drag the slider under each one to resize it,
-      click a caption to edit it — everything saves automatically.
+      photos &amp; videos in each page's <code>assets/</code> folder are picked up automatically.
+      drag to arrange, use the slider to resize (% of page width), click a caption to edit — everything saves automatically.
     </p>
-    <div class="add-row">
+    <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap;">
       <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">
       <button id="boards-add-btn">+ add photos / videos</button>
+      <button id="boards-sync-btn" class="ghost">sync from folder</button>
     </div>
     <div id="boards-mini-board" class="mini-board"></div>
   </section>
 
-  <!-- SIMPLE PHOTO GRID PANEL — for portrait.html and tour.html
-       only. These are plain grids (no dragging, no resizing) —
-       just a reorderable list of photos. -->
-  <section id="panel-gallery" class="panel">
-    <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-      <label style="font-family:var(--mono); font-size:0.78rem;">page:</label>
-      <select id="gallery-select">
-        <option value="portrait">portrait</option>
-        <option value="tour">tour</option>
-      </select>
-    </div>
-    <div class="add-row">
-      <input type="file" id="gallery-file-input" accept="image/*,video/*" multiple style="display:none;">
-      <button id="gallery-add-btn">+ add photos / videos</button>
-    </div>
-    <div id="gallery-list"></div>
-  </section>
-
 </div>
 </div>
 
+<script src="js/config.js"></script>
+<script src="js/media.js"></script>
 <script src="js/organizer.js"></script>
 </body>
 </html>

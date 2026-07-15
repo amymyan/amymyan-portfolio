@@ -5,6 +5,21 @@
 
 /* ---- WIDE MODE (default): scattered freeform board ---- */
 
+.board-error{
+  font-family:var(--mono);
+  font-size:0.82rem;
+  line-height:1.65;
+  padding:2rem clamp(1.25rem, 4vw, 3rem);
+  max-width:36rem;
+}
+.board-error code{
+  display:inline-block;
+  margin:0.4rem 0;
+  padding:0.25rem 0.5rem;
+  background:var(--line);
+  border-radius:4px;
+}
+
 .board{
   position:relative;    /* required so photos can be positioned freely inside it */
   width:100%;
@@ -16,27 +31,66 @@
   touch-action:none;     /* lets dragging work properly on phones/tablets */
 }
 
-/* Each photo/video tile. Width comes from an inline style set in
-   board.js (based on the "width" field you set per-photo in
-   organizer.html) — height is automatic, so photos keep their
-   correct proportions instead of getting stretched or cropped. */
+/* Each photo/video tile. Width is a % of the board (set in
+   organizer.html) — height follows automatically. */
 .polaroid{
   cursor:grab;
   user-select:none;
   will-change:transform;
-  max-width:90vw;        /* safety cap so a very wide chosen size never
-                              overflows off a smaller screen */
 }
 .polaroid.dragging{
   cursor:grabbing;
-  z-index:999 !important; /* whatever you're dragging stays on top */
+  z-index:999 !important;
 }
 .polaroid img,
 .polaroid video{
   display:block;
   width:100%;
   height:auto;
-  pointer-events:none;   /* clicks pass through to the .polaroid div itself */
+  pointer-events:none;
+}
+.polaroid.has-video{
+  cursor:default;
+}
+.polaroid .video-controls{
+  display:flex;
+  align-items:center;
+  gap:0.45rem;
+  margin-top:0.35rem;
+  padding:0.35rem 0.4rem;
+  background:rgba(255,255,255,0.96);
+  border:1px solid var(--line);
+  border-radius:6px;
+  pointer-events:auto;
+  touch-action:none;
+}
+.polaroid .video-play-btn{
+  flex-shrink:0;
+  width:1.6rem;
+  height:1.6rem;
+  border:1px solid var(--ink);
+  border-radius:50%;
+  background:var(--paper);
+  color:var(--ink);
+  font-size:0.55rem;
+  line-height:1;
+  cursor:pointer;
+  padding:0;
+}
+.polaroid .video-progress{
+  flex:1;
+  min-width:0;
+  height:4px;
+  accent-color:var(--ink);
+  cursor:pointer;
+}
+.polaroid .video-time{
+  flex-shrink:0;
+  font-family:var(--mono);
+  font-size:0.62rem;
+  opacity:0.75;
+  min-width:2.2rem;
+  text-align:right;
 }
 .polaroid .placeholder{
   display:flex;

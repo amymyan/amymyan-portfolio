@@ -60,6 +60,70 @@ function isVideoFile(name) {
   return /\.(mp4|webm|mov)$/i.test(name);
 }
 
+const MEDIA_EXTENSIONS = /\.(jpe?g|png|gif|webp|heic|avif|tiff?|mp4|webm|mov)$/i;
+const BROWSER_IMAGE = /\.(jpe?g|png|gif|webp|avif|heic)$/i;
+
+function isBrowserDisplayable(name) {
+  return isVideoFile(name) || BROWSER_IMAGE.test(name);
+}
+
+function filenameFromSrc(src) {
+  return src.split('/').pop();
+}
+
+function captionFromFilename(filename) {
+  return filename.replace(/^\d+-/, '').replace(/\.[^.]+$/, '');
+}
+
+async function listMediaFiles(pageName) {
+  const dir = await getDir('assets/' + pageName, { create: true });
+  const files = [];
+  for await (const entry of dir.values()) {
+    if (entry.kind === 'file' && MEDIA_EXTENSIONS.test(entry.name)) {
+      files.push(entry.name);
+    }
+  }
+  return files.sort();
+}
+
+function normalizeBoardEntry(item, pageName, index) {
+  const src = item.src || '';
+  const entry = {
+    id: item.id || ('p' + Date.now() + Math.floor(Math.random() * 1000) + index),
+    src,
+    caption: item.caption || (src ? captionFromFilename(filenameFromSrc(src)) : ''),
+    x: typeof item.x === 'number' ? item.x : 10 + (index % 4) * 18,
+    y: typeof item.y === 'number' ? item.y : 10 + Math.floor(index / 4) * 15,
+    width: normalizeWidthPercent(item.width)
+  };
+  if (item.href) entry.href = item.href;
+  return entry;
+}
+
+async function syncBoardFromFolder(pageName, boardData) {
+  const filesOnDisk = await listMediaFiles(pageName);
+  const registered = new Set(
+    boardData.filter(i => i.src).map(i => filenameFromSrc(i.src))
+  );
+
+  let added = 0;
+  const unsupported = [];
+
+  for (const filename of filesOnDisk) {
+    if (!registered.has(filename)) {
+      boardData.push(normalizeBoardEntry({
+        src: 'assets/' + pageName + '/' + filename,
+        caption: captionFromFilename(filename)
+      }, pageName, boardData.length + added));
+      if (!isBrowserDisplayable(filename)) unsupported.push(filename);
+      added++;
+    }
+  }
+
+  boardData = boardData.map((item, i) => normalizeBoardEntry(item, pageName, i));
+  return { boardData, added, unsupported };
+}
+
 /* ---------------- connect ---------------- */
 
 document.getElementById('connect-btn').addEventListener('click', async () => {
@@ -72,50 +136,67 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
     setStatus('connected to: ' + rootHandle.name);
     document.getElementById('app').style.display = 'block';
     await initBoardsPanel();
-    await initGalleryPanel();
   } catch (err) {
-    setStatus('connection cancelled.');
+    if (err && err.name === 'AbortError') {
+      setStatus('connection cancelled.');
+    } else {
+      console.error(err);
+      setStatus('error: ' + (err.message || err));
+    }
   }
 });
 
-/* ---------------- tabs ---------------- */
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-  });
-});
-
 /* ============================================================
-   BOARDS PANEL — handles music.html, projects.html (the listing
-   page), and every individual project-*.html page. All of these
-   share the same data shape:
-     { id, src, caption, x, y, width, href (only on the projects
-       listing — links to that project's own page) }
-
-   Which board you're editing is picked from the dropdown, and
-   maps directly to data/<board>.json + assets/<board>/. To add a
-   new project page to this list, see the comment in
-   organizer.html above the <select id="board-select">.
+   BOARDS PANEL — all content pages (music, portrait, tour,
+   projects, and every project-*.html page). Each maps to
+   data/<page>.json + assets/<page>/. Files in the asset folder
+   are synced automatically; drag to place, slider to resize.
    ============================================================ */
 
 let boardData = [];
 let currentBoard = 'music';
+
+async function loadAndSyncBoard(pageName) {
+  const data = await readJSON('data', pageName + '.json');
+  const { boardData: synced, added, unsupported } = await syncBoardFromFolder(pageName, data);
+  if (JSON.stringify(data) !== JSON.stringify(synced)) {
+    await writeJSON('data', pageName + '.json', synced);
+  }
+  return { data: synced, added, unsupported };
+}
+
+function reportSyncStatus(added, unsupported) {
+  if (added > 0 && unsupported.length > 0) {
+    setStatus(`synced ${added} new file(s) — note: ${unsupported.join(', ')} won't display in browsers (convert to jpg/png)`);
+  } else if (added > 0) {
+    setStatus(`synced ${added} new file(s) from assets/${currentBoard}/ ✓`);
+  } else if (unsupported.length > 0) {
+    setStatus(`warning: ${unsupported.join(', ')} won't display in browsers (convert to jpg/png)`);
+  }
+}
 
 async function initBoardsPanel() {
   const select = document.getElementById('board-select');
   select.value = currentBoard;
   select.onchange = async () => {
     currentBoard = select.value;
-    boardData = await readJSON('data', currentBoard + '.json');
+    const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
+    boardData = data;
+    reportSyncStatus(added, unsupported);
     renderBoardMini();
   };
 
-  boardData = await readJSON('data', currentBoard + '.json');
+  const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
+  boardData = data;
+  reportSyncStatus(added, unsupported);
   renderBoardMini();
+
+  document.getElementById('boards-sync-btn').onclick = async () => {
+    const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
+    boardData = data;
+    reportSyncStatus(added, unsupported);
+    renderBoardMini();
+  };
 
   document.getElementById('boards-add-btn').onclick = () =>
     document.getElementById('boards-file-input').click();
@@ -124,14 +205,10 @@ async function initBoardsPanel() {
     const files = Array.from(e.target.files);
     for (const file of files) {
       const savedName = await writeMediaFile('assets/' + currentBoard, file);
-      boardData.push({
-        id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+      boardData.push(normalizeBoardEntry({
         src: 'assets/' + currentBoard + '/' + savedName,
-        caption: file.name.replace(/\.[^.]+$/, ''),
-        x: 10 + Math.random() * 60,
-        y: 10 + Math.random() * 60,
-        width: 220 // starting display size in pixels — draggable slider changes this
-      });
+        caption: file.name.replace(/\.[^.]+$/, '')
+      }, currentBoard, boardData.length));
     }
     e.target.value = '';
     await writeJSON('data', currentBoard + '.json', boardData);
@@ -144,13 +221,13 @@ function renderBoardMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
   boardData.forEach(photo => {
-    const width = photo.width || 220;
+    const width = normalizeWidthPercent(photo.width);
 
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
     el.style.left = photo.x + '%';
     el.style.top = photo.y + '%';
-    el.style.width = width + 'px'; // real width — same number that's used on the live site
+    el.style.width = width + '%';
 
     /* ---- the actual photo preview ----
        This part is deliberately styled with NO border, card, or
@@ -158,11 +235,11 @@ function renderBoardMini() {
     if (photo.src) {
       if (isVideoFile(photo.src)) {
         const v = document.createElement('video');
-        v.src = photo.src; v.muted = true;
+        v.src = mediaSrc(photo.src); v.muted = true;
         el.appendChild(v);
       } else {
         const img = document.createElement('img');
-        img.src = photo.src;
+        img.src = mediaSrc(photo.src);
         el.appendChild(img);
       }
     } else {
@@ -187,28 +264,23 @@ function renderBoardMini() {
     });
     editBar.appendChild(cap);
 
-    /* ---- size slider ----
-       Sets how wide this photo displays on the real site (its
-       height follows automatically to keep it in proportion).
-       Range: 100px (small) to 500px (large). */
+    /* ---- size slider (% of page width) ---- */
     const sizeControl = document.createElement('div');
     sizeControl.className = 'size-control';
 
     const slider = document.createElement('input');
     slider.type = 'range';
-    slider.min = 100;
-    slider.max = 500;
-    slider.step = 10;
+    slider.min = 5;
+    slider.max = 95;
+    slider.step = 1;
     slider.value = width;
 
     const sizeLabel = document.createElement('span');
-    sizeLabel.textContent = width + 'px';
+    sizeLabel.textContent = width + '%';
 
     slider.addEventListener('input', () => {
-      // live-resize the preview as you drag the slider, so you can
-      // see the real size before it's even saved
-      el.style.width = slider.value + 'px';
-      sizeLabel.textContent = slider.value + 'px';
+      el.style.width = slider.value + '%';
+      sizeLabel.textContent = slider.value + '%';
     });
     slider.addEventListener('change', async () => {
       photo.width = parseInt(slider.value, 10);
@@ -288,116 +360,5 @@ function makeMiniDraggable(el, board, photo) {
     }
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
-  });
-}
-
-/* ============================================================
-   SIMPLE PHOTO GRID PANEL — for portrait.html and tour.html.
-   These are plain ordered lists (no position/size), unlike the
-   boards above.
-   ============================================================ */
-
-let galleryData = [];
-let currentGalleryPage = 'portrait';
-
-async function initGalleryPanel() {
-  const select = document.getElementById('gallery-select');
-  select.value = currentGalleryPage;
-  select.onchange = async () => {
-    currentGalleryPage = select.value;
-    galleryData = await readJSON('data', currentGalleryPage + '.json');
-    renderGalleryList();
-  };
-  galleryData = await readJSON('data', currentGalleryPage + '.json');
-  renderGalleryList();
-
-  document.getElementById('gallery-add-btn').onclick = () =>
-    document.getElementById('gallery-file-input').click();
-
-  document.getElementById('gallery-file-input').onchange = async (e) => {
-    const files = Array.from(e.target.files);
-    for (const file of files) {
-      const savedName = await writeMediaFile('assets/' + currentGalleryPage, file);
-      galleryData.push({
-        src: 'assets/' + currentGalleryPage + '/' + savedName,
-        caption: file.name.replace(/\.[^.]+$/, '')
-      });
-    }
-    e.target.value = '';
-    await writeJSON('data', currentGalleryPage + '.json', galleryData);
-    renderGalleryList();
-    setStatus('saved \u2713');
-  };
-}
-
-function renderGalleryList() {
-  const list = document.getElementById('gallery-list');
-  list.innerHTML = '';
-  galleryData.forEach((item, idx) => {
-    if (!item.src) return;
-    const row = document.createElement('div');
-    row.className = 'item-row';
-
-    let thumb;
-    if (isVideoFile(item.src)) {
-      thumb = document.createElement('video');
-      thumb.src = item.src; thumb.muted = true;
-    } else {
-      thumb = document.createElement('img');
-      thumb.src = item.src;
-    }
-    thumb.className = 'thumb';
-    row.appendChild(thumb);
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = item.caption || '';
-    input.placeholder = 'caption (optional)';
-    input.addEventListener('blur', async () => {
-      item.caption = input.value.trim();
-      await writeJSON('data', currentGalleryPage + '.json', galleryData);
-      setStatus('saved \u2713');
-    });
-    row.appendChild(input);
-
-    const controls = document.createElement('div');
-    controls.className = 'controls';
-
-    const up = document.createElement('button');
-    up.textContent = '\u2191';
-    up.disabled = idx === 0;
-    up.addEventListener('click', async () => {
-      [galleryData[idx - 1], galleryData[idx]] = [galleryData[idx], galleryData[idx - 1]];
-      await writeJSON('data', currentGalleryPage + '.json', galleryData);
-      renderGalleryList();
-      setStatus('saved \u2713');
-    });
-
-    const down = document.createElement('button');
-    down.textContent = '\u2193';
-    down.disabled = idx === galleryData.length - 1;
-    down.addEventListener('click', async () => {
-      [galleryData[idx + 1], galleryData[idx]] = [galleryData[idx], galleryData[idx + 1]];
-      await writeJSON('data', currentGalleryPage + '.json', galleryData);
-      renderGalleryList();
-      setStatus('saved \u2713');
-    });
-
-    const del = document.createElement('button');
-    del.textContent = '\u00d7';
-    del.title = 'remove from page (file stays on disk)';
-    del.addEventListener('click', async () => {
-      galleryData.splice(idx, 1);
-      await writeJSON('data', currentGalleryPage + '.json', galleryData);
-      renderGalleryList();
-      setStatus('saved \u2713');
-    });
-
-    controls.appendChild(up);
-    controls.appendChild(down);
-    controls.appendChild(del);
-    row.appendChild(controls);
-
-    list.appendChild(row);
   });
 }

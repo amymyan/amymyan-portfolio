@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Portrait — Amy Myan</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/board.css">
 </head>
 <body>
 
@@ -19,9 +20,7 @@
   </div>
 </nav>
 
-
-<div id="gallery" class="gallery-grid"></div>
-<p id="empty-note" class="empty-note" hidden>no photos yet — open organizer.html to add some.</p>
+<main id="board" class="board" data-source="data/portrait.json" data-show-captions="false"></main>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy Myan</span>
@@ -32,7 +31,9 @@
   </span>
 </footer>
 
-<script src="js/gallery.js" data-source="data/portrait.json"></script>
+<script src="js/config.js"></script>
+<script src="js/media.js"></script>
+<script src="js/board.js"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
