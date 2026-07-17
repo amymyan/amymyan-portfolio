@@ -218,6 +218,95 @@
           "focusY": 50
         }
       ]
+    },
+    {
+      "id": "sheet-1784321682342",
+      "title": "gracie abrams: the secret of us deluxe tour",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 4,
+      "x": 10.568576388888886,
+      "y": 141.037037037037,
+      "width": 85,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f17843216823420",
+          "src": "assets/music/IMG_4024.jpg",
+          "rotation": 0,
+          "focusX": 48,
+          "focusY": 62
+        },
+        {
+          "id": "f17843216823425",
+          "src": "assets/music/IMG_4244-2.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 42
+        },
+        {
+          "id": "f17843216823424",
+          "src": "assets/music/IMG_4219.jpg",
+          "rotation": 0,
+          "focusX": 49,
+          "focusY": 80
+        },
+        {
+          "id": "f17843216823428",
+          "src": "assets/music/IMG_4306-2.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843216823427",
+          "src": "assets/music/IMG_4300.jpg",
+          "rotation": 0,
+          "focusX": 47,
+          "focusY": 100
+        },
+        {
+          "id": "f17843216823429",
+          "src": "assets/music/IMG_4376.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f178432168234210",
+          "src": "assets/music/IMG_4731.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843216823421",
+          "src": "assets/music/IMG_4025.jpg",
+          "rotation": 0,
+          "focusX": 49,
+          "focusY": 79
+        },
+        {
+          "id": "f17843216823422",
+          "src": "assets/music/IMG_4131.jpg",
+          "rotation": 0,
+          "focusX": 49,
+          "focusY": 31
+        },
+        {
+          "id": "f17843216823426",
+          "src": "assets/music/IMG_4245-2.jpg",
+          "rotation": 0,
+          "focusX": 52,
+          "focusY": 30
+        },
+        {
+          "id": "f17843216823423",
+          "src": "assets/music/IMG_4162.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        }
+      ]
     }
   ]
 }

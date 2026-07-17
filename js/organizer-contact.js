@@ -49,12 +49,74 @@ function updateMusicOrganizerUI() {
 }
 
 function updateLibraryCreateButton() {
-  const btn = document.getElementById('library-create-sheet-btn');
-  if (!btn) return;
-  btn.disabled = selectedLibrarySrcs.size === 0;
-  btn.textContent = selectedLibrarySrcs.size
-    ? `create contact sheet (${selectedLibrarySrcs.size} selected)`
-    : 'create contact sheet from selected';
+  const createBtn = document.getElementById('library-create-sheet-btn');
+  const addBtn = document.getElementById('library-add-to-sheet-btn');
+  const sheet = getSelectedContactSheet();
+
+  if (createBtn) {
+    createBtn.disabled = selectedLibrarySrcs.size === 0;
+    createBtn.textContent = selectedLibrarySrcs.size
+      ? `create contact sheet (${selectedLibrarySrcs.size} selected)`
+      : 'create contact sheet from selected';
+  }
+
+  if (addBtn) {
+    addBtn.disabled = selectedLibrarySrcs.size === 0 || !sheet;
+    const label = sheet?.title?.trim() || 'selected sheet';
+    addBtn.textContent = selectedLibrarySrcs.size && sheet
+      ? `add ${selectedLibrarySrcs.size} to “${label}”`
+      : 'add to selected sheet';
+  }
+}
+
+function getSelectedContactSheet() {
+  const board = document.getElementById('boards-mini-board');
+  const selected = board?.querySelectorAll('.contact-sheet.selected') || [];
+  if (selected.length !== 1) return null;
+  const id = selected[0].dataset.id;
+  return getMusicSheetsArray().find(s => s.id === id) || null;
+}
+
+function selectContactSheetById(sheetId) {
+  const board = document.getElementById('boards-mini-board');
+  const el = board?.querySelector(`.contact-sheet[data-id="${CSS.escape(sheetId)}"]`);
+  if (el) sheetSelection.selectOnly(el, board);
+  updateLibraryCreateButton();
+}
+
+async function addPhotosToSheet(sheet, srcs, { startSlot = null, mediaWrap = null, refit = null } = {}) {
+  if (!sheet || !srcs.length) return 0;
+
+  const existing = new Set((sheet.frames || []).map(f => f.src).filter(Boolean));
+  const pending = srcs.filter(src => src?.trim() && !existing.has(src));
+  if (!pending.length) {
+    setStatus('photo(s) already on this sheet');
+    return 0;
+  }
+
+  pushUndoSnapshot();
+  const added = addFramesToSheet(sheet, pending, { startSlot, skipExisting: false });
+  if (!added) return 0;
+
+  pending.forEach(src => selectedLibrarySrcs.delete(src));
+  await saveBoardData();
+
+  if (mediaWrap) {
+    rebuildContactSheetBody(mediaWrap, sheet, sheetBodyOptions(sheet, refit, { el: mediaWrap }));
+  } else {
+    renderBoardMini();
+    selectContactSheetById(sheet.id);
+  }
+
+  renderMusicLibrary();
+  setStatus(`added ${added} photo(s) \u2713`);
+  return added;
+}
+
+async function addToSelectedSheet() {
+  const sheet = getSelectedContactSheet();
+  if (!sheet || !selectedLibrarySrcs.size) return;
+  await addPhotosToSheet(sheet, [...selectedLibrarySrcs]);
 }
 
 async function refreshMusicLibrary() {
@@ -171,6 +233,18 @@ function sheetBodyOptions(sheet, refit, mediaWrapRef) {
         renderBoardMini();
       }
       setStatus('photos swapped \u2713');
+    },
+    onFrameClick: async (slot) => {
+      if (!selectedLibrarySrcs.size) {
+        setStatus('select photos in the library, then click an empty frame');
+        return;
+      }
+      const mediaWrap = mediaWrapRef?.el;
+      await addPhotosToSheet(sheet, [...selectedLibrarySrcs], {
+        startSlot: slot,
+        mediaWrap,
+        refit
+      });
     }
   };
   return opts;
@@ -357,6 +431,7 @@ function renderContactSheetsMini() {
 
   requestAnimationFrame(refit);
   enableBoardMarquee(board, sheetSelection, 'contact-sheet');
+  updateLibraryCreateButton();
 }
 
 function makeContactSheetDraggable(el, board, sheet, refit) {
@@ -411,6 +486,7 @@ function makeContactSheetDraggable(el, board, sheet, refit) {
 
     if (shiftHeld) sheetSelection.toggle(el);
     else if (!el.classList.contains('selected')) sheetSelection.selectOnly(el, board);
+    updateLibraryCreateButton();
 
     dragGroup = sheetSelection.getDragGroup(board, el);
     originLeftPx = captureOriginLeftPx(dragGroup);
@@ -475,6 +551,12 @@ function setupMusicOrganizerHooks() {
   if (createBtn && !createBtn.dataset.bound) {
     createBtn.dataset.bound = '1';
     createBtn.onclick = () => createSheetFromSelection();
+  }
+
+  const addToSheetBtn = document.getElementById('library-add-to-sheet-btn');
+  if (addToSheetBtn && !addToSheetBtn.dataset.bound) {
+    addToSheetBtn.dataset.bound = '1';
+    addToSheetBtn.onclick = () => addToSelectedSheet();
   }
 
   const refreshBtn = document.getElementById('library-refresh-btn');

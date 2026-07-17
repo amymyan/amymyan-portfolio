@@ -206,6 +206,23 @@
   border:1px dashed rgba(201,120,66,0.2);
 }
 
+.organizer .contact-frame.empty{
+  cursor:pointer;
+}
+
+.organizer .contact-frame.empty::after{
+  content:'+';
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:0.65rem;
+  color:rgba(201,120,66,0.45);
+  pointer-events:none;
+}
+
 .contact-frame .frame-media{
   width:100%;
   height:100%;

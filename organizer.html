@@ -281,7 +281,7 @@
       </select>
     </div>
     <p id="boards-music-hint" style="display:none;font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin-bottom:0.75rem;">
-      <strong>music contact sheets:</strong> all photos from <code>assets/music/</code> appear in the library below. click to select (shift-click for range), then <em>create contact sheet from selected</em>. drag the whole sheet to move; pink slider = size; pink dot = rotate. show name appears centered under the sheet on the live site.<br>
+      <strong>music contact sheets:</strong> all photos from <code>assets/music/</code> appear in the library below. click to select (shift-click for range), then <em>create contact sheet from selected</em> or click a contact sheet and use <em>add to selected sheet</em>. you can also click an empty frame on a sheet to drop selected photos in. drag the whole sheet to move; pink slider = size; pink dot = rotate. show name appears centered under the sheet on the live site.<br>
       <em>from left</em> / <em>from top</em> = position on the page (% of board width) — or just drag the sheet.
     </p>
     <div id="music-library" class="music-library" style="display:none;">
@@ -289,6 +289,7 @@
         <button type="button" id="library-refresh-btn" class="ghost">refresh library</button>
         <button type="button" id="library-clear-btn" class="ghost">clear selection</button>
         <button type="button" id="library-create-sheet-btn" disabled>create contact sheet from selected</button>
+        <button type="button" id="library-add-to-sheet-btn" class="ghost" disabled>add to selected sheet</button>
         <label>photos per row: <input type="number" id="sheet-cols-input" min="1" max="8" value="3"></label>
       </div>
       <div id="music-library-grid" class="library-grid"></div>

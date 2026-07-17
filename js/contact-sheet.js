@@ -139,6 +139,40 @@ function swapSheetFrames(sheet, slotA, slotB) {
   return true;
 }
 
+function addFramesToSheet(sheet, srcs, options = {}) {
+  const { startSlot = null, skipExisting = true } = options;
+  if (!Array.isArray(srcs) || !srcs.length) return 0;
+
+  const existing = skipExisting
+    ? new Set((sheet.frames || []).map(f => f.src).filter(Boolean))
+    : new Set();
+
+  const toAdd = srcs.filter(src => src?.trim() && !existing.has(src));
+  if (!toAdd.length) return 0;
+
+  if (!sheet.frames) sheet.frames = [];
+
+  let slot = startSlot;
+  let added = 0;
+
+  toAdd.forEach((src, i) => {
+    const frame = normalizeContactFrame(
+      { id: 'f' + Date.now() + i + Math.floor(Math.random() * 1000), src, rotation: 0 },
+      sheet.frames.length + i
+    );
+
+    if (typeof slot === 'number' && slot >= 0) {
+      sheet.frames.splice(Math.min(slot, sheet.frames.length), 0, frame);
+      slot++;
+    } else {
+      sheet.frames.push(frame);
+    }
+    added++;
+  });
+
+  return added;
+}
+
 function sheetSeed(sheet, rowIndex) {
   return (sheet.id || 's').split('').reduce((a, c) => a + c.charCodeAt(0), 0) + rowIndex * 17;
 }
