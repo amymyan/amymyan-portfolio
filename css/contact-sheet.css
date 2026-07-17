@@ -1,0 +1,565 @@
+/* Contact sheet — Kodak Portra 400 style (music page + organizer) */
+
+.contact-sheet-board{
+  position:relative;
+  width:100%;
+  min-height:75vh;
+  overflow:visible;
+  background:rgba(255,255,255,0.55);
+}
+
+.contact-sheet{
+  position:absolute;
+  user-select:none;
+  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+  contain:layout style;
+}
+
+.contact-sheet.dragging{
+  z-index:999 !important;
+  will-change:left, top;
+}
+
+.contact-sheet.selected{
+  outline:2px solid var(--flash);
+  outline-offset:4px;
+}
+
+.mini-board.board-dragging .contact-sheet img{
+  pointer-events:none;
+}
+
+.contact-sheet-body{
+  background:#030303;
+  padding:5px 7px 8px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.45);
+  border:1px solid #1a1208;
+}
+
+.contact-strip{
+  margin-bottom:0;
+}
+
+.contact-row{
+  display:grid;
+  gap:2px;
+}
+
+/* ---- film edges (Kodak Portra 400 reference) ---- */
+.film-edge{
+  background:#0a0806;
+  position:relative;
+  overflow:hidden;
+}
+
+.film-edge--top{
+  padding-bottom:1px;
+}
+
+.film-edge--bottom{
+  padding-top:1px;
+  margin-bottom:2px;
+}
+
+.sprocket-row{
+  position:relative;
+  width:100%;
+  height:9px;
+  background:#0a0806;
+}
+
+.sprocket-row--top{
+  border-bottom:1px solid rgba(255,140,40,0.12);
+}
+
+.sprocket-row--bottom{
+  border-top:1px solid rgba(255,140,40,0.12);
+}
+
+.sprocket-row--top .sprocket-hole{
+  top:1px;
+  transform:translate(-50%, 0);
+}
+
+.sprocket-row--bottom .sprocket-hole{
+  bottom:1px;
+  top:auto;
+  transform:translate(-50%, 0);
+}
+
+.sprocket-hole{
+  position:absolute;
+  background:#050403;
+  border:1px solid rgba(255,153,51,0.45);
+  border-radius:2px;
+  box-shadow:
+    inset 0 0 3px rgba(0,0,0,1),
+    inset 0 -1px 0 rgba(255,153,51,0.35),
+    0 0 4px rgba(255,120,30,0.15);
+}
+
+.film-meta-row{
+  display:grid;
+  gap:0;
+  min-height:11px;
+  align-items:end;
+  padding:1px 0 2px;
+  background:#0a0806;
+}
+
+.film-meta-row--top{
+  padding-top:0;
+  padding-bottom:3px;
+}
+
+.film-meta-row--bottom{
+  padding-top:2px;
+  padding-bottom:0;
+  align-items:start;
+}
+
+.film-meta-cell{
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:3px;
+  padding:0 2px;
+  overflow:hidden;
+  min-height:10px;
+}
+
+.film-meta-cell--barcode{
+  justify-content:center;
+  align-items:flex-end;
+  padding:0 3px 1px;
+}
+
+.film-meta-cell--kodak{
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:0;
+  padding:1px 1px 0;
+}
+
+.film-brand{
+  font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:4.5px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  color:#ff9933;
+  text-shadow:0 0 4px rgba(255,153,51,0.5);
+  text-transform:uppercase;
+  text-align:center;
+  white-space:nowrap;
+  line-height:1.1;
+}
+
+.film-barcode{
+  position:relative;
+  flex:1;
+  width:100%;
+  height:10px;
+  min-width:0;
+  overflow:hidden;
+}
+
+.film-barcode-bar{
+  position:absolute;
+  bottom:0;
+  background:#ff9933;
+  border-radius:0;
+  box-shadow:0 0 4px rgba(255,153,51,0.45);
+}
+
+/* Show title under contact sheet (live site only — organizer uses edit bar) */
+.contact-sheet-caption{
+  display:block;
+  text-align:center;
+  font-family:var(--body);
+  font-size:0.85rem;
+  letter-spacing:0.03em;
+  color:var(--ink);
+  opacity:0.75;
+  margin:0.35rem 0 0;
+  pointer-events:none;
+  width:100%;
+}
+
+.organizer .contact-sheet-caption{
+  display:none;
+}
+
+.organizer .contact-sheet .frame-list{
+  display:none !important;
+}
+
+.contact-frame{
+  position:relative;
+  background:#0a0a0a;
+  aspect-ratio:3/2;
+  overflow:hidden;
+}
+
+.contact-frame.empty{
+  background:#070707;
+  border:1px dashed rgba(201,120,66,0.2);
+}
+
+.contact-frame .frame-media{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+}
+
+.contact-frame .frame-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  pointer-events:none;
+}
+
+.contact-frame .frame-media.rotated img{
+  width:140%;
+  height:140%;
+}
+
+/* Live site: hover via single shared preview (no in-frame scale) */
+.contact-sheet-board .contact-frame{
+  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+}
+
+#contact-hover-preview{
+  position:fixed;
+  z-index:10000;
+  pointer-events:none;
+  background:#000;
+  border:2px solid #c97842;
+  box-shadow:0 16px 48px rgba(0,0,0,0.72);
+  overflow:hidden;
+  visibility:hidden;
+  opacity:0;
+  transform:scale(0.94);
+  transition:
+    opacity 0.32s ease,
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s ease;
+  will-change:opacity, transform;
+}
+
+#contact-hover-preview.is-visible{
+  visibility:visible;
+  opacity:1;
+  transform:scale(1);
+}
+
+#contact-hover-preview.is-closing{
+  opacity:0;
+  transform:scale(0.96);
+  transition-duration:0.22s;
+}
+
+#contact-hover-preview img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+/* Music photo library (organizer) */
+.music-library{
+  margin:1rem 0 1.25rem;
+  padding:0.75rem;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:rgba(255,255,255,0.5);
+}
+
+.music-library-toolbar{
+  display:flex;
+  gap:0.6rem;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:0.75rem;
+}
+
+.music-library-toolbar label{
+  font-family:var(--mono);
+  font-size:0.65rem;
+  display:flex;
+  align-items:center;
+  gap:0.35rem;
+}
+
+.music-library-toolbar input[type="number"]{
+  width:3rem;
+  font-family:var(--mono);
+  font-size:0.65rem;
+  padding:0.2rem 0.35rem;
+  border:1px solid var(--line);
+  border-radius:4px;
+}
+
+.library-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(72px, 1fr));
+  gap:6px;
+  max-height:280px;
+  overflow-y:auto;
+  padding:2px;
+}
+
+.library-empty{
+  font-family:var(--mono);
+  font-size:0.7rem;
+  opacity:0.65;
+  margin:0;
+}
+
+.library-item{
+  position:relative;
+  border:2px solid transparent;
+  border-radius:4px;
+  padding:0;
+  background:#111;
+  cursor:pointer;
+  overflow:hidden;
+  aspect-ratio:1;
+}
+
+.library-item.selected{
+  border-color:var(--flash);
+  box-shadow:0 0 0 1px var(--flash);
+}
+
+.library-item.on-sheet::after{
+  content:'on sheet';
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  font-family:var(--mono);
+  font-size:0.4rem;
+  background:rgba(0,0,0,0.65);
+  color:#ccc;
+  padding:1px 2px;
+}
+
+.library-item img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.library-label{
+  display:none;
+}
+
+/* Organizer contact sheets */
+.organizer .contact-sheet .edit-bar{
+  margin-top:6px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  background:rgba(255,255,255,0.96);
+  border:1px solid var(--line);
+  border-radius:5px;
+  padding:6px 8px;
+  width:100%;
+  box-sizing:border-box;
+}
+
+.organizer .contact-sheet .sheet-title{
+  font-family:var(--mono);
+  font-size:0.6rem;
+  padding:2px 4px;
+  border:1px solid var(--line);
+  border-radius:4px;
+  width:100%;
+  box-sizing:border-box;
+}
+
+.organizer .contact-sheet .sheet-settings{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.organizer .contact-sheet .sheet-setting{
+  font-family:var(--mono);
+  font-size:0.5rem;
+  display:flex;
+  align-items:center;
+  gap:3px;
+}
+
+.organizer .contact-sheet .sheet-setting input{
+  width:2.5rem;
+  font-family:var(--mono);
+  font-size:0.5rem;
+  padding:1px 3px;
+  border:1px solid var(--line);
+  border-radius:3px;
+}
+
+.organizer .contact-sheet .photo-frame{
+  position:relative;
+}
+
+.organizer .contact-sheet .size-control{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 4px 0;
+  background:transparent;
+}
+
+.organizer .contact-sheet .size-control input[type="range"]{
+  flex:1;
+  height:3px;
+  margin:0;
+  -webkit-appearance:none;
+  appearance:none;
+  background:rgba(232,143,178,0.4);
+  border-radius:999px;
+  cursor:pointer;
+}
+
+.organizer .contact-sheet .size-control input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:var(--flash);
+  border:2px solid #fff;
+}
+
+.organizer .contact-sheet .size-control span{
+  font-family:var(--mono);
+  font-size:0.5rem;
+  color:var(--flash);
+  width:28px;
+  text-align:right;
+  flex-shrink:0;
+  text-shadow:0 0 4px #fff, 0 0 8px #fff;
+}
+
+.organizer .contact-sheet .sheet-del{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--flash);
+  color:#fff;
+  border:none;
+  font-size:0.7rem;
+  cursor:pointer;
+  z-index:10;
+}
+
+.organizer .contact-sheet .tile-media{
+  position:relative;
+  transform-origin:center center;
+}
+
+.organizer .contact-sheet .rotate-handle{
+  position:absolute;
+  left:50%;
+  top:0;
+  width:0;
+  height:26px;
+  transform:translate(-50%, -100%);
+  pointer-events:none;
+  z-index:6;
+}
+
+.organizer .contact-sheet .rotate-stick{
+  position:absolute;
+  bottom:0;
+  left:-1px;
+  width:2px;
+  height:18px;
+  background:var(--flash);
+}
+
+.organizer .contact-sheet .rotate-dot{
+  position:absolute;
+  top:0;
+  left:-6px;
+  width:12px;
+  height:12px;
+  border-radius:50%;
+  background:var(--flash);
+  border:2px solid #fff;
+  cursor:grab;
+  pointer-events:auto;
+}
+
+.organizer .contact-sheet .frame-rotate-handle{
+  position:absolute;
+  top:2px;
+  right:2px;
+  z-index:4;
+}
+
+.organizer .contact-sheet .frame-rotate-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--flash);
+  border:2px solid #fff;
+  cursor:grab;
+}
+
+.organizer .contact-frame .frame-media--pannable{
+  cursor:grab;
+}
+
+.organizer .contact-frame .frame-media--pannable.is-panning{
+  cursor:grabbing;
+}
+
+.organizer .contact-frame .frame-media--pannable.is-panning img{
+  opacity:0.92;
+}
+
+.organizer .contact-frame.swap-drop-target{
+  outline:2px solid var(--flash);
+  outline-offset:1px;
+}
+
+.organizer .contact-frame .frame-media.is-swapping{
+  opacity:0.45;
+}
+
+.frame-drag-ghost{
+  position:fixed;
+  z-index:10000;
+  pointer-events:none;
+  width:72px;
+  height:48px;
+  border:2px solid var(--flash);
+  box-shadow:0 8px 24px rgba(0,0,0,0.45);
+  overflow:hidden;
+  opacity:0.9;
+}
+
+.frame-drag-ghost img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}

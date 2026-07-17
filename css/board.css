@@ -35,6 +35,7 @@
   cursor:url('../assets/cursor-hover.png') 12 12, pointer;
   user-select:none;
   will-change:transform;
+  transform-origin:center center;
 }
 .polaroid.dragging{
   z-index:999 !important;

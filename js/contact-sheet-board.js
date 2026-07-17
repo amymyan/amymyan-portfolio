@@ -1,0 +1,273 @@
+/* Live music page — contact sheet boards */
+
+const boardEl = document.getElementById('board');
+const DATA_SOURCE = boardEl.dataset.source;
+const MOBILE_BREAKPOINT = 700;
+
+let sheets = [];
+let hoverPreview = null;
+
+async function loadSheets() {
+  const res = await fetch(DATA_SOURCE);
+  if (!res.ok) throw new Error(DATA_SOURCE + ' returned ' + res.status);
+  const raw = await res.json();
+  return getContactSheets(raw);
+}
+
+function showBoardError(messageHtml) {
+  boardEl.innerHTML = '<p class="board-error">' + messageHtml + '</p>';
+}
+
+function isNarrowScreen() {
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+}
+
+function buildLightbox() {
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = `
+    <button class="lightbox-close" aria-label="close">&times;</button>
+    <div class="lightbox-content"></div>
+  `;
+  document.body.appendChild(overlay);
+
+  function close() {
+    overlay.classList.remove('open');
+    overlay.querySelector('.lightbox-content').innerHTML = '';
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.lightbox-close').addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+
+  return {
+    open(photo) {
+      const content = overlay.querySelector('.lightbox-content');
+      content.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = mediaSrc(photo.src);
+      img.alt = photo.caption || '';
+      content.appendChild(img);
+      overlay.classList.add('open');
+    }
+  };
+}
+
+const lightbox = buildLightbox();
+
+function initHoverPreview() {
+  const el = document.createElement('div');
+  el.id = 'contact-hover-preview';
+  const img = document.createElement('img');
+  img.alt = '';
+  img.decoding = 'async';
+  el.appendChild(img);
+  document.body.appendChild(el);
+  hoverPreview = { el, img, pendingSrc: null, anchorRect: null, closeTimer: null };
+}
+
+function hideHoverPreview() {
+  if (!hoverPreview) return;
+  const { el } = hoverPreview;
+  if (hoverPreview.closeTimer) {
+    clearTimeout(hoverPreview.closeTimer);
+    hoverPreview.closeTimer = null;
+  }
+  hoverPreview.pendingSrc = null;
+  hoverPreview.anchorRect = null;
+  if (!el.classList.contains('is-visible')) return;
+
+  el.classList.remove('is-visible');
+  el.classList.add('is-closing');
+
+  function finishClose() {
+    el.classList.remove('is-closing');
+    el.removeEventListener('transitionend', finishClose);
+  }
+
+  el.addEventListener('transitionend', finishClose);
+  hoverPreview.closeTimer = setTimeout(finishClose, 260);
+}
+
+function showHoverPreview(anchorRect) {
+  const { el, img } = hoverPreview;
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  if (!nw || !nh) return;
+
+  if (hoverPreview.closeTimer) {
+    clearTimeout(hoverPreview.closeTimer);
+    hoverPreview.closeTimer = null;
+    el.classList.remove('is-closing');
+  }
+
+  const maxW = window.innerWidth * 0.88;
+  const maxH = window.innerHeight * 0.88;
+  let w = nw;
+  let h = nh;
+  if (w > maxW) {
+    h = (h * maxW) / w;
+    w = maxW;
+  }
+  if (h > maxH) {
+    w = (w * maxH) / h;
+    h = maxH;
+  }
+
+  let left = anchorRect.left + anchorRect.width / 2 - w / 2;
+  let top = anchorRect.top + anchorRect.height / 2 - h / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+  top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
+
+  const thumbCx = anchorRect.left + anchorRect.width / 2;
+  const thumbCy = anchorRect.top + anchorRect.height / 2;
+  const originX = ((thumbCx - left) / w) * 100;
+  const originY = ((thumbCy - top) / h) * 100;
+
+  el.style.width = w + 'px';
+  el.style.height = h + 'px';
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  el.style.transformOrigin = `${originX}% ${originY}%`;
+
+  const startScale = Math.max(0.2, Math.min(anchorRect.width / w, anchorRect.height / h));
+  el.classList.remove('is-visible');
+  el.style.transform = `scale(${startScale})`;
+  el.style.opacity = '0';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add('is-visible');
+      el.style.removeProperty('transform');
+      el.style.removeProperty('opacity');
+    });
+  });
+}
+
+function positionHoverPreview(anchorRect) {
+  hoverPreview.anchorRect = anchorRect;
+  showHoverPreview(anchorRect);
+}
+
+function attachLiveFrame(frame, frameData) {
+  const src = mediaSrc(frameData.src);
+  let anchorRect = null;
+
+  frame.addEventListener('mouseenter', () => {
+    anchorRect = frame.getBoundingClientRect();
+    const { el, img } = hoverPreview;
+
+    if (img.src === src && img.complete && img.naturalWidth) {
+      positionHoverPreview(anchorRect);
+      return;
+    }
+
+    hoverPreview.pendingSrc = src;
+    img.onload = () => {
+      if (hoverPreview.pendingSrc !== src) return;
+      positionHoverPreview(anchorRect);
+    };
+    img.src = src;
+  });
+
+  frame.addEventListener('mouseleave', hideHoverPreview);
+
+  frame.addEventListener('click', (e) => {
+    e.stopPropagation();
+    hideHoverPreview();
+    lightbox.open({ src: frameData.src });
+  });
+}
+
+function createSheetElement(sheet) {
+  return buildContactSheetElement(sheet, {
+    mode: 'live',
+    attachLiveFrame
+  });
+}
+
+function layoutWide(board) {
+  board.classList.remove('board--narrow');
+
+  sheets.forEach(sheet => {
+    const el = createSheetElement(sheet);
+    const x = sheet.x;
+    const y = sheet.y;
+    const width = sheet.width || DEFAULT_SHEET_WIDTH;
+    const rotation = sheet.rotation || 0;
+
+    el.style.position = 'absolute';
+    applyTileLayout(el, board, { x, y, width, rotation });
+    board.appendChild(el);
+  });
+}
+
+function layoutNarrow(board) {
+  board.classList.add('board--narrow');
+  sheets.forEach(sheet => {
+    const el = createSheetElement(sheet);
+    el.style.position = 'static';
+    el.style.width = '100%';
+    el.style.marginBottom = '2rem';
+    board.appendChild(el);
+  });
+}
+
+function renderBoard() {
+  boardEl.innerHTML = '';
+  hideHoverPreview();
+
+  if (isNarrowScreen()) {
+    layoutNarrow(boardEl);
+    boardEl.style.height = 'auto';
+  } else {
+    layoutWide(boardEl);
+    requestAnimationFrame(() => fitBoardHeight(boardEl));
+  }
+}
+
+async function initBoard() {
+  boardEl.classList.add('contact-sheet-board');
+  initHoverPreview();
+
+  if (window.location.protocol === 'file:') {
+    showBoardError(
+      'photos can\u2019t load when you double-click an html file.<br><br>' +
+      'start a local server in your project folder, then open the site in your browser:<br>' +
+      '<code>python3 -m http.server 8000</code><br><br>' +
+      'then go to <strong>http://localhost:8000</strong>'
+    );
+    return;
+  }
+
+  try {
+    sheets = await loadSheets();
+    renderBoard();
+  } catch (err) {
+    console.error('Contact sheet load failed:', err);
+    showBoardError(
+      'couldn\u2019t load photos from <code>' + DATA_SOURCE + '</code>.<br><br>' +
+      'open the site through a local server (not by double-clicking the html file).'
+    );
+    return;
+  }
+
+  let lastIsNarrow = isNarrowScreen();
+  window.addEventListener('resize', () => {
+    hideHoverPreview();
+    const nowNarrow = isNarrowScreen();
+    if (nowNarrow !== lastIsNarrow) {
+      lastIsNarrow = nowNarrow;
+      renderBoard();
+    } else if (!nowNarrow) {
+      reflowBoardTiles(boardEl, '.contact-sheet');
+      fitBoardHeight(boardEl);
+    }
+  });
+}
+
+initBoard();

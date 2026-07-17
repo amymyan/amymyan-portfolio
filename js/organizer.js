@@ -119,7 +119,8 @@ function normalizeBoardEntry(item, pageName, index) {
     caption: item.caption || (src ? captionFromFilename(filenameFromSrc(src)) : ''),
     x: typeof item.x === 'number' ? item.x : 10,
     y: typeof item.y === 'number' ? item.y : 5,
-    width: normalizeWidthPercent(item.width)
+    width: normalizeWidthPercent(item.width),
+    rotation: normalizeRotation(item.rotation)
   };
   if (item.href) entry.href = item.href;
   if (item.poster) entry.poster = item.poster;
@@ -128,6 +129,55 @@ function normalizeBoardEntry(item, pageName, index) {
 
 function newEntryAtTop(pageName, partial, index) {
   return normalizeBoardEntry({ ...partial, x: 10, y: 5 }, pageName, index);
+}
+
+function attachRotationHandle(el, mediaWrap, photo, board, refit) {
+  const handle = document.createElement('div');
+  handle.className = 'rotate-handle';
+  handle.title = 'drag to rotate';
+
+  const stick = document.createElement('div');
+  stick.className = 'rotate-stick';
+
+  const dot = document.createElement('div');
+  dot.className = 'rotate-dot';
+
+  handle.appendChild(dot);
+  handle.appendChild(stick);
+  mediaWrap.appendChild(handle);
+
+  dot.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    pushUndoSnapshot();
+    handle.classList.add('dragging');
+
+    const rect = mediaWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const startRotation = normalizeRotation(photo.rotation);
+
+    function onMove(ev) {
+      const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx);
+      const deltaDeg = (angle - startAngle) * (180 / Math.PI);
+      const next = normalizeRotation(startRotation + deltaDeg);
+      photo.rotation = next;
+      applyTileRotation(el, next);
+      requestAnimationFrame(refit);
+    }
+
+    async function onUp() {
+      handle.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      await saveBoardData();
+      setStatus('saved \u2713');
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 function appendVideoPosterControls(editBar, photo, videoEl) {
@@ -198,6 +248,9 @@ async function syncBoardFromFolder(pageName, boardData) {
 }
 
 async function loadBoard(pageName) {
+  if (isContactSheetPage(pageName)) {
+    return loadMusicBoard(pageName);
+  }
   let data = await readJSON('data', pageName + '.json');
   const purged = purgeEmptyEntries(data);
   if (JSON.stringify(data) !== JSON.stringify(purged)) {
@@ -318,6 +371,11 @@ async function initBoardsPanel() {
   renderBoardMini();
 
   document.getElementById('boards-sync-btn').onclick = async () => {
+    if (isContactSheetPage(currentBoard)) {
+      await refreshMusicLibrary();
+      setStatus('library refreshed from assets/music/ \u2713');
+      return;
+    }
     pushUndoSnapshot();
     const { data, added, unsupported } = await syncBoardWithFolder(currentBoard, boardData);
     boardData = data;
@@ -337,6 +395,18 @@ async function initBoardsPanel() {
   });
 
   document.getElementById('boards-register-btn').onclick = async () => {
+    if (isContactSheetPage(currentBoard)) {
+      const name = prompt(
+        'Enter filename in assets/' + currentBoard + '/\n(must exist in your folder or on R2 — e.g. DSC00205.jpg):'
+      );
+      if (!name || !name.trim()) return;
+      await removeFromIgnoreList(currentBoard, name.trim());
+      await refreshMusicLibrary();
+      selectedLibrarySrcs.add(srcFromFilename(name.trim()));
+      renderMusicLibrary();
+      setStatus('registered ' + name.trim() + ' \u2713 — select it and create a contact sheet');
+      return;
+    }
     const name = prompt(
       'Enter the exact filename on R2 in assets/' + currentBoard + '/\n(e.g. DSC00205.jpg):'
     );
@@ -360,6 +430,22 @@ async function initBoardsPanel() {
   document.getElementById('boards-file-input').onchange = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    if (isContactSheetPage(currentBoard)) {
+      const uploaded = [];
+      for (const file of files) {
+        const savedName = await writeMediaFile('assets/' + currentBoard, file);
+        await removeFromIgnoreList(currentBoard, savedName);
+        uploaded.push(srcFromFilename(savedName));
+      }
+      e.target.value = '';
+      await refreshMusicLibrary();
+      uploaded.forEach(src => selectedLibrarySrcs.add(src));
+      renderMusicLibrary();
+      setStatus('uploaded ' + uploaded.length + ' file(s) \u2713 — create contact sheet when ready');
+      return;
+    }
+
     pushUndoSnapshot();
     for (const file of files) {
       const savedName = await writeMediaFile('assets/' + currentBoard, file);
@@ -377,11 +463,19 @@ async function initBoardsPanel() {
 
   updateUndoButton();
 
+  setupMusicOrganizerHooks();
+
   if (!window._organizerResizeBound) {
     window._organizerResizeBound = true;
     window.addEventListener('resize', () => {
       const board = document.getElementById('boards-mini-board');
-      if (!board || !board.querySelector('.mini-polaroid')) return;
+      if (!board) return;
+      if (isContactSheetPage(currentBoard) && board.querySelector('.contact-sheet')) {
+        reflowBoardTiles(board, '.contact-sheet');
+        fitBoardHeight(board, { minHeight: 520, padding: 80 });
+        return;
+      }
+      if (!board.querySelector('.mini-polaroid')) return;
       reflowBoardTiles(board);
       fitBoardHeight(board, { minHeight: 520, padding: 80 });
     });
@@ -389,6 +483,12 @@ async function initBoardsPanel() {
 }
 
 function renderBoardMini() {
+  if (isContactSheetPage(currentBoard)) {
+    updateMusicOrganizerUI();
+    renderContactSheetsMini();
+    return;
+  }
+  updateMusicOrganizerUI();
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
   miniSelection.clear(board);
@@ -397,6 +497,7 @@ function renderBoardMini() {
   boardData.forEach(photo => {
     if (!photo.src?.trim() && !photo.href) return;
     const width = normalizeWidthPercent(photo.width);
+    const rotation = normalizeRotation(photo.rotation);
 
     const el = document.createElement('div');
     el.className = 'mini-polaroid';
@@ -406,11 +507,11 @@ function renderBoardMini() {
     let x = photo.x;
     let y = photo.y;
     if (legacy) ({ x, y } = migrateLegacyCoords(x, y, board));
-    applyTileLayout(el, board, { x, y, width });
 
-    /* ---- the actual photo preview ----
-       This part is deliberately styled with NO border, card, or
-       shadow, so what you see here matches music.html exactly. */
+    /* ---- the actual photo preview ---- */
+    const mediaWrap = document.createElement('div');
+    mediaWrap.className = 'tile-media';
+
     if (photo.src) {
       if (isVideoFile(photo.src)) {
         const v = document.createElement('video');
@@ -419,20 +520,63 @@ function renderBoardMini() {
         if (photo.poster) v.poster = mediaSrc(photo.poster);
         v.addEventListener('loadedmetadata', () => requestAnimationFrame(refit));
         v.addEventListener('error', () => el.remove());
-        el.appendChild(v);
+        mediaWrap.appendChild(v);
       } else {
         const img = document.createElement('img');
         img.src = mediaSrc(photo.src);
         img.addEventListener('load', () => requestAnimationFrame(refit));
         img.addEventListener('error', () => el.remove());
-        el.appendChild(img);
+        mediaWrap.appendChild(img);
       }
     } else {
       const frame = document.createElement('div');
       frame.className = 'frame';
       frame.textContent = 'no photo';
-      el.appendChild(frame);
+      mediaWrap.appendChild(frame);
     }
+
+    /* ---- size slider overlaid on top of photo ---- */
+    const photoFrame = document.createElement('div');
+    photoFrame.className = 'photo-frame';
+    photoFrame.appendChild(mediaWrap);
+
+    const sizeControl = document.createElement('div');
+    sizeControl.className = 'size-control';
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 5;
+    slider.max = 95;
+    slider.step = 1;
+    slider.value = width;
+
+    const sizeLabel = document.createElement('span');
+    sizeLabel.textContent = width + '%';
+
+    slider.addEventListener('mousedown', (e) => e.stopPropagation());
+    slider.addEventListener('input', () => {
+      const w = parseInt(slider.value, 10);
+      sizeLabel.textContent = w + '%';
+      const { x, y, rotation } = readTileCoords(el);
+      applyTileLayout(el, board, { x, y, width: w, rotation });
+    });
+    slider.addEventListener('change', async () => {
+      const next = parseInt(slider.value, 10);
+      if (next === photo.width) return;
+      pushUndoSnapshot();
+      photo.width = next;
+      await saveBoardData();
+      setStatus('saved \u2713');
+      refit();
+    });
+
+    sizeControl.appendChild(slider);
+    sizeControl.appendChild(sizeLabel);
+    photoFrame.appendChild(sizeControl);
+    el.appendChild(photoFrame);
+    attachRotationHandle(el, mediaWrap, photo, board, refit);
+
+    applyTileLayout(el, board, { x, y, width, rotation });
 
     /* ---- edit toolbar (organizer-only — not part of the live site) ---- */
     const editBar = document.createElement('div');
@@ -452,45 +596,8 @@ function renderBoardMini() {
     });
     editBar.appendChild(cap);
 
-    /* ---- size slider (% of page width) ---- */
-    const sizeControl = document.createElement('div');
-    sizeControl.className = 'size-control';
-
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = 5;
-    slider.max = 95;
-    slider.step = 1;
-    slider.value = width;
-
-    const sizeLabel = document.createElement('span');
-    sizeLabel.textContent = width + '%';
-
-    slider.addEventListener('input', () => {
-      const w = parseInt(slider.value, 10);
-      sizeLabel.textContent = w + '%';
-      applyTileLayout(el, board, {
-        x: parseFloat(el.dataset.x),
-        y: parseFloat(el.dataset.y),
-        width: w
-      });
-    });
-    slider.addEventListener('change', async () => {
-      const next = parseInt(slider.value, 10);
-      if (next === photo.width) return;
-      pushUndoSnapshot();
-      photo.width = next;
-      await saveBoardData();
-      setStatus('saved \u2713');
-      refit();
-    });
-
-    sizeControl.appendChild(slider);
-    sizeControl.appendChild(sizeLabel);
-    editBar.appendChild(sizeControl);
-
     if (photo.src && isVideoFile(photo.src)) {
-      appendVideoPosterControls(editBar, photo, el.querySelector('video'));
+      appendVideoPosterControls(editBar, photo, mediaWrap.querySelector('video'));
     }
 
     /* ---- href (projects listing only) ----
@@ -570,14 +677,25 @@ function makeMiniDraggable(el, board, photo) {
     positions.forEach(({ tile, x, y }) => {
       tile.classList.add('dragging');
       board.appendChild(tile);
-      applyTileLayout(tile, board, { x, y, width: parseFloat(tile.dataset.w) });
+      applyTileLayout(tile, board, {
+        x,
+        y,
+        width: parseFloat(tile.dataset.w),
+        rotation: parseFloat(tile.dataset.rotation) || 0
+      });
     });
     setBoardSnapGuides(board, guideX, guideY);
-    fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false, adjustScroll: false });
+    fitBoardHeight(board, {
+      minHeight: 520,
+      padding: 80,
+      allowShrink: false,
+      adjustScroll: false,
+      pointerY: clientY
+    });
   }
 
   el.addEventListener('mousedown', (e) => {
-    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control')) return;
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control') || e.target.closest('.rotate-handle') || e.target.closest('.size-control')) return;
     e.preventDefault();
     shiftHeld = e.shiftKey;
 

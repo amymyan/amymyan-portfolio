@@ -98,6 +98,7 @@ button{
   font-size:1.70rem;
   letter-spacing:0.02em;
   white-space:nowrap;
+  text-transform:uppercase;
 }
 
 /* the little ✮⋆˙ ˙⋆✮ star symbols around the logo — kept, but
@@ -129,6 +130,24 @@ button{
   left:0; right:0; bottom:-3px;
   height:1px;
   background:var(--ink);
+}
+
+/* When nav links wrap below the name, center both rows */
+@media (max-width:720px){
+  .site-nav{
+    justify-content:center;
+    gap:0.85rem;
+  }
+
+  .site-nav .wordmark{
+    flex:1 1 100%;
+    text-align:center;
+  }
+
+  .site-nav .nav-links{
+    flex:1 1 100%;
+    justify-content:center;
+  }
 }
 
 /* ---------- footer ---------- */

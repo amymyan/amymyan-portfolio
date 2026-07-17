@@ -24,6 +24,49 @@ function normalizeWidthPercent(value, referenceWidthPx = 1200) {
   return Math.max(5, Math.min(95, Math.round(n)));
 }
 
+function normalizeRotation(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n);
+}
+
+function applyTileRotation(el, rotation) {
+  const deg = normalizeRotation(rotation);
+  el.dataset.rotation = deg;
+  const media = el.querySelector('.tile-media');
+  const target = media || el;
+  target.style.transform = deg ? `rotate(${deg}deg)` : '';
+}
+
+function applyTileLayout(el, board, { x, y, width, rotation }) {
+  const u = boardUnit(board);
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = width;
+  el.style.left = (x * u) + 'px';
+  el.style.top = (y * u) + 'px';
+  el.style.width = (width * u) + 'px';
+  if (rotation != null) applyTileRotation(el, rotation);
+}
+
+function readTileCoords(el) {
+  return {
+    x: parseFloat(el.dataset.x),
+    y: parseFloat(el.dataset.y),
+    width: parseFloat(el.dataset.w),
+    rotation: parseFloat(el.dataset.rotation) || 0
+  };
+}
+
+function reflowBoardTiles(board, tileSelector = '.polaroid, .mini-polaroid') {
+  board.querySelectorAll(tileSelector).forEach(el => {
+    const { x, y, width, rotation } = readTileCoords(el);
+    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(width)) {
+      applyTileLayout(el, board, { x, y, width, rotation });
+    }
+  });
+}
+
 function boardUnit(board) {
   return board.offsetWidth / 100;
 }
@@ -35,35 +78,8 @@ function migrateLegacyCoords(x, y, board) {
   return { x, y: ((y / 100) * h / w) * 100 };
 }
 
-function applyTileLayout(el, board, { x, y, width }) {
-  const u = boardUnit(board);
-  el.dataset.x = x;
-  el.dataset.y = y;
-  el.dataset.w = width;
-  el.style.left = (x * u) + 'px';
-  el.style.top = (y * u) + 'px';
-  el.style.width = (width * u) + 'px';
-}
-
-function readTileCoords(el) {
-  return {
-    x: parseFloat(el.dataset.x),
-    y: parseFloat(el.dataset.y),
-    width: parseFloat(el.dataset.w)
-  };
-}
-
-function reflowBoardTiles(board, tileSelector = '.polaroid, .mini-polaroid') {
-  board.querySelectorAll(tileSelector).forEach(el => {
-    const { x, y, width } = readTileCoords(el);
-    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(width)) {
-      applyTileLayout(el, board, { x, y, width });
-    }
-  });
-}
-
 /* Grows a board to fit the lowest item. */
-function fitBoardHeight(board, { minHeight = 520, padding = 100, allowShrink = true, adjustScroll = true } = {}) {
+function fitBoardHeight(board, { minHeight = 520, padding = 100, allowShrink = true, adjustScroll = true, pointerY = null } = {}) {
   if (board.classList.contains('board--narrow')) return;
 
   const floor = Math.max(minHeight, window.innerHeight * 0.75);
@@ -72,10 +88,14 @@ function fitBoardHeight(board, { minHeight = 520, padding = 100, allowShrink = t
   const boardRect = board.getBoundingClientRect();
 
   let maxBottom = 0;
-  board.querySelectorAll('.polaroid, .mini-polaroid').forEach(el => {
+  board.querySelectorAll('.polaroid, .mini-polaroid, .contact-sheet').forEach(el => {
     const rect = el.getBoundingClientRect();
     maxBottom = Math.max(maxBottom, rect.bottom - boardRect.top);
   });
+
+  if (pointerY != null) {
+    maxBottom = Math.max(maxBottom, pointerY - boardRect.top);
+  }
 
   let newHeight = Math.ceil(Math.max(maxBottom + padding, floor));
   if (!allowShrink) newHeight = Math.max(newHeight, prevHeight);
@@ -288,7 +308,7 @@ function snapDragGroup(dragTiles, originLeftPx, originTopPx, dx, dy, board, {
     return {
       tile,
       x: clamp(leftPx / u, clampMin, clampMax),
-      y: clamp(topPx / u, clampMin, clampMax * 4)
+      y: Math.max(clampMin, topPx / u)
     };
   });
 

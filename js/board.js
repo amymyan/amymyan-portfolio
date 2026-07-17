@@ -28,6 +28,7 @@ async function loadPhotos() {
     x: typeof item.x === 'number' ? item.x : 10,
     y: typeof item.y === 'number' ? item.y : 5,
     width: normalizeWidthPercent(item.width),
+    rotation: normalizeRotation(item.rotation),
     ...(item.href ? { href: item.href } : {}),
     ...(item.poster ? { poster: item.poster } : {})
   }));
@@ -191,10 +192,11 @@ function layoutWide(board, layout) {
     let x = saved ? saved.x : photo.x;
     let y = saved ? saved.y : photo.y;
     const width = photo.width || DEFAULT_WIDTH_PERCENT;
+    const rotation = photo.rotation || 0;
     if (legacy) ({ x, y } = migrateLegacyCoords(x, y, board));
 
     el.style.position = 'absolute';
-    applyTileLayout(el, board, { x, y, width });
+    applyTileLayout(el, board, { x, y, width, rotation });
     board.appendChild(el);
     makeFreeformDraggable(el, board, photo);
   });
@@ -225,10 +227,15 @@ function makeFreeformDraggable(el, board, photo) {
     positions.forEach(({ tile, x, y }) => {
       tile.classList.add('dragging');
       board.appendChild(tile);
-      applyTileLayout(tile, board, { x, y, width: parseFloat(tile.dataset.w) });
+      applyTileLayout(tile, board, {
+        x,
+        y,
+        width: parseFloat(tile.dataset.w),
+        rotation: parseFloat(tile.dataset.rotation) || 0
+      });
     });
     setBoardSnapGuides(board, guideX, guideY);
-    fitBoardHeight(board, { allowShrink: false, adjustScroll: false });
+    fitBoardHeight(board, { allowShrink: false, adjustScroll: false, pointerY: point.clientY });
   }
 
   function onPointerDown(e) {

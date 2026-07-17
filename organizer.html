@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>organizer (private) — Amy Myan</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/contact-sheet.css">
 <style>
   body{ padding-bottom:4rem; }
   .wrap{ max-width:960px; margin:0 auto; padding:0 clamp(1.25rem, 4vw, 3rem); }
@@ -91,6 +92,31 @@
   .mini-polaroid img, .mini-polaroid video{
     display:block; width:100%; height:auto;
   }
+  .mini-polaroid .tile-media{
+    position:relative;
+    transform-origin:center center;
+  }
+  .mini-polaroid .tile-media img,
+  .mini-polaroid .tile-media video{
+    display:block; width:100%; height:auto;
+  }
+  .mini-polaroid .photo-frame{
+    position:relative;
+  }
+  .mini-polaroid .size-control{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:6px 4px 0;
+    background:transparent;
+    border:none;
+    box-sizing:border-box;
+  }
   .mini-polaroid .frame{
     width:110px; height:110px; background:#ddd;
     display:flex; align-items:center; justify-content:center;
@@ -121,16 +147,81 @@
   .mini-polaroid .del{
     position:absolute; top:-8px; right:-8px; width:20px; height:20px;
     border-radius:50%; background:var(--flash); color:white; border:none;
-    font-size:0.7rem; line-height:1; cursor:pointer; padding:0; z-index:2;
-  }
-  .mini-polaroid .size-control{
-    display:flex; align-items:center; gap:4px;
+    font-size:0.7rem; line-height:1; cursor:pointer; padding:0; z-index:3;
   }
   .mini-polaroid .size-control input[type="range"]{
-    flex:1; height:3px;
+    flex:1;
+    height:3px;
+    margin:0;
+    -webkit-appearance:none;
+    appearance:none;
+    background:rgba(232,143,178,0.4);
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .mini-polaroid .size-control input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:var(--flash);
+    border:2px solid #fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.18);
+  }
+  .mini-polaroid .size-control input[type="range"]::-moz-range-track{
+    height:3px;
+    background:rgba(232,143,178,0.4);
+    border-radius:999px;
+    border:none;
+  }
+  .mini-polaroid .size-control input[type="range"]::-moz-range-thumb{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:var(--flash);
+    border:2px solid #fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.18);
+    cursor:pointer;
   }
   .mini-polaroid .size-control span{
-    font-family:var(--mono); font-size:0.5rem; opacity:0.6; width:28px; text-align:right;
+    font-family:var(--mono); font-size:0.5rem; color:var(--flash);
+    opacity:0.95; width:28px; text-align:right; flex-shrink:0;
+    text-shadow:0 0 4px #fff, 0 0 8px #fff;
+  }
+  .mini-polaroid .rotate-handle{
+    position:absolute;
+    left:50%;
+    top:0;
+    width:0;
+    height:26px;
+    transform:translate(-50%, -100%);
+    pointer-events:none;
+    z-index:3;
+  }
+  .mini-polaroid .rotate-stick{
+    position:absolute;
+    bottom:0;
+    left:-1px;
+    width:2px;
+    height:18px;
+    background:var(--flash);
+    opacity:0.9;
+  }
+  .mini-polaroid .rotate-dot{
+    position:absolute;
+    top:0;
+    left:-6px;
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:var(--flash);
+    border:2px solid #fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.2);
+    cursor:grab;
+    pointer-events:auto;
+  }
+  .mini-polaroid .rotate-handle.dragging .rotate-dot{
+    cursor:grabbing;
   }
 
   .item-row{
@@ -189,16 +280,30 @@
         <option value="project-example">project: example</option>
       </select>
     </div>
-    <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;">
+    <p id="boards-music-hint" style="display:none;font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin-bottom:0.75rem;">
+      <strong>music contact sheets:</strong> all photos from <code>assets/music/</code> appear in the library below. click to select (shift-click for range), then <em>create contact sheet from selected</em>. drag the whole sheet to move; pink slider = size; pink dot = rotate. show name appears centered under the sheet on the live site.<br>
+      <em>from left</em> / <em>from top</em> = position on the page (% of board width) — or just drag the sheet.
+    </p>
+    <div id="music-library" class="music-library" style="display:none;">
+      <div class="music-library-toolbar">
+        <button type="button" id="library-refresh-btn" class="ghost">refresh library</button>
+        <button type="button" id="library-clear-btn" class="ghost">clear selection</button>
+        <button type="button" id="library-create-sheet-btn" disabled>create contact sheet from selected</button>
+        <label>photos per row: <input type="number" id="sheet-cols-input" min="1" max="8" value="3"></label>
+      </div>
+      <div id="music-library-grid" class="library-grid"></div>
+    </div>
+    <p id="boards-general-hint" style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;">
       <strong>adding media:</strong> upload files to R2 in <code>assets/&lt;page&gt;/</code>, then click
       <em>register R2 file</em> to add them to the page. Or add locally via
       <em>sync from folder</em> only runs when you click it — removing a photo (×) keeps it off the page even if the file is still on disk or R2.<br>
-      drag to arrange, slider = % of page width. click a caption to edit — it shows centered under the video on the live site.<br>
+      drag to arrange, size slider on top of each photo, pink rotation dot above photo to spin. click a caption to edit — it shows centered under the video on the live site.<br>
       <em>undo</em> button or ⌘Z (ctrl+Z on windows) reverses your last change on this page.<br>
       video thumbnails: click <em>upload thumb</em>, pick an image, then upload that same file to R2 in <code>assets/&lt;page&gt;/</code> — one upload, R2 only.
     </p>
     <div class="add-row" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
       <input type="file" id="boards-file-input" accept="image/*,video/*" multiple style="display:none;">
+      <button id="boards-new-sheet-btn" style="display:none;">+ new contact sheet</button>
       <button id="boards-add-btn">+ add photos / videos</button>
       <button id="boards-sync-btn" class="ghost">sync from folder</button>
       <button id="boards-register-btn" class="ghost">register R2 file</button>
@@ -212,7 +317,9 @@
 
 <script src="js/config.js"></script>
 <script src="js/media.js"></script>
+<script src="js/contact-sheet.js"></script>
 <script src="js/organizer.js"></script>
+<script src="js/organizer-contact.js"></script>
 <script src="js/galaxy.js" defer></script>
 </body>
 </html>
