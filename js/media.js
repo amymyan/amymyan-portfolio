@@ -67,6 +67,20 @@ function reflowBoardTiles(board, tileSelector = '.polaroid, .mini-polaroid') {
   });
 }
 
+/* Scale film chrome with board width; text uses fixed rem/px in CSS. */
+function syncContactSheetScale(board) {
+  const u = boardUnit(board);
+  if (!u) return;
+  board.querySelectorAll('.contact-sheet').forEach(el => {
+    el.style.setProperty('--sheet-u', u + 'px');
+  });
+}
+
+function reflowContactSheets(board) {
+  syncContactSheetScale(board);
+  reflowBoardTiles(board, '.contact-sheet');
+}
+
 function boardUnit(board) {
   return board.offsetWidth / 100;
 }

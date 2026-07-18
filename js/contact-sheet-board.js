@@ -3,6 +3,7 @@
 const boardEl = document.getElementById('board');
 const DATA_SOURCE = boardEl.dataset.source;
 const MOBILE_BREAKPOINT = 700;
+const HOVER_PREVIEW_DELAY_MS = 550;
 
 let sheets = [];
 let hoverPreview = null;
@@ -67,11 +68,27 @@ function initHoverPreview() {
   img.decoding = 'async';
   el.appendChild(img);
   document.body.appendChild(el);
-  hoverPreview = { el, img, pendingSrc: null, anchorRect: null, closeTimer: null };
+  hoverPreview = {
+    el,
+    img,
+    pendingSrc: null,
+    anchorRect: null,
+    closeTimer: null,
+    openTimer: null,
+    hoverFrame: null
+  };
+}
+
+function clearHoverOpenTimer() {
+  if (!hoverPreview?.openTimer) return;
+  clearTimeout(hoverPreview.openTimer);
+  hoverPreview.openTimer = null;
 }
 
 function hideHoverPreview() {
   if (!hoverPreview) return;
+  clearHoverOpenTimer();
+  hoverPreview.hoverFrame = null;
   const { el } = hoverPreview;
   if (hoverPreview.closeTimer) {
     clearTimeout(hoverPreview.closeTimer);
@@ -148,30 +165,44 @@ function showHoverPreview(anchorRect) {
   });
 }
 
-function positionHoverPreview(anchorRect) {
+function positionHoverPreview(frame) {
+  if (!frame || hoverPreview.hoverFrame !== frame) return;
+  const anchorRect = frame.getBoundingClientRect();
   hoverPreview.anchorRect = anchorRect;
   showHoverPreview(anchorRect);
 }
 
-function attachLiveFrame(frame, frameData) {
-  const src = mediaSrc(frameData.src);
-  let anchorRect = null;
+function scheduleHoverPreview(frame, src) {
+  clearHoverOpenTimer();
+  hoverPreview.hoverFrame = frame;
+  hoverPreview.pendingSrc = src;
 
-  frame.addEventListener('mouseenter', () => {
-    anchorRect = frame.getBoundingClientRect();
-    const { el, img } = hoverPreview;
+  const { img } = hoverPreview;
+  if (img.src !== src) {
+    img.src = src;
+  }
 
-    if (img.src === src && img.complete && img.naturalWidth) {
-      positionHoverPreview(anchorRect);
+  hoverPreview.openTimer = setTimeout(() => {
+    hoverPreview.openTimer = null;
+    if (hoverPreview.hoverFrame !== frame) return;
+
+    if (img.complete && img.naturalWidth) {
+      positionHoverPreview(frame);
       return;
     }
 
-    hoverPreview.pendingSrc = src;
     img.onload = () => {
-      if (hoverPreview.pendingSrc !== src) return;
-      positionHoverPreview(anchorRect);
+      if (hoverPreview.hoverFrame !== frame || hoverPreview.pendingSrc !== src) return;
+      positionHoverPreview(frame);
     };
-    img.src = src;
+  }, HOVER_PREVIEW_DELAY_MS);
+}
+
+function attachLiveFrame(frame, frameData) {
+  const src = mediaSrc(frameData.src);
+
+  frame.addEventListener('mouseenter', () => {
+    scheduleHoverPreview(frame, src);
   });
 
   frame.addEventListener('mouseleave', hideHoverPreview);
@@ -226,7 +257,10 @@ function renderBoard() {
     boardEl.style.height = 'auto';
   } else {
     layoutWide(boardEl);
-    requestAnimationFrame(() => fitBoardHeight(boardEl));
+    requestAnimationFrame(() => {
+      reflowContactSheets(boardEl);
+      fitBoardHeight(boardEl);
+    });
   }
 }
 
@@ -264,7 +298,7 @@ async function initBoard() {
       lastIsNarrow = nowNarrow;
       renderBoard();
     } else if (!nowNarrow) {
-      reflowBoardTiles(boardEl, '.contact-sheet');
+      reflowContactSheets(boardEl);
       fitBoardHeight(boardEl);
     }
   });

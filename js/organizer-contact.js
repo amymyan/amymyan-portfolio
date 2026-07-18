@@ -332,15 +332,15 @@ function attachMusicFrameDelete(frameEl, slot, sheet, refit, mediaWrapRef) {
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!removeFrameAtSlot(sheet, slot)) return;
     pushUndoSnapshot();
+    if (!removeFrameAtSlot(sheet, slot)) return;
     const mediaWrap = mediaWrapRef?.el || frameEl.closest('.contact-sheet')?.querySelector('.tile-media');
     if (mediaWrap) {
       rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef || { el: mediaWrap });
     } else {
-      await saveBoardData();
       renderBoardMini();
     }
+    await saveBoardData();
     updateLibraryItemStates();
     setStatus('photo removed from sheet \u2713');
   });
@@ -381,24 +381,24 @@ function sheetBodyOptions(sheet, refit, mediaWrapRef) {
     },
     onSwapStart: () => pushUndoSnapshot(),
     onSwapEnd: async () => {
-      await saveBoardData();
       const mediaWrap = mediaWrapRef?.el;
       if (mediaWrap) {
         rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef);
       } else {
         renderBoardMini();
       }
+      await saveBoardData();
       setStatus('photos swapped \u2713');
     },
     onRemoveStart: () => pushUndoSnapshot(),
     onRemoveEnd: async () => {
-      await saveBoardData();
       const mediaWrap = mediaWrapRef?.el;
       if (mediaWrap) {
         rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef);
       } else {
         renderBoardMini();
       }
+      await saveBoardData();
       updateLibraryItemStates();
       setStatus('photo removed from sheet \u2713');
     },
@@ -515,7 +515,10 @@ function renderContactSheetsMini() {
   sheetSelection.clear(board);
   board.classList.add('organizer');
 
-  const refit = () => fitBoardHeight(board, { minHeight: 520, padding: 80 });
+  const refit = () => {
+    reflowContactSheets(board);
+    fitBoardHeight(board, { minHeight: 520, padding: 80 });
+  };
   const sheets = getMusicSheetsArray();
 
   refreshMusicLibrary();
@@ -548,13 +551,15 @@ function renderContactSheetsMini() {
         slider.addEventListener('input', () => {
           const w = parseInt(slider.value, 10);
           sizeLabel.textContent = w + '%';
-          sheetData.width = w;
           const coords = readTileCoords(sheetEl);
           applyTileLayout(sheetEl, board, { ...coords, width: w, rotation: coords.rotation });
         });
         slider.addEventListener('change', async () => {
+          const next = parseInt(slider.value, 10);
+          const prev = normalizeWidthPercent(sheetData.width);
+          if (next === prev) return;
           pushUndoSnapshot();
-          sheetData.width = parseInt(slider.value, 10);
+          sheetData.width = next;
           await saveBoardData();
           setStatus('saved \u2713');
           refit();
@@ -675,10 +680,14 @@ function makeContactSheetDraggable(el, board, sheet, refit) {
     startX = e.clientX;
     startY = e.clientY;
     let moved = 0;
+    const undoGate = { recorded: false };
 
     function move(ev) {
       moved = Math.max(moved, Math.abs(ev.clientX - startX), Math.abs(ev.clientY - startY));
-      if (moved > 6) scheduleDrag(ev.clientX, ev.clientY);
+      if (moved > 6) {
+        maybeRecordDragUndo(undoGate);
+        scheduleDrag(ev.clientX, ev.clientY);
+      }
     }
 
     async function up(ev) {
@@ -692,8 +701,6 @@ function makeContactSheetDraggable(el, board, sheet, refit) {
       if (moved > 6) {
         applyDragPositions(ev.clientX, ev.clientY);
         refit();
-
-        pushUndoSnapshot();
         dragGroup.forEach(tile => {
           const item = getMusicSheetsArray().find(s => s.id === tile.dataset.id);
           if (item) {

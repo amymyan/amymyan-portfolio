@@ -13,6 +13,8 @@
   user-select:none;
   cursor:url('../assets/cursor-hover.png') 12 12, pointer;
   contain:layout style;
+  --sheet-u:10px;
+  font-size:var(--sheet-u);
 }
 
 .contact-sheet.dragging{
@@ -31,9 +33,9 @@
 
 .contact-sheet-body{
   background:#030303;
-  padding:5px 7px 8px;
-  box-shadow:0 8px 28px rgba(0,0,0,0.45);
-  border:1px solid #1a1208;
+  padding:0.5em 0.7em 0.8em;
+  box-shadow:0 0.8em 2.8em rgba(0,0,0,0.45);
+  border:0.1em solid #1a1208;
 }
 
 .contact-strip{
@@ -42,7 +44,7 @@
 
 .contact-row{
   display:grid;
-  gap:2px;
+  gap:0.2em;
 }
 
 /* ---- film edges (Kodak Portra 400 reference) ---- */
@@ -53,18 +55,18 @@
 }
 
 .film-edge--top{
-  padding-bottom:1px;
+  padding-bottom:0.1em;
 }
 
 .film-edge--bottom{
-  padding-top:1px;
-  margin-bottom:2px;
+  padding-top:0.1em;
+  margin-bottom:0.2em;
 }
 
 .sprocket-row{
   position:relative;
   width:100%;
-  height:9px;
+  height:0.9em;
   background:#0a0806;
 }
 
@@ -77,12 +79,12 @@
 }
 
 .sprocket-row--top .sprocket-hole{
-  top:1px;
+  top:0.1em;
   transform:translate(-50%, 0);
 }
 
 .sprocket-row--bottom .sprocket-hole{
-  bottom:1px;
+  bottom:0.1em;
   top:auto;
   transform:translate(-50%, 0);
 }
@@ -90,30 +92,30 @@
 .sprocket-hole{
   position:absolute;
   background:#050403;
-  border:1px solid rgba(255,153,51,0.45);
-  border-radius:2px;
+  border:0.1em solid rgba(255,153,51,0.45);
+  border-radius:0.2em;
   box-shadow:
-    inset 0 0 3px rgba(0,0,0,1),
-    inset 0 -1px 0 rgba(255,153,51,0.35),
-    0 0 4px rgba(255,120,30,0.15);
+    inset 0 0 0.3em rgba(0,0,0,1),
+    inset 0 -0.1em 0 rgba(255,153,51,0.35),
+    0 0 0.4em rgba(255,120,30,0.15);
 }
 
 .film-meta-row{
   display:grid;
   gap:0;
-  min-height:11px;
+  min-height:1.1em;
   align-items:end;
-  padding:1px 0 2px;
+  padding:0.1em 0 0.2em;
   background:#0a0806;
 }
 
 .film-meta-row--top{
   padding-top:0;
-  padding-bottom:3px;
+  padding-bottom:0.3em;
 }
 
 .film-meta-row--bottom{
-  padding-top:2px;
+  padding-top:0.2em;
   padding-bottom:0;
   align-items:start;
 }
@@ -122,16 +124,16 @@
   display:flex;
   align-items:flex-end;
   justify-content:flex-start;
-  gap:3px;
-  padding:0 2px;
+  gap:0.3em;
+  padding:0 0.2em;
   overflow:hidden;
-  min-height:10px;
+  min-height:1em;
 }
 
 .film-meta-cell--barcode{
   justify-content:center;
   align-items:flex-end;
-  padding:0 3px 1px;
+  padding:0 0.3em 0.1em;
 }
 
 .film-meta-cell--kodak{
@@ -139,7 +141,7 @@
   align-items:center;
   justify-content:flex-start;
   gap:0;
-  padding:1px 1px 0;
+  padding:0.1em 0.1em 0;
 }
 
 .film-brand{
@@ -159,7 +161,7 @@
   position:relative;
   flex:1;
   width:100%;
-  height:10px;
+  height:1em;
   min-width:0;
   overflow:hidden;
 }
@@ -169,7 +171,7 @@
   bottom:0;
   background:#ff9933;
   border-radius:0;
-  box-shadow:0 0 4px rgba(255,153,51,0.45);
+  box-shadow:0 0 0.4em rgba(255,153,51,0.45);
 }
 
 /* Show title under contact sheet (live site only — organizer uses edit bar) */

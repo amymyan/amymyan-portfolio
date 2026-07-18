@@ -314,11 +314,21 @@ function pushUndoSnapshot() {
   updateUndoButton();
 }
 
+function maybeRecordDragUndo(gate) {
+  if (!gate?.recorded) {
+    pushUndoSnapshot();
+    gate.recorded = true;
+  }
+}
+
 function updateUndoButton() {
   const btn = document.getElementById('boards-undo-btn');
   if (!btn) return;
   const stack = undoStacks[currentBoard] || [];
   btn.disabled = stack.length === 0;
+  btn.title = stack.length
+    ? `undo last change (${stack.length} step${stack.length === 1 ? '' : 's'} available)`
+    : 'nothing to undo';
 }
 
 async function undoBoardChange() {
@@ -326,9 +336,17 @@ async function undoBoardChange() {
   if (!stack || !stack.length) return;
 
   recordingUndo = false;
-  boardData = JSON.parse(stack.pop());
+  const restored = JSON.parse(stack.pop());
+  boardData = isContactSheetPage(currentBoard)
+    ? normalizeMusicData(restored)
+    : restored;
   await writeJSON('data', currentBoard + '.json', boardData);
   renderBoardMini();
+  if (isContactSheetPage(currentBoard)) {
+    if (typeof selectedLibrarySrcs !== 'undefined') selectedLibrarySrcs.clear();
+    if (typeof refreshMusicLibrary === 'function') await refreshMusicLibrary();
+    if (typeof updateLibrarySelection === 'function') updateLibrarySelection();
+  }
   setStatus('undo \u2713');
   recordingUndo = true;
   updateUndoButton();
@@ -472,7 +490,7 @@ async function initBoardsPanel() {
       const board = document.getElementById('boards-mini-board');
       if (!board) return;
       if (isContactSheetPage(currentBoard) && board.querySelector('.contact-sheet')) {
-        reflowBoardTiles(board, '.contact-sheet');
+        reflowContactSheets(board);
         fitBoardHeight(board, { minHeight: 520, padding: 80 });
         return;
       }
@@ -563,7 +581,8 @@ function renderBoardMini() {
     });
     slider.addEventListener('change', async () => {
       const next = parseInt(slider.value, 10);
-      if (next === photo.width) return;
+      const prev = normalizeWidthPercent(photo.width);
+      if (next === prev) return;
       pushUndoSnapshot();
       photo.width = next;
       await saveBoardData();
@@ -720,11 +739,13 @@ function makeMiniDraggable(el, board, photo) {
     startX = e.clientX;
     startY = e.clientY;
     let moved = 0;
+    const undoGate = { recorded: false };
 
     function move(e) {
       moved = Math.max(moved, Math.abs(e.clientX - startX), Math.abs(e.clientY - startY));
 
       if (moved > 6) {
+        maybeRecordDragUndo(undoGate);
         scheduleDrag(e.clientX, e.clientY);
       }
     }
@@ -739,7 +760,6 @@ function makeMiniDraggable(el, board, photo) {
         applyDragPositions(e.clientX, e.clientY);
         fitBoardHeight(board, { minHeight: 520, padding: 80, allowShrink: false });
 
-        pushUndoSnapshot();
         dragGroup.forEach(tile => {
           const item = boardData.find(p => p.id === tile.dataset.id);
           if (item) {

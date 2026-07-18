@@ -33,15 +33,8 @@
           "focusY": 50
         },
         {
-          "id": "f17843190814103",
+          "id": "f17843627105720805",
           "src": "assets/music/DSC03805.jpg",
-          "rotation": 9,
-          "focusX": 50,
-          "focusY": 50
-        },
-        {
-          "id": "f17843190814090",
-          "src": "assets/music/DSC03789.jpg",
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
@@ -94,6 +87,13 @@
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
+        },
+        {
+          "id": "f17843190814090",
+          "src": "assets/music/DSC03789.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
         }
       ]
     },
@@ -102,9 +102,9 @@
       "title": "kristiane: not anything, just everything tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 17.40740740740741,
-      "y": 62.47649016203702,
-      "width": 78,
+      "x": 17.52314814814815,
+      "y": 59.65069444444443,
+      "width": 80,
       "rotation": 0,
       "frames": [
         {
@@ -133,7 +133,7 @@
           "src": "assets/music/DSC09750.jpg",
           "rotation": 0,
           "focusX": 55,
-          "focusY": 45
+          "focusY": 50
         },
         {
           "id": "f17843205383586",
@@ -184,9 +184,9 @@
       "title": "landon conrath: north america tour 2026",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 1.3194444444444444,
-      "y": 119.07407407407406,
-      "width": 83,
+      "x": 3.7499999999999996,
+      "y": 116.98472222222222,
+      "width": 87,
       "rotation": 0,
       "frames": [
         {
@@ -207,8 +207,8 @@
           "id": "f17843207105203",
           "src": "assets/music/DSC03821.jpg",
           "rotation": 0,
-          "focusX": 59,
-          "focusY": 30
+          "focusX": 54,
+          "focusY": 18
         },
         {
           "id": "f17843207105202",
@@ -224,8 +224,8 @@
       "title": "gracie abrams: the secret of us deluxe tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 3.325737847222222,
-      "y": 210.9722222222222,
+      "x": 2.6874160879629616,
+      "y": 216.75925925925924,
       "width": 80,
       "rotation": 0,
       "frames": [
@@ -313,9 +313,9 @@
       "title": "wasia project: isotope tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 3,
-      "x": 3.2099971064814814,
-      "y": 293.4849537037037,
-      "width": 71,
+      "x": 2.803156828703702,
+      "y": 297.1886574074074,
+      "width": 74,
       "rotation": 0,
       "frames": [
         {
@@ -346,8 +346,8 @@
       "title": "sophie cates",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 2.7471064814814814,
-      "y": 341.5046296296296,
+      "x": 2.4560040509259244,
+      "y": 345.90277777777777,
       "width": 90,
       "rotation": 0,
       "frames": [
@@ -386,21 +386,21 @@
       "title": "chase atlantic",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 3,
-      "x": 24.93761574074074,
-      "y": 317.3645833333333,
-      "width": 73,
+      "x": 24.18355034722222,
+      "y": 321.41550925925924,
+      "width": 71,
       "rotation": 0,
       "frames": [
         {
-          "id": "f17843594563660",
-          "src": "assets/music/IMG_5466.jpg",
+          "id": "f17843594563661",
+          "src": "assets/music/IMG_5657.jpg",
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
         },
         {
-          "id": "f17843594563661",
-          "src": "assets/music/IMG_5657.jpg",
+          "id": "f17843594563660",
+          "src": "assets/music/IMG_5466.jpg",
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
@@ -419,9 +419,9 @@
       "title": "djo",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 14.995601851851852,
-      "y": 271.3773148148148,
-      "width": 81,
+      "x": 13.662832754629626,
+      "y": 275.4282407407407,
+      "width": 83,
       "rotation": 0,
       "frames": [
         {
@@ -442,8 +442,8 @@
           "id": "f17843594618952",
           "src": "assets/music/DSC00269.jpg",
           "rotation": 0,
-          "focusX": 45,
-          "focusY": 44
+          "focusX": 46,
+          "focusY": 37
         },
         {
           "id": "f17843594618953",
@@ -459,9 +459,9 @@
       "title": "mr. fantasy's sexy little tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 24.573206018518515,
-      "y": 140.18055555555554,
-      "width": 71,
+      "x": 16.53419777199074,
+      "y": 140.875,
+      "width": 80,
       "rotation": 0,
       "frames": [
         {
@@ -521,18 +521,11 @@
           "focusY": 50
         },
         {
-          "id": "f178436072787912",
-          "src": "assets/music/DSC04678.jpg",
+          "id": "f17843607278791",
+          "src": "assets/music/DSC04195.jpg",
           "rotation": 0,
-          "focusX": 51,
-          "focusY": 28
-        },
-        {
-          "id": "f17843607278793",
-          "src": "assets/music/DSC04279.jpg",
-          "rotation": 0,
-          "focusX": 51,
-          "focusY": 28
+          "focusX": 56,
+          "focusY": 33
         },
         {
           "id": "f17843607278795",
@@ -542,11 +535,18 @@
           "focusY": 50
         },
         {
-          "id": "f17843607278791",
-          "src": "assets/music/DSC04195.jpg",
+          "id": "f17843607278793",
+          "src": "assets/music/DSC04279.jpg",
           "rotation": 0,
-          "focusX": 56,
-          "focusY": 33
+          "focusX": 51,
+          "focusY": 28
+        },
+        {
+          "id": "f178436072787912",
+          "src": "assets/music/DSC04678.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 28
         },
         {
           "id": "f17843607278799",

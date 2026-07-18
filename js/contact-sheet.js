@@ -198,9 +198,9 @@ function buildSprocketRow(seed, position) {
     const jitter = (seededNoise(seed + i * 4.17) - 0.5) * 3;
     const w = 9 + seededNoise(seed + i * 6.2) * 2.5;
     const h = 6.5 + seededNoise(seed + i * 7.1) * 1.5;
-    hole.style.left = `calc(${(i + 0.5) * (100 / count)}% + ${jitter}px)`;
-    hole.style.width = w + 'px';
-    hole.style.height = h + 'px';
+    hole.style.left = `calc(${(i + 0.5) * (100 / count)}% + ${jitter / 10}em)`;
+    hole.style.width = (w / 10) + 'em';
+    hole.style.height = (h / 10) + 'em';
     row.appendChild(hole);
   }
   return row;
@@ -217,7 +217,7 @@ function buildBarcodeCell(seed) {
     const bar = document.createElement('span');
     bar.className = 'film-barcode-bar';
     bar.style.left = ((i / bars) * 100 + (n - 0.5) * 2) + '%';
-    bar.style.width = (1.4 + seededNoise(seed + i * 2.43) * 3.8) + 'px';
+    bar.style.width = ((1.4 + seededNoise(seed + i * 2.43) * 3.8) / 10) + 'em';
     bar.style.height = (45 + seededNoise(seed + i * 3.17) * 55) + '%';
     bar.style.opacity = (0.55 + n * 0.45).toFixed(2);
     wrap.appendChild(bar);
@@ -333,8 +333,9 @@ function attachContactFrameRemove(frameEl, slot, options) {
   btn.addEventListener('click', async (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!options.sheet || !removeFrameAtSlot(options.sheet, slot)) return;
+    if (!options.sheet) return;
     if (options.onRemoveStart) options.onRemoveStart();
+    if (!removeFrameAtSlot(options.sheet, slot)) return;
     if (options.onRemoveEnd) await options.onRemoveEnd();
   });
   media.appendChild(btn);
