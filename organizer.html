@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>organizer (private) — Amy Myan</title>
 <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/contact-sheet.css">
+<link rel="stylesheet" href="css/contact-sheet.css?v=20260718">
 <style>
   body{ padding-bottom:4rem; }
+  body.organizer .site-nav{ backdrop-filter:none; }
   .wrap{ max-width:960px; margin:0 auto; padding:0 clamp(1.25rem, 4vw, 3rem); }
   .warn{
     background:#FFF7E6; border:1px solid #D9B968; border-radius:10px;
@@ -281,7 +282,10 @@
       </select>
     </div>
     <p id="boards-music-hint" style="display:none;font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin-bottom:0.75rem;">
-      <strong>music contact sheets:</strong> all photos from <code>assets/music/</code> appear in the library below. click to select (shift-click for range), then <em>create contact sheet from selected</em> or click a contact sheet and use <em>add to selected sheet</em>. you can also click an empty frame on a sheet to drop selected photos in. drag the whole sheet to move; pink slider = size; pink dot = rotate. show name appears centered under the sheet on the live site.<br>
+      <strong>music library — two ways photos get in:</strong><br>
+      1. <em>local folder</em> — copy/download files into <code>assets/music/</code> on your computer, then click <em>refresh library</em> or <em>sync from folder</em><br>
+      2. <em>R2 only</em> — upload to Cloudflare R2, then click <em>register R2 filename</em> and enter the exact filename (refresh alone cannot scan R2)<br>
+      select photos in the library (shift-click for range), then create or add to a contact sheet. on the board: shift-click or cmd-click sheets to select multiple, drag a box on empty space, then drag any selected sheet to move them together. click the <strong>×</strong> on a photo to remove it from the sheet (it stays in the library).<br>
       <em>from left</em> / <em>from top</em> = position on the page (% of board width) — or just drag the sheet.
     </p>
     <div id="music-library" class="music-library" style="display:none;">
@@ -318,9 +322,10 @@
 
 <script src="js/config.js"></script>
 <script src="js/media.js"></script>
-<script src="js/contact-sheet.js"></script>
+<script src="js/contact-sheet.js?v=20260718"></script>
 <script src="js/organizer.js"></script>
-<script src="js/organizer-contact.js"></script>
+<script src="js/organizer-preview.js"></script>
+<script src="js/organizer-contact.js?v=20260718"></script>
 <script src="js/galaxy.js" defer></script>
 </body>
 </html>

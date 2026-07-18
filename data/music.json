@@ -6,8 +6,8 @@
       "title": "josh conway - plum: in the pit",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 4.212962962962963,
-      "y": 3.0324074074074074,
+      "x": 3.1060112847222245,
+      "y": 1.8283449074074074,
       "width": 81,
       "rotation": 0,
       "frames": [
@@ -35,7 +35,7 @@
         {
           "id": "f17843190814103",
           "src": "assets/music/DSC03805.jpg",
-          "rotation": 0,
+          "rotation": 9,
           "focusX": 50,
           "focusY": 50
         },
@@ -184,9 +184,9 @@
       "title": "landon conrath: north america tour 2026",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 1.898148148148148,
-      "y": 119.88425925925925,
-      "width": 78,
+      "x": 1.3194444444444444,
+      "y": 119.07407407407406,
+      "width": 83,
       "rotation": 0,
       "frames": [
         {
@@ -224,9 +224,9 @@
       "title": "gracie abrams: the secret of us deluxe tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 10.568576388888886,
-      "y": 141.037037037037,
-      "width": 85,
+      "x": 3.325737847222222,
+      "y": 210.9722222222222,
+      "width": 80,
       "rotation": 0,
       "frames": [
         {
@@ -240,8 +240,8 @@
           "id": "f17843216823425",
           "src": "assets/music/IMG_4244-2.jpg",
           "rotation": 0,
-          "focusX": 50,
-          "focusY": 42
+          "focusX": 75,
+          "focusY": 45
         },
         {
           "id": "f17843216823424",
@@ -302,6 +302,276 @@
         {
           "id": "f17843216823423",
           "src": "assets/music/IMG_4162.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 79
+        }
+      ]
+    },
+    {
+      "id": "sheet-1784357875562",
+      "title": "wasia project: isotope tour",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 3,
+      "x": 3.2099971064814814,
+      "y": 293.4849537037037,
+      "width": 71,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f17843578755620",
+          "src": "assets/music/IMG_0003.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843578755621",
+          "src": "assets/music/IMG_0005.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843578755622",
+          "src": "assets/music/IMG_0010.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        }
+      ]
+    },
+    {
+      "id": "sheet-1784358257961",
+      "title": "sophie cates",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 4,
+      "x": 2.7471064814814814,
+      "y": 341.5046296296296,
+      "width": 90,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f17843582579611",
+          "src": "assets/music/IMG_1541.jpg",
+          "rotation": 0,
+          "focusX": 52,
+          "focusY": 28
+        },
+        {
+          "id": "f17843582579612",
+          "src": "assets/music/IMG_1589.jpg",
+          "rotation": 0,
+          "focusX": 53,
+          "focusY": 30
+        },
+        {
+          "id": "f17843582579610",
+          "src": "assets/music/IMG_1196.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 42
+        },
+        {
+          "id": "f17843582579613",
+          "src": "assets/music/IMG_1802.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        }
+      ]
+    },
+    {
+      "id": "sheet-1784359456366",
+      "title": "chase atlantic",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 3,
+      "x": 24.93761574074074,
+      "y": 317.3645833333333,
+      "width": 73,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f17843594563660",
+          "src": "assets/music/IMG_5466.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843594563661",
+          "src": "assets/music/IMG_5657.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843594563662",
+          "src": "assets/music/IMG_5684-2.jpg",
+          "rotation": 0,
+          "focusX": 54,
+          "focusY": 0
+        }
+      ]
+    },
+    {
+      "id": "sheet-1784359461895",
+      "title": "djo",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 4,
+      "x": 14.995601851851852,
+      "y": 271.3773148148148,
+      "width": 81,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f17843594618951",
+          "src": "assets/music/DSC00265.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 16
+        },
+        {
+          "id": "f17843594618940",
+          "src": "assets/music/DSC00235.jpg",
+          "rotation": 0,
+          "focusX": 47,
+          "focusY": 31
+        },
+        {
+          "id": "f17843594618952",
+          "src": "assets/music/DSC00269.jpg",
+          "rotation": 0,
+          "focusX": 45,
+          "focusY": 44
+        },
+        {
+          "id": "f17843594618953",
+          "src": "assets/music/DSC00205.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        }
+      ]
+    },
+    {
+      "id": "sheet-1784360727879",
+      "title": "mr. fantasy's sexy little tour",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 4,
+      "x": 24.573206018518515,
+      "y": 140.18055555555554,
+      "width": 71,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f178436072787914",
+          "src": "assets/music/DSC04737.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f178436072787911",
+          "src": "assets/music/DSC04673.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 38
+        },
+        {
+          "id": "f178436072787915",
+          "src": "assets/music/DSC04876.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f178436072787910",
+          "src": "assets/music/DSC04644.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843607278794",
+          "src": "assets/music/DSC04369.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f178436072787913",
+          "src": "assets/music/DSC04736.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 31
+        },
+        {
+          "id": "f17843607278797",
+          "src": "assets/music/DSC04516.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 37
+        },
+        {
+          "id": "f17843607278790",
+          "src": "assets/music/DSC04077.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f178436072787912",
+          "src": "assets/music/DSC04678.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 28
+        },
+        {
+          "id": "f17843607278793",
+          "src": "assets/music/DSC04279.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 28
+        },
+        {
+          "id": "f17843607278795",
+          "src": "assets/music/DSC04497.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843607278791",
+          "src": "assets/music/DSC04195.jpg",
+          "rotation": 0,
+          "focusX": 56,
+          "focusY": 33
+        },
+        {
+          "id": "f17843607278799",
+          "src": "assets/music/DSC04595.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 25
+        },
+        {
+          "id": "f17843607278798",
+          "src": "assets/music/DSC04534.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f1784361719696088",
+          "src": "assets/music/DSC04153.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17843607278792",
+          "src": "assets/music/DSC04197.jpg",
           "rotation": 0,
           "focusX": 50,
           "focusY": 50

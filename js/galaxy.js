@@ -1,4 +1,5 @@
 (function initGalaxy() {
+  if (document.body.classList.contains('organizer')) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const canvas = document.createElement('canvas');

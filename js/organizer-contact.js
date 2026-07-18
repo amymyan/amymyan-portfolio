@@ -29,6 +29,90 @@ function srcFromFilename(filename) {
   return 'assets/' + currentBoard + '/' + filename;
 }
 
+function filenameFromMusicSrc(src) {
+  return (src || '').split('/').pop();
+}
+
+function parseFilenameList(input) {
+  return [...new Set(
+    (input || '')
+      .split(/[\n,]+/)
+      .map(s => s.trim().replace(/^.*\//, ''))
+      .filter(Boolean)
+  )];
+}
+
+async function readMusicLibraryRegistry() {
+  const list = await readJSON('data', 'music.library.json');
+  return Array.isArray(list) ? list.filter(Boolean) : [];
+}
+
+async function saveMusicLibraryRegistry(filenames) {
+  const sorted = [...new Set(filenames.filter(Boolean))].sort();
+  await writeJSON('data', 'music.library.json', sorted);
+  return sorted;
+}
+
+async function addToMusicLibraryRegistry(filenames) {
+  const incoming = Array.isArray(filenames) ? filenames : [filenames];
+  const merged = new Set([...(await readMusicLibraryRegistry()), ...incoming.filter(Boolean)]);
+  return saveMusicLibraryRegistry([...merged]);
+}
+
+async function fetchR2LibraryManifest() {
+  try {
+    const res = await fetch(mediaSrc('assets/music/library.json'), { cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data.filter(f => typeof f === 'string');
+    if (Array.isArray(data?.files)) return data.files.filter(f => typeof f === 'string');
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+async function collectMusicLibraryFilenames() {
+  const merged = new Set();
+  const ignored = await readIgnoreList('music');
+
+  if (rootHandle) {
+    const local = await listMediaFiles('music');
+    local.filter(f => !/\.(mp4|webm|mov)$/i.test(f)).forEach(f => merged.add(f));
+  }
+
+  (await readMusicLibraryRegistry()).forEach(f => merged.add(f));
+  (await fetchR2LibraryManifest()).forEach(f => merged.add(f));
+
+  getMusicSheetsArray().forEach(sheet => {
+    (sheet.frames || []).forEach(frame => {
+      const fn = filenameFromMusicSrc(frame.src);
+      if (fn) merged.add(fn);
+    });
+  });
+
+  return [...merged].filter(f => !ignored.has(f)).sort();
+}
+
+async function refreshMusicLibrary() {
+  if (!isContactSheetPage(currentBoard)) return 0;
+  musicLibraryFiles = await collectMusicLibraryFilenames();
+  renderMusicLibrary(true);
+  return musicLibraryFiles.length;
+}
+
+async function registerMusicFilenames(filenames) {
+  const incoming = parseFilenameList(Array.isArray(filenames) ? filenames.join('\n') : filenames);
+  if (!incoming.length) return 0;
+
+  await addToMusicLibraryRegistry(incoming);
+  for (const fn of incoming) await removeFromIgnoreList('music', fn);
+
+  musicLibraryFiles = await collectMusicLibraryFilenames();
+  renderMusicLibrary(true);
+  return incoming.length;
+}
+
 function updateMusicOrganizerUI() {
   const isMusic = isContactSheetPage(currentBoard);
   const library = document.getElementById('music-library');
@@ -102,13 +186,13 @@ async function addPhotosToSheet(sheet, srcs, { startSlot = null, mediaWrap = nul
   await saveBoardData();
 
   if (mediaWrap) {
-    rebuildContactSheetBody(mediaWrap, sheet, sheetBodyOptions(sheet, refit, { el: mediaWrap }));
+    rebuildMusicSheetBody(mediaWrap, sheet, refit, { el: mediaWrap });
   } else {
     renderBoardMini();
     selectContactSheetById(sheet.id);
   }
 
-  renderMusicLibrary();
+  updateLibraryItemStates();
   setStatus(`added ${added} photo(s) \u2713`);
   return added;
 }
@@ -119,21 +203,43 @@ async function addToSelectedSheet() {
   await addPhotosToSheet(sheet, [...selectedLibrarySrcs]);
 }
 
-async function refreshMusicLibrary() {
-  if (!isContactSheetPage(currentBoard) || !rootHandle) return;
-  musicLibraryFiles = await listMediaFiles(currentBoard);
-  musicLibraryFiles = musicLibraryFiles.filter(f => !/\.(mp4|webm|mov)$/i.test(f));
-  renderMusicLibrary();
+function getUsedLibrarySrcs() {
+  return new Set(
+    getMusicSheetsArray().flatMap(s => (s.frames || []).map(f => f.src))
+  );
 }
 
-function renderMusicLibrary() {
+function updateLibraryItemStates() {
+  const grid = document.getElementById('music-library-grid');
+  if (!grid) return;
+  const usedSrcs = getUsedLibrarySrcs();
+  grid.querySelectorAll('.library-item').forEach(item => {
+    item.classList.toggle('selected', selectedLibrarySrcs.has(item.dataset.src));
+    item.classList.toggle('on-sheet', usedSrcs.has(item.dataset.src));
+  });
+  updateLibraryCreateButton();
+}
+
+function updateLibrarySelection() {
+  const grid = document.getElementById('music-library-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.library-item').forEach(item => {
+    item.classList.toggle('selected', selectedLibrarySrcs.has(item.dataset.src));
+  });
+  updateLibraryCreateButton();
+}
+
+function renderMusicLibrary(forceRebuild = false) {
   const grid = document.getElementById('music-library-grid');
   if (!grid) return;
 
+  if (!forceRebuild && grid.querySelector('.library-item')) {
+    updateLibraryItemStates();
+    return;
+  }
+
   grid.innerHTML = '';
-  const usedSrcs = new Set(
-    getMusicSheetsArray().flatMap(s => (s.frames || []).map(f => f.src))
-  );
+  const usedSrcs = getUsedLibrarySrcs();
 
   if (!musicLibraryFiles.length) {
     grid.innerHTML = '<p class="library-empty">no photos in assets/music/ — upload or sync from folder</p>';
@@ -175,7 +281,7 @@ function renderMusicLibrary() {
         else selectedLibrarySrcs.add(src);
         libraryLastClickIndex = index;
       }
-      renderMusicLibrary();
+      updateLibrarySelection();
     });
 
     grid.appendChild(item);
@@ -209,15 +315,65 @@ async function createSheetFromSelection() {
   setStatus('contact sheet created \u2713');
 }
 
+function attachMusicFrameDelete(frameEl, slot, sheet, refit, mediaWrapRef) {
+  frameEl.querySelector('.frame-rotate-handle')?.remove();
+  const media = frameEl.querySelector('.frame-media');
+  if (!media) return;
+
+  media.querySelector('.frame-del')?.remove();
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'frame-del';
+  btn.setAttribute('aria-label', 'Remove photo from sheet');
+  btn.textContent = '\u00d7';
+  btn.title = 'remove photo from sheet (stays in library)';
+  btn.addEventListener('mousedown', (e) => e.stopPropagation());
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!removeFrameAtSlot(sheet, slot)) return;
+    pushUndoSnapshot();
+    const mediaWrap = mediaWrapRef?.el || frameEl.closest('.contact-sheet')?.querySelector('.tile-media');
+    if (mediaWrap) {
+      rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef || { el: mediaWrap });
+    } else {
+      await saveBoardData();
+      renderBoardMini();
+    }
+    updateLibraryItemStates();
+    setStatus('photo removed from sheet \u2713');
+  });
+  media.appendChild(btn);
+}
+
+function finalizeContactFrameControlsForSheet(sheetEl, sheet, refit, mediaWrapRef) {
+  if (!sheetEl || !sheet) return;
+  const opts = sheetBodyOptions(sheet, refit, mediaWrapRef || { el: sheetEl.querySelector('.tile-media') });
+
+  sheetEl.querySelectorAll('.contact-frame:not(.empty)').forEach(frameEl => {
+    frameEl.querySelector('.frame-rotate-handle')?.remove();
+    const slot = parseInt(frameEl.dataset.slot, 10);
+    if (!Number.isFinite(slot)) return;
+    if (typeof attachContactFrameRemove === 'function') {
+      attachContactFrameRemove(frameEl, slot, opts);
+    } else {
+      attachMusicFrameDelete(frameEl, slot, sheet, refit, mediaWrapRef);
+    }
+  });
+}
+
+function rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef) {
+  const ref = mediaWrapRef || { el: mediaWrap };
+  const opts = sheetBodyOptions(sheet, refit, ref);
+  rebuildContactSheetBody(mediaWrap, sheet, opts);
+  finalizeContactFrameControlsForSheet(mediaWrap.closest('.contact-sheet'), sheet, refit, ref);
+}
+
 function sheetBodyOptions(sheet, refit, mediaWrapRef) {
   const opts = {
     mode: 'organizer',
     sheet,
-    onRotateStart: () => pushUndoSnapshot(),
-    onRotateEnd: async () => {
-      await saveBoardData();
-      setStatus('saved \u2713');
-    },
     onPanStart: () => pushUndoSnapshot(),
     onPanEnd: async () => {
       await saveBoardData();
@@ -228,11 +384,23 @@ function sheetBodyOptions(sheet, refit, mediaWrapRef) {
       await saveBoardData();
       const mediaWrap = mediaWrapRef?.el;
       if (mediaWrap) {
-        rebuildContactSheetBody(mediaWrap, sheet, opts);
+        rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef);
       } else {
         renderBoardMini();
       }
       setStatus('photos swapped \u2713');
+    },
+    onRemoveStart: () => pushUndoSnapshot(),
+    onRemoveEnd: async () => {
+      await saveBoardData();
+      const mediaWrap = mediaWrapRef?.el;
+      if (mediaWrap) {
+        rebuildMusicSheetBody(mediaWrap, sheet, refit, mediaWrapRef);
+      } else {
+        renderBoardMini();
+      }
+      updateLibraryItemStates();
+      setStatus('photo removed from sheet \u2713');
     },
     onFrameClick: async (slot) => {
       if (!selectedLibrarySrcs.size) {
@@ -277,7 +445,7 @@ function attachSheetEditBar(el, sheet, mediaWrap, refit) {
   settingsRow.appendChild(makeSheetSetting('cols', 'photos per row', sheet.colsPerRow, 1, 8, async (val) => {
     pushUndoSnapshot();
     sheet.colsPerRow = val;
-    rebuildContactSheetBody(mediaWrap, sheet, sheetBodyOptions(sheet, refit, { el: mediaWrap }));
+    rebuildMusicSheetBody(mediaWrap, sheet, refit, { el: mediaWrap });
     await saveBoardData();
     setStatus('saved \u2713');
   }));
@@ -427,15 +595,22 @@ function renderContactSheetsMini() {
 
     makeContactSheetDraggable(el, board, sheet, refit);
     board.appendChild(el);
+    finalizeContactFrameControlsForSheet(el, sheet, refit, mediaWrapRef);
   });
 
   requestAnimationFrame(refit);
-  enableBoardMarquee(board, sheetSelection, 'contact-sheet');
+  enableBoardMarquee(board, sheetSelection, 'contact-sheet', {
+    onSelectionChange: () => updateLibraryCreateButton()
+  });
   updateLibraryCreateButton();
 }
 
+function isMultiSelectKey(e) {
+  return e.shiftKey || e.metaKey || e.ctrlKey;
+}
+
 function makeContactSheetDraggable(el, board, sheet, refit) {
-  let startX, startY, shiftHeld, dragGroup, originLeftPx, originTopPx;
+  let startX, startY, dragGroup, originLeftPx, originTopPx;
   let rafId = null;
   let pendingX = null;
   let pendingY = null;
@@ -477,14 +652,16 @@ function makeContactSheetDraggable(el, board, sheet, refit) {
   }
 
   el.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
     if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' ||
         e.target.closest('.sheet-del') ||
-        e.target.closest('.rotate-handle') || e.target.closest('.frame-rotate-handle') ||
-        e.target.closest('.size-control') || e.target.closest('.contact-frame')) return;
+        e.target.closest('.frame-del') ||
+        e.target.closest('.rotate-handle') ||
+        e.target.closest('.size-control')) return;
+    if (e.target.closest('.contact-frame') && !isMultiSelectKey(e)) return;
     e.preventDefault();
-    shiftHeld = e.shiftKey;
 
-    if (shiftHeld) sheetSelection.toggle(el);
+    if (isMultiSelectKey(e)) sheetSelection.toggle(el);
     else if (!el.classList.contains('selected')) sheetSelection.selectOnly(el, board);
     updateLibraryCreateButton();
 
@@ -563,8 +740,8 @@ function setupMusicOrganizerHooks() {
   if (refreshBtn && !refreshBtn.dataset.bound) {
     refreshBtn.dataset.bound = '1';
     refreshBtn.onclick = async () => {
-      await refreshMusicLibrary();
-      setStatus('library refreshed from assets/music/ \u2713');
+      const count = await refreshMusicLibrary();
+      setStatus(`library refreshed — ${count} photo(s) from local folder + registered R2 names \u2713`);
     };
   }
 
@@ -573,7 +750,7 @@ function setupMusicOrganizerHooks() {
     clearSelBtn.dataset.bound = '1';
     clearSelBtn.onclick = () => {
       selectedLibrarySrcs.clear();
-      renderMusicLibrary();
+      updateLibrarySelection();
     };
   }
 

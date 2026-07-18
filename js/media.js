@@ -346,7 +346,7 @@ function clearBoardSnapGuides(board) {
   board.querySelector('.snap-guides')?.remove();
 }
 
-function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIfNarrow = false } = {}) {
+function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIfNarrow = false, onSelectionChange = null } = {}) {
   if (board.dataset.marqueeEnabled) return;
   board.dataset.marqueeEnabled = '1';
 
@@ -409,6 +409,7 @@ function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIf
       document.removeEventListener('mouseup', onUp);
       if (box) box.remove();
       else if (!additive) selection.clear(board);
+      if (onSelectionChange) onSelectionChange();
     }
 
     document.addEventListener('mousemove', onMove);

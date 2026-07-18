@@ -173,6 +173,16 @@ function addFramesToSheet(sheet, srcs, options = {}) {
   return added;
 }
 
+function removeFrameAtSlot(sheet, slot) {
+  const { cols, rowCount, frames } = sheetGridLayout(sheet);
+  const total = cols * rowCount;
+  const slots = Array.from({ length: total }, (_, i) => frames[i] || null);
+  if (!slots[slot]?.src?.trim()) return false;
+  slots[slot] = null;
+  sheet.frames = slots.filter(f => f?.src?.trim());
+  return true;
+}
+
 function sheetSeed(sheet, rowIndex) {
   return (sheet.id || 's').split('').reduce((a, c) => a + c.charCodeAt(0), 0) + rowIndex * 17;
 }
@@ -278,17 +288,21 @@ function buildContactFrameElement(frameData, slot, options = {}) {
     }
 
     const img = document.createElement('img');
-    img.src = mediaSrc(frameData.src);
     img.alt = '';
-    img.loading = mode === 'organizer' ? 'lazy' : 'lazy';
+    img.loading = 'lazy';
     img.decoding = 'async';
     applyFrameFocus(img, frameData);
+    if (mode === 'organizer' && typeof setOrganizerPreviewImg === 'function') {
+      setOrganizerPreviewImg(img, frameData.src, ORGANIZER_THUMB_FRAME);
+    } else {
+      img.src = mediaSrc(frameData.src);
+    }
     media.appendChild(img);
     frame.appendChild(media);
 
     if (mode === 'organizer') {
-      attachContactFrameRotation(frame, media, frameData, options);
       attachContactFramePan(frame, media, img, frameData, slot, options);
+      attachContactFrameRemove(frame, slot, options);
     } else if (options.attachLiveFrame) {
       options.attachLiveFrame(frame, frameData);
     }
@@ -302,12 +316,37 @@ function buildContactFrameElement(frameData, slot, options = {}) {
   return frame;
 }
 
+function attachContactFrameRemove(frameEl, slot, options) {
+  frameEl.querySelector('.frame-rotate-handle')?.remove();
+
+  const media = frameEl.querySelector('.frame-media');
+  if (!media) return;
+  media.querySelector('.frame-del')?.remove();
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'frame-del';
+  btn.setAttribute('aria-label', 'Remove photo from sheet');
+  btn.textContent = '\u00d7';
+  btn.title = 'remove photo from sheet (stays in library)';
+  btn.addEventListener('mousedown', (e) => e.stopPropagation());
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!options.sheet || !removeFrameAtSlot(options.sheet, slot)) return;
+    if (options.onRemoveStart) options.onRemoveStart();
+    if (options.onRemoveEnd) await options.onRemoveEnd();
+  });
+  media.appendChild(btn);
+}
+
 function attachContactFramePan(frameEl, mediaWrap, img, frameData, sourceSlot, options) {
   mediaWrap.classList.add('frame-media--pannable');
   mediaWrap.title = 'drag to adjust crop · drag to another photo to swap';
 
   mediaWrap.addEventListener('mousedown', (e) => {
-    if (e.button !== 0 || e.target.closest('.frame-rotate-handle')) return;
+    if (e.button !== 0 || e.target.closest('.frame-del')) return;
+    if (e.shiftKey || e.metaKey || e.ctrlKey) return;
     e.stopPropagation();
     e.preventDefault();
 
@@ -429,47 +468,6 @@ function attachContactFramePan(frameEl, mediaWrap, img, frameData, sourceSlot, o
       } else if (undoPushed && !panMoved && dragMode !== 'swap') {
         revertPan();
       }
-    }
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-}
-
-function attachContactFrameRotation(frameEl, mediaWrap, frameData, options) {
-  const handle = document.createElement('div');
-  handle.className = 'frame-rotate-handle';
-  handle.title = 'drag to rotate frame';
-
-  const dot = document.createElement('div');
-  dot.className = 'frame-rotate-dot';
-  handle.appendChild(dot);
-  frameEl.appendChild(handle);
-
-  dot.addEventListener('mousedown', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (options.onRotateStart) options.onRotateStart();
-
-    const rect = mediaWrap.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
-    const startRotation = normalizeRotation(frameData.rotation);
-
-    function onMove(ev) {
-      const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx);
-      const deltaDeg = (angle - startAngle) * (180 / Math.PI);
-      const next = normalizeRotation(startRotation + deltaDeg);
-      frameData.rotation = next;
-      mediaWrap.classList.toggle('rotated', !!next);
-      mediaWrap.style.transform = next ? `rotate(${next}deg)` : '';
-    }
-
-    async function onUp() {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      if (options.onRotateEnd) await options.onRotateEnd();
     }
 
     document.addEventListener('mousemove', onMove);

@@ -372,8 +372,8 @@ async function initBoardsPanel() {
 
   document.getElementById('boards-sync-btn').onclick = async () => {
     if (isContactSheetPage(currentBoard)) {
-      await refreshMusicLibrary();
-      setStatus('library refreshed from assets/music/ \u2713');
+      const count = await refreshMusicLibrary();
+      setStatus(`library refreshed — ${count} photo(s) from local folder + registered R2 names \u2713`);
       return;
     }
     pushUndoSnapshot();
@@ -397,14 +397,15 @@ async function initBoardsPanel() {
   document.getElementById('boards-register-btn').onclick = async () => {
     if (isContactSheetPage(currentBoard)) {
       const name = prompt(
-        'Enter filename in assets/' + currentBoard + '/\n(must exist in your folder or on R2 — e.g. DSC00205.jpg):'
+        'Enter the exact filename(s) on R2 in assets/' + currentBoard + '/\n' +
+        '(one per line or comma-separated — e.g. DSC00205.jpg):'
       );
       if (!name || !name.trim()) return;
-      await removeFromIgnoreList(currentBoard, name.trim());
-      await refreshMusicLibrary();
-      selectedLibrarySrcs.add(srcFromFilename(name.trim()));
-      renderMusicLibrary();
-      setStatus('registered ' + name.trim() + ' \u2713 — select it and create a contact sheet');
+      const count = await registerMusicFilenames(name);
+      if (!count) return;
+      parseFilenameList(name).forEach(fn => selectedLibrarySrcs.add(srcFromFilename(fn)));
+      updateLibrarySelection();
+      setStatus(`registered ${count} file(s) \u2713 — now in library, select and add to a contact sheet`);
       return;
     }
     const name = prompt(
@@ -441,7 +442,7 @@ async function initBoardsPanel() {
       e.target.value = '';
       await refreshMusicLibrary();
       uploaded.forEach(src => selectedLibrarySrcs.add(src));
-      renderMusicLibrary();
+      renderMusicLibrary(true);
       setStatus('uploaded ' + uploaded.length + ' file(s) \u2713 — create contact sheet when ready');
       return;
     }
@@ -523,7 +524,7 @@ function renderBoardMini() {
         mediaWrap.appendChild(v);
       } else {
         const img = document.createElement('img');
-        img.src = mediaSrc(photo.src);
+        setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_POLAROID);
         img.addEventListener('load', () => requestAnimationFrame(refit));
         img.addEventListener('error', () => el.remove());
         mediaWrap.appendChild(img);
@@ -659,6 +660,9 @@ function renderBoardMini() {
 
 function makeMiniDraggable(el, board, photo) {
   let startX, startY, shiftHeld, dragGroup, originLeftPx, originTopPx;
+  let rafId = null;
+  let pendingX = null;
+  let pendingY = null;
 
   function applyDragPositions(clientX, clientY) {
     const dx = clientX - startX;
@@ -685,12 +689,15 @@ function makeMiniDraggable(el, board, photo) {
       });
     });
     setBoardSnapGuides(board, guideX, guideY);
-    fitBoardHeight(board, {
-      minHeight: 520,
-      padding: 80,
-      allowShrink: false,
-      adjustScroll: false,
-      pointerY: clientY
+  }
+
+  function scheduleDrag(clientX, clientY) {
+    pendingX = clientX;
+    pendingY = clientY;
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      if (pendingX != null) applyDragPositions(pendingX, pendingY);
     });
   }
 
@@ -718,10 +725,11 @@ function makeMiniDraggable(el, board, photo) {
       moved = Math.max(moved, Math.abs(e.clientX - startX), Math.abs(e.clientY - startY));
 
       if (moved > 6) {
-        applyDragPositions(e.clientX, e.clientY);
+        scheduleDrag(e.clientX, e.clientY);
       }
     }
     async function up(e) {
+      if (rafId) cancelAnimationFrame(rafId);
       dragGroup.forEach(tile => tile.classList.remove('dragging'));
       clearBoardSnapGuides(board);
       document.removeEventListener('mousemove', move);
