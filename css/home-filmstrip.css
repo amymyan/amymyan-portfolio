@@ -1,7 +1,7 @@
 /* Homepage — 35mm filmstrip, landscape 3:2 frames */
 
 .home-film {
-  --peek: clamp(44px, 13%, 108px);
+  --peek: clamp(30px, 9%, 76px);
   --frame-w: calc(100% - var(--peek) * 2);
   --frame-gap: 0px;
   --frame-step: var(--frame-w);
@@ -10,6 +10,7 @@
   --film-ink: var(--ink);
   --film-edge: var(--ink);
   --film-divider: var(--ink);
+  --film-frame-gap: 14px;
 
   position: relative;
   width: 100%;
@@ -179,7 +180,7 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: var(--film-frame-gap);
   background: var(--film-divider);
   z-index: 1;
   pointer-events: none;
@@ -270,7 +271,7 @@
   line-height: 1;
   letter-spacing: 0;
   color: var(--ink);
-  cursor: pointer;
+  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
   transform: scaleX(0.93);
   transform-origin: center;
   transition: color 0.12s ease, opacity 0.12s ease;

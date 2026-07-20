@@ -18,6 +18,12 @@
 
   let frames = [];
   let coverIndices = [];
+  let rollPools = new Map();
+  let rollCurrentSrc = new Map();
+  let rollVisibility = new Map();
+  let rollQueuedSrc = new Map();
+  let preloadedUrls = new Set();
+  let visibilityInitialized = false;
   let rollCount = 0;
   let currentRollIndex = 0;
   let currentIndex = 0;
@@ -141,10 +147,11 @@
         lastActiveIndex = rounded;
       }
       gateMark.classList.toggle('is-link-ready', !animating);
-      return;
+    } else {
+      gateMark.classList.remove('is-link-ready');
     }
 
-    gateMark.classList.remove('is-link-ready');
+    updateCoverVisibility();
   }
 
   function resetStripMotionState() {
@@ -157,6 +164,7 @@
     const frameEl = document.createElement('div');
     frameEl.className = 'home-film-frame is-cover';
     frameEl.dataset.index = index;
+    frameEl.dataset.rollId = frame.rollId || '';
 
     const photo = document.createElement('div');
     photo.className = 'home-film-photo';
@@ -176,6 +184,106 @@
 
     frameEl.appendChild(photo);
     return frameEl;
+  }
+
+  function getRollFrameEls(rollId) {
+    return frameEls.filter(el => el.dataset.rollId === rollId);
+  }
+
+  function setRollCoverSrc(rollId, src) {
+    if (!rollId || !src) return;
+    rollCurrentSrc.set(rollId, src);
+    const frame = frames.find(f => f.rollId === rollId);
+    if (frame) frame.src = src;
+
+    getRollFrameEls(rollId).forEach(el => {
+      const img = el.querySelector('img');
+      if (!img) return;
+      const next = mediaSrc(src);
+      if (img.getAttribute('src') === next) return;
+      img.src = next;
+      if (img.decode) img.decode().catch(() => {});
+    });
+  }
+
+  function rollIdAt(rollIndex) {
+    return frames[rollIndex]?.rollId || '';
+  }
+
+  function preloadSrc(src) {
+    const url = mediaSrc(src);
+    if (!src || !url || preloadedUrls.has(url)) return Promise.resolve();
+    preloadedUrls.add(url);
+    return new Promise((resolve) => {
+      const img = new Image();
+      const finish = () => resolve();
+      img.onload = finish;
+      img.onerror = finish;
+      img.src = url;
+    });
+  }
+
+  function queueRollCover(rollId) {
+    const pool = rollPools.get(rollId);
+    if (!pool?.length) return;
+    const exclude = rollQueuedSrc.get(rollId) || rollCurrentSrc.get(rollId);
+    const nextSrc = pickRandomCover(pool, exclude);
+    if (!nextSrc) return;
+    rollQueuedSrc.set(rollId, nextSrc);
+    preloadSrc(nextSrc);
+  }
+
+  function warmScrollCovers(nextRoll, prevRoll) {
+    [nextRoll, prevRoll].forEach(rollIndex => {
+      const rollId = rollIdAt(rollIndex);
+      if (!rollId) return;
+      if (!rollQueuedSrc.has(rollId)) queueRollCover(rollId);
+      const src = rollQueuedSrc.get(rollId);
+      if (src) preloadSrc(src);
+    });
+  }
+
+  function preloadAllQueuedCovers() {
+    rollPools.forEach((_, rollId) => {
+      if (!rollQueuedSrc.has(rollId)) queueRollCover(rollId);
+      const src = rollQueuedSrc.get(rollId);
+      if (src) preloadSrc(src);
+    });
+  }
+
+  function applyQueuedCover(rollId) {
+    if (!rollQueuedSrc.has(rollId)) queueRollCover(rollId);
+    const queued = rollQueuedSrc.get(rollId);
+    if (!queued) return;
+    rollQueuedSrc.delete(rollId);
+    setRollCoverSrc(rollId, queued);
+    queueRollCover(rollId);
+  }
+
+  function isRollInViewport(rollId) {
+    if (!rollEl) return false;
+    const viewport = rollEl.getBoundingClientRect();
+    return getRollFrameEls(rollId).some(el => {
+      const rect = el.getBoundingClientRect();
+      return rect.right > viewport.left && rect.left < viewport.right;
+    });
+  }
+
+  function updateCoverVisibility() {
+    if (!rollEl || !frameEls.length) return;
+
+    rollPools.forEach((_, rollId) => {
+      const isVisible = isRollInViewport(rollId);
+      const wasVisible = rollVisibility.get(rollId) ?? false;
+      if (!visibilityInitialized) {
+        rollVisibility.set(rollId, isVisible);
+        return;
+      }
+      if (wasVisible && !isVisible) applyQueuedCover(rollId);
+      rollVisibility.set(rollId, isVisible);
+    });
+
+    visibilityInitialized = true;
   }
 
   function decodeCoverImages() {
@@ -204,6 +312,8 @@
   function finishAdvance(nextRoll, toIndex, { snap = false } = {}) {
     currentRollIndex = nextRoll;
     currentIndex = toIndex;
+    animating = false;
+
     resetStripMotionState();
     if (snap) trackEl.style.transition = 'none';
     setStripPosition(currentIndex);
@@ -212,7 +322,7 @@
         trackEl.style.transition = '';
       });
     }
-    animating = false;
+    preloadAllQueuedCovers();
   }
 
   function runAdvanceAnimation(fromIndex, toIndex, onComplete) {
@@ -238,7 +348,6 @@
 
   function animateStep(direction) {
     if (animating || !direction) return;
-    if (direction > 0 && typeof HomeFilmSound !== 'undefined') HomeFilmSound.advance();
 
     const leadingCloneIndex = 0;
     const trailingCloneIndex = frameEls.length - 1;
@@ -266,6 +375,7 @@
     }
 
     animating = true;
+    warmScrollCovers(nextRoll, prevRoll);
     gateMark.classList.remove('is-link-ready');
 
     try {
@@ -293,6 +403,10 @@
       frames = data.frames;
       coverIndices = data.coverIndices;
       rollCount = coverIndices.length;
+      rollPools = new Map((data.rolls || []).map(roll => [roll.id, roll.coverPoolSrcs || []]));
+      rollCurrentSrc = new Map(data.frames.map(frame => [frame.rollId, frame.src]));
+      rollVisibility = new Map();
+      visibilityInitialized = false;
 
       if (!frames.length) {
         loadingEl.textContent = 'no photos yet — add some in the organizer';
@@ -311,7 +425,8 @@
       stripEl.appendChild(leadingClone);
 
       frames.forEach((frame, i) => {
-        stripEl.appendChild(buildFrameEl(frame, i + 1, { eager: i === 0 }));
+        stripEl.appendChild(buildFrameEl(frame, i + 1, { eager: true }));
+        preloadSrc(frame.src);
       });
 
       const trailingClone = buildFrameEl(frames[0], frames.length + 1);
@@ -326,6 +441,7 @@
       measureFrameStep();
       syncRollScaleSoon();
       snapToCover(0);
+      preloadAllQueuedCovers();
 
       loadingEl.hidden = true;
       navButtons.forEach(btn => { btn.disabled = false; });

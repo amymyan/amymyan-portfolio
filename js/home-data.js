@@ -8,6 +8,40 @@ const HOME_ROLL_DEFAULTS = [
 
 const MAX_SCRUB_PHOTOS = 5;
 
+function pickRandomCover(pool, exclude) {
+  if (!pool?.length) return '';
+  let choices = pool;
+  if (exclude && pool.length > 1) {
+    choices = pool.filter(src => src !== exclude);
+    if (!choices.length) choices = pool;
+  }
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function resolveCoverPool(saved, photoPool, fallbackCover) {
+  let pool = Array.isArray(saved.coverPoolSrcs)
+    ? uniqueSrcs(saved.coverPoolSrcs.map(s => (s || '').trim()).filter(Boolean))
+    : [];
+
+  if (!pool.length) {
+    pool = uniqueSrcs([
+      saved.coverSrc,
+      ...(Array.isArray(saved.scrubSrcs) ? saved.scrubSrcs : [])
+    ].map(s => (s || '').trim()).filter(Boolean));
+  }
+
+  pool = pool.filter(src => photoPool.includes(src));
+
+  if (!pool.length && fallbackCover && photoPool.includes(fallbackCover)) {
+    pool = [fallbackCover];
+  }
+  if (!pool.length && photoPool.length) {
+    pool = [photoPool[0]];
+  }
+
+  return pool;
+}
+
 function uniqueSrcs(list) {
   const seen = new Set();
   const out = [];
@@ -72,15 +106,22 @@ function normalizeHomeConfig(raw) {
 
   const rolls = HOME_ROLL_DEFAULTS.map((def, index) => {
     const saved = rollsIn.find(r => r.id === def.id) || rollsIn[index] || {};
-    const scrubSrcs = Array.isArray(saved.scrubSrcs)
-      ? uniqueSrcs(saved.scrubSrcs.map(s => (s || '').trim()).filter(Boolean))
-      : [];
+    const coverSrc = (saved.coverSrc || def.coverSrc || '').trim();
+    const coverPoolSrcs = Array.isArray(saved.coverPoolSrcs)
+      ? uniqueSrcs(saved.coverPoolSrcs.map(s => (s || '').trim()).filter(Boolean))
+      : uniqueSrcs([
+          coverSrc,
+          ...(Array.isArray(saved.scrubSrcs)
+            ? saved.scrubSrcs.map(s => (s || '').trim()).filter(Boolean)
+            : [])
+        ].filter(Boolean));
     return {
       id: def.id,
       href: saved.href || def.href,
       title: saved.title || def.title,
-      coverSrc: (saved.coverSrc || def.coverSrc || '').trim(),
-      scrubSrcs: scrubSrcs.slice(0, MAX_SCRUB_PHOTOS)
+      coverSrc,
+      coverPoolSrcs,
+      scrubSrcs: []
     };
   });
 
@@ -98,25 +139,18 @@ function ensureCoverInPhotos(photos, coverSrc, fallback) {
 
 function buildRollFromSources(rollConfig, photoSrcs, extraFallbacks = []) {
   const pool = uniqueSrcs([...photoSrcs, ...extraFallbacks, rollConfig.coverSrc]);
+  const coverPoolSrcs = resolveCoverPool(rollConfig, pool, rollConfig.coverSrc);
   const coverSrc = rollConfig.coverSrc && pool.includes(rollConfig.coverSrc)
     ? rollConfig.coverSrc
-    : (rollConfig.coverSrc || pool[0] || '');
-
-  const savedScrub = uniqueSrcs(rollConfig.scrubSrcs || [])
-    .filter(src => src !== coverSrc && pool.includes(src))
-    .slice(0, MAX_SCRUB_PHOTOS);
-
-  let scrub = savedScrub;
-  if (!scrub.length) {
-    scrub = subsamplePhotos(pool.filter(src => src !== coverSrc), MAX_SCRUB_PHOTOS);
-  }
+    : (coverPoolSrcs[0] || pool[0] || '');
 
   return {
     ...rollConfig,
     coverSrc,
+    coverPoolSrcs,
     photos: pool,
-    scrub,
-    scrubSrcs: savedScrub.length ? savedScrub : scrub
+    scrub: [],
+    scrubSrcs: []
   };
 }
 
@@ -138,13 +172,14 @@ function buildHomeRolls(homeConfig, sources) {
 function pruneRollMedia(roll, loadable) {
   if (!roll) return roll;
   const photos = roll.photos.filter(src => loadable.has(src));
-  let coverSrc = loadable.has(roll.coverSrc) ? roll.coverSrc : (photos[0] || '');
+  const coverPoolSrcs = (roll.coverPoolSrcs || [])
+    .filter(src => loadable.has(src));
+  let coverSrc = loadable.has(roll.coverSrc) ? roll.coverSrc : (coverPoolSrcs[0] || photos[0] || '');
   if (coverSrc && !photos.includes(coverSrc)) photos.unshift(coverSrc);
-  const scrub = (roll.scrubSrcs?.length ? roll.scrubSrcs : subsamplePhotos(
-    photos.filter(src => src !== coverSrc),
-    MAX_SCRUB_PHOTOS
-  )).filter(src => src !== coverSrc && loadable.has(src)).slice(0, MAX_SCRUB_PHOTOS);
-  return { ...roll, coverSrc, photos, scrub };
+  const pool = coverPoolSrcs.length
+    ? coverPoolSrcs
+    : (coverSrc ? [coverSrc] : photos.slice(0, 1));
+  return { ...roll, coverSrc, coverPoolSrcs: pool, photos, scrub: [], scrubSrcs: [] };
 }
 
 function buildStripFrames(rolls) {
@@ -152,11 +187,16 @@ function buildStripFrames(rolls) {
   const coverIndices = [];
 
   for (const roll of rolls) {
-    if (!roll?.coverSrc || !roll.coverSrc.trim()) continue;
+    const pool = roll.coverPoolSrcs?.length
+      ? roll.coverPoolSrcs
+      : [roll.coverSrc].filter(Boolean);
+    const coverSrc = pickRandomCover(pool) || roll.coverSrc || '';
+    if (!coverSrc.trim()) continue;
     coverIndices.push(frames.length);
     frames.push({
-      src: roll.coverSrc,
+      src: coverSrc,
       rollId: roll.id,
+      coverPoolSrcs: pool,
       isCover: true,
       href: roll.href,
       title: roll.title
@@ -185,5 +225,5 @@ async function loadHomeFilmstripData() {
   ]);
 
   const rolls = buildHomeRolls(homeConfig || {}, { music, portrait, video });
-  return buildStripFrames(rolls);
+  return { rolls, ...buildStripFrames(rolls) };
 }
