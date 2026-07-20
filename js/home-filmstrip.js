@@ -8,7 +8,9 @@
   const trackEl = root.querySelector('.home-film-track');
   const rollEl = root.querySelector('.home-film-roll');
   const viewportEl = root.querySelector('.home-film-viewport');
-  const advanceBtn = root.querySelector('.home-film-advance');
+  const prevBtn = root.querySelector('.home-film-nav--prev');
+  const nextBtn = root.querySelector('.home-film-nav--next');
+  const navButtons = [prevBtn, nextBtn].filter(Boolean);
   const gateMark = root.querySelector('.home-film-gate-mark');
   const loadingEl = root.querySelector('.home-film-loading');
   const sprocketTopEl = root.querySelector('.home-film-sprocket--top');
@@ -34,7 +36,7 @@
 
   function advanceDuration(steps) {
     const n = Math.max(1, Math.abs(steps));
-    return Math.min(1800, 720 + n * 320);
+    return Math.min(1700, 660 + n * 290);
   }
 
   function seededNoise(seed) {
@@ -90,7 +92,7 @@
     if (gate && rollEl?.clientWidth) {
       return (rollEl.clientWidth - gate.offsetWidth) / 2;
     }
-    return 72;
+    return 108;
   }
 
   function updateFrameWidth() {
@@ -211,7 +213,6 @@
       });
     }
     animating = false;
-    advanceBtn.disabled = false;
   }
 
   function runAdvanceAnimation(fromIndex, toIndex, onComplete) {
@@ -235,36 +236,54 @@
     requestAnimationFrame(tick);
   }
 
-  function animateAdvance() {
-    if (animating) return;
-    if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.advance();
+  function animateStep(direction) {
+    if (animating || !direction) return;
+    if (direction > 0 && typeof HomeFilmSound !== 'undefined') HomeFilmSound.advance();
 
+    const leadingCloneIndex = 0;
+    const trailingCloneIndex = frameEls.length - 1;
+    const prevRoll = (currentRollIndex - 1 + rollCount) % rollCount;
     const nextRoll = (currentRollIndex + 1) % rollCount;
-    const toIndex = coverIndices[nextRoll];
-    const loopIndex = frameEls.length - 1;
-    const loopingForward = currentRollIndex === rollCount - 1 && loopIndex > currentIndex;
+
+    let targetRoll;
+    let targetIndex;
+    let loopSnap = null;
+
+    if (direction > 0) {
+      targetRoll = nextRoll;
+      targetIndex = coverIndices[targetRoll];
+      if (currentRollIndex === rollCount - 1) {
+        targetIndex = trailingCloneIndex;
+        loopSnap = { roll: 0, index: coverIndices[0] };
+      }
+    } else {
+      targetRoll = prevRoll;
+      targetIndex = coverIndices[targetRoll];
+      if (currentRollIndex === 0) {
+        targetIndex = leadingCloneIndex;
+        loopSnap = { roll: rollCount - 1, index: coverIndices[rollCount - 1] };
+      }
+    }
 
     animating = true;
-    advanceBtn.disabled = true;
     gateMark.classList.remove('is-link-ready');
 
     try {
-      if (reduceMotion || toIndex == null) {
-        finishAdvance(nextRoll, toIndex ?? coverIndices[0]);
+      if (reduceMotion) {
+        finishAdvance(loopSnap ? loopSnap.roll : targetRoll, loopSnap ? loopSnap.index : targetIndex);
         return;
       }
 
-      const targetIndex = loopingForward ? loopIndex : toIndex;
       runAdvanceAnimation(currentIndex, targetIndex, () => {
-        if (loopingForward) {
-          finishAdvance(0, coverIndices[0], { snap: true });
+        if (loopSnap) {
+          finishAdvance(loopSnap.roll, loopSnap.index, { snap: true });
         } else {
-          finishAdvance(nextRoll, toIndex);
+          finishAdvance(targetRoll, targetIndex);
         }
       });
     } catch (err) {
       console.error(err);
-      finishAdvance(nextRoll, toIndex ?? coverIndices[0]);
+      finishAdvance(loopSnap ? loopSnap.roll : targetRoll, loopSnap ? loopSnap.index : targetIndex);
     }
   }
 
@@ -281,7 +300,7 @@
       }
 
       loadingEl.textContent = 'loading film…';
-      advanceBtn.disabled = true;
+      navButtons.forEach(btn => { btn.disabled = true; });
 
       updateFrameWidth();
       stripEl.innerHTML = '';
@@ -309,15 +328,19 @@
       snapToCover(0);
 
       loadingEl.hidden = true;
-      advanceBtn.disabled = false;
+      navButtons.forEach(btn => { btn.disabled = false; });
 
-      advanceBtn.addEventListener('click', animateAdvance);
+      prevBtn?.addEventListener('click', () => animateStep(-1));
+      nextBtn?.addEventListener('click', () => animateStep(1));
 
       document.addEventListener('keydown', (e) => {
         if (e.target.closest('input, textarea, [contenteditable="true"]')) return;
-        if (e.key === ' ' || e.key === 'ArrowRight') {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
           e.preventDefault();
-          animateAdvance();
+          animateStep(1);
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          animateStep(-1);
         }
       });
 
@@ -340,7 +363,7 @@
     } catch (err) {
       console.error(err);
       loadingEl.textContent = 'could not load filmstrip';
-      advanceBtn.disabled = frames.length > 0 ? false : true;
+      navButtons.forEach(btn => { btn.disabled = frames.length === 0; });
     }
   }
 
