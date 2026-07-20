@@ -190,14 +190,14 @@ function sheetSeed(sheet, rowIndex) {
 function buildSprocketRow(seed, position) {
   const row = document.createElement('div');
   row.className = `sprocket-row sprocket-row--${position}`;
-  const count = 9 + Math.floor(seededNoise(seed + 3) * 4);
+  const count = 20 + Math.floor(seededNoise(seed + 3) * 10);
 
   for (let i = 0; i < count; i++) {
     const hole = document.createElement('span');
     hole.className = 'sprocket-hole';
-    const jitter = (seededNoise(seed + i * 4.17) - 0.5) * 3;
-    const w = 9 + seededNoise(seed + i * 6.2) * 2.5;
-    const h = 6.5 + seededNoise(seed + i * 7.1) * 1.5;
+    const jitter = (seededNoise(seed + i * 4.17) - 0.5) * 2;
+    const w = 7 + seededNoise(seed + i * 6.2) * 2;
+    const h = 5.5 + seededNoise(seed + i * 7.1) * 1.2;
     hole.style.left = `calc(${(i + 0.5) * (100 / count)}% + ${jitter / 10}em)`;
     hole.style.width = (w / 10) + 'em';
     hole.style.height = (h / 10) + 'em';
@@ -246,28 +246,31 @@ function buildFilmTopEdge(sheet, rowIndex, cols, rowStartSlot) {
   return edge;
 }
 
-function buildFilmBottomEdge(sheet, rowIndex, cols, rowStartSlot, filmStock) {
+function buildFilmBottomEdge(sheet, rowIndex, cols, rowStartSlot, filmStock, options = {}) {
   const seed = sheetSeed(sheet, rowIndex) + 500;
   const edge = document.createElement('div');
   edge.className = 'film-edge film-edge--bottom';
 
-  const meta = document.createElement('div');
-  meta.className = 'film-meta-row film-meta-row--bottom';
-  meta.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  if (options.mode !== 'live') {
+    const meta = document.createElement('div');
+    meta.className = 'film-meta-row film-meta-row--bottom';
+    meta.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
-  for (let col = 0; col < cols; col++) {
-    const cell = document.createElement('div');
-    cell.className = 'film-meta-cell film-meta-cell--kodak';
+    for (let col = 0; col < cols; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'film-meta-cell film-meta-cell--kodak';
 
-    const brand = document.createElement('span');
-    brand.className = 'film-brand';
-    brand.textContent = filmStock;
+      const brand = document.createElement('span');
+      brand.className = 'film-brand';
+      brand.textContent = filmStock;
 
-    cell.appendChild(brand);
-    meta.appendChild(cell);
+      cell.appendChild(brand);
+      meta.appendChild(cell);
+    }
+
+    edge.appendChild(meta);
   }
 
-  edge.appendChild(meta);
   edge.appendChild(buildSprocketRow(seed, 'bottom'));
   return edge;
 }
@@ -298,6 +301,13 @@ function buildContactFrameElement(frameData, slot, options = {}) {
       img.src = mediaSrc(frameData.src);
     }
     media.appendChild(img);
+    attachBrokenImageHandler(img, () => {
+      media.remove();
+      frame.className = 'contact-frame empty';
+      if (frameData?.src && typeof options.onBrokenSrc === 'function') {
+        options.onBrokenSrc(frameData.src, slot);
+      }
+    });
     frame.appendChild(media);
 
     if (mode === 'organizer') {
@@ -498,7 +508,7 @@ function buildContactSheetBody(sheet, options = {}) {
     }
     strip.appendChild(rowEl);
 
-    strip.appendChild(buildFilmBottomEdge(sheet, row, cols, rowStartSlot, filmStock));
+    strip.appendChild(buildFilmBottomEdge(sheet, row, cols, rowStartSlot, filmStock, options));
     body.appendChild(strip);
   }
 

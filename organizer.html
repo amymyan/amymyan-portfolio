@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>organizer (private) — Amy Myan</title>
 <link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/contact-sheet.css?v=20260718c">
+<link rel="stylesheet" href="css/contact-sheet.css?v=20260720zk">
 <style>
   body{ padding-bottom:4rem; }
   body.organizer .site-nav{ backdrop-filter:none; }
@@ -37,6 +37,22 @@
     border:1px solid var(--ink); border-radius:8px; background:var(--paper);
   }
 
+  .panel.is-hidden{ display:none; }
+
+  .organizer-nav{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    flex-wrap:wrap;
+    margin:0 0 1.5rem;
+    padding-bottom:1.25rem;
+    border-bottom:1px solid var(--line);
+  }
+  .organizer-nav label{
+    font-family:var(--mono);
+    font-size:0.78rem;
+  }
+
   .panel{ display:block; }
 
   .mini-board{
@@ -65,6 +81,109 @@
     background:rgba(232,143,178,0.15);
     pointer-events:none;
     z-index:500;
+  }
+
+  .home-roll-panel{
+    margin-bottom:2rem;
+    padding-bottom:1.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .home-roll-panel:last-child{ border-bottom:none; }
+  .home-roll-head h3{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:1.15rem;
+    margin:0 0 0.2rem;
+  }
+  .home-roll-meta{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    opacity:0.55;
+    margin:0 0 0.85rem;
+  }
+  .home-roll-current{
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    margin-bottom:0.85rem;
+  }
+  .home-roll-current img{
+    width:120px;
+    height:80px;
+    object-fit:cover;
+    border:2px solid var(--ink);
+  }
+  .home-roll-label{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    opacity:0.55;
+  }
+  .home-roll-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(88px, 1fr));
+    gap:0.5rem;
+  }
+  .home-roll-pick{
+    padding:0;
+    border:2px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    background:var(--paper);
+    aspect-ratio:3/2;
+  }
+  .home-roll-pick img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .home-roll-pick.is-cover{
+    border-color:var(--flash);
+    box-shadow:0 0 0 2px rgba(232,143,178,0.35);
+  }
+  .home-roll-pick.is-scrub:not(.is-cover){
+    border-color:var(--ink);
+    outline:2px dashed rgba(10,8,6,0.35);
+    outline-offset:-4px;
+  }
+  .home-roll-scrub-meta{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    opacity:0.65;
+    margin:0 0 0.75rem;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.75rem;
+    flex-wrap:wrap;
+  }
+  .home-roll-scrub-clear{
+    font-family:var(--mono);
+    font-size:0.68rem;
+    padding:0.15rem 0.45rem;
+    opacity:0.85;
+  }
+  .home-roll-scrub-clear:disabled{
+    opacity:0.35;
+    cursor:default;
+  }
+  .home-roll-scrub-count{
+    opacity:1;
+    font-weight:600;
+  }
+  .home-roll-empty,
+  .home-roll-loading,
+  .home-roll-cover-missing{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    opacity:0.6;
+  }
+  .home-roll-cover-missing{
+    opacity:0.75;
+    max-width:140px;
+    line-height:1.4;
   }
   .snap-guides{
     position:absolute;
@@ -266,21 +385,32 @@
 
 <div id="app" style="display:none;">
 
-  <!-- All content pages share one board editor. Each page maps to
-       data/<name>.json + assets/<name>/. Files dropped into the
-       assets folder are picked up automatically on connect or via
-       "sync from folder". -->
-  <section id="panel-boards" class="panel">
-    <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-      <label style="font-family:var(--mono); font-size:0.78rem;">page:</label>
-      <select id="board-select">
-        <option value="music">music</option>
-        <option value="portrait">portrait</option>
-        <option value="video">video</option>
-        <option value="projects">projects (listing page)</option>
-        <option value="project-example">project: example</option>
-      </select>
+  <div class="organizer-nav">
+    <label for="organizer-section-select">section:</label>
+    <select id="organizer-section-select">
+      <option value="home">homepage filmstrip</option>
+      <option value="music">music</option>
+      <option value="portrait">portrait</option>
+      <option value="video">video</option>
+    </select>
+  </div>
+
+  <section id="panel-home" class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:0.35rem;">
+      <h2 style="font-family:var(--display);font-weight:400;font-size:1.45rem;margin:0;">homepage filmstrip</h2>
+      <button type="button" id="home-roll-refresh-btn" class="ghost" style="font-family:var(--mono);font-size:0.72rem;">refresh covers</button>
     </div>
+    <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin:0 0 1.25rem;">
+      pick <strong>1 cover</strong> and up to <strong>5 scrub photos</strong> per roll (3 is the sweet spot for smooth motion).
+      click = cover · shift+click = scrub. order: music → portraits → video.
+    </p>
+    <div id="home-roll-panels">
+      <p class="home-roll-loading">connect your project folder above to load cover options…</p>
+    </div>
+  </section>
+
+  <!-- Page board editor — music, portrait, video -->
+  <section id="panel-boards" class="panel is-hidden">
     <p id="boards-music-hint" style="display:none;font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin-bottom:0.75rem;">
       <strong>music library — two ways photos get in:</strong><br>
       1. <em>local folder</em> — copy/download files into <code>assets/music/</code> on your computer, then click <em>refresh library</em> or <em>sync from folder</em><br>
@@ -321,11 +451,13 @@
 </div>
 
 <script src="js/config.js"></script>
-<script src="js/media.js?v=20260718g"></script>
-<script src="js/contact-sheet.js?v=20260718g"></script>
-<script src="js/organizer.js?v=20260718h"></script>
+<script src="js/amy-media.js?v=20260720zn"></script>
+<script src="js/contact-sheet.js?v=20260720zk"></script>
+<script src="js/organizer.js?v=20260720y"></script>
 <script src="js/organizer-preview.js"></script>
-<script src="js/organizer-contact.js?v=20260718h"></script>
+<script src="js/organizer-contact.js?v=20260720v"></script>
+<script src="js/home-data.js?v=20260720z"></script>
+<script src="js/organizer-home.js?v=20260720zo"></script>
 <script src="js/galaxy.js" defer></script>
 </body>
 </html>

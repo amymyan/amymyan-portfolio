@@ -16,6 +16,19 @@ function mediaSrc(path) {
   return base ? base + '/' + encoded.replace(/^\//, '') : encoded;
 }
 
+/* Optional CDN resize for scrub frames — set in config.js, e.g.
+   window.SCRUB_IMAGE_CDN_PARAMS = 'width=480,quality=55,format=auto';
+   Only works if your media host supports /cdn-cgi/image/… URLs. */
+function mediaSrcScrub(path) {
+  const params = window.SCRUB_IMAGE_CDN_PARAMS;
+  if (!path || !params || !window.MEDIA_BASE_URL) return null;
+  if (/^https?:\/\//i.test(path)) return null;
+
+  const base = window.MEDIA_BASE_URL.replace(/\/$/, '');
+  const encoded = path.split('/').map(part => encodeURIComponent(part)).join('/');
+  return base + '/cdn-cgi/image/' + params + '/' + encoded.replace(/^\//, '');
+}
+
 function normalizeWidthPercent(value, referenceWidthPx = 1200) {
   if (value == null || value === '') return DEFAULT_WIDTH_PERCENT;
   const n = Number(value);
@@ -429,4 +442,52 @@ function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIf
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
+}
+
+function probeMediaSrc(path, { timeoutMs = 10000 } = {}) {
+  if (!path?.trim()) return Promise.resolve(false);
+  /* Video files can't be probed with Image — never treat them as broken here. */
+  if (isVideoPath(path)) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    const img = new Image();
+    img.onload = () => finish(img.naturalWidth > 0);
+    img.onerror = () => finish(false);
+    img.src = mediaSrc(path);
+  });
+}
+
+async function filterLoadableSrcs(srcs, { concurrency = 6, timeoutMs = 10000 } = {}) {
+  const list = [...new Set((srcs || []).filter(Boolean))];
+  if (!list.length) return new Set();
+
+  const loadable = new Set();
+  let cursor = 0;
+
+  async function worker() {
+    while (cursor < list.length) {
+      const src = list[cursor++];
+      if (await probeMediaSrc(src, { timeoutMs })) loadable.add(src);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, list.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return loadable;
+}
+
+function attachBrokenImageHandler(img, onBroken) {
+  if (!img || typeof onBroken !== 'function') return;
+  img.addEventListener('error', () => onBroken(), { once: true });
 }

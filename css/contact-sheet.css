@@ -1,4 +1,4 @@
-/* Contact sheet — Kodak Portra 400 style (music page + organizer) */
+/* Contact sheet — film edge styling (music page + organizer) */
 
 .contact-sheet-board{
   position:relative;
@@ -71,11 +71,11 @@
 }
 
 .sprocket-row--top{
-  border-bottom:1px solid rgba(255,140,40,0.12);
+  border-bottom:1px solid rgba(255,255,255,0.22);
 }
 
 .sprocket-row--bottom{
-  border-top:1px solid rgba(255,140,40,0.12);
+  border-top:1px solid rgba(255,255,255,0.22);
 }
 
 .sprocket-row--top .sprocket-hole{
@@ -92,12 +92,12 @@
 .sprocket-hole{
   position:absolute;
   background:#050403;
-  border:0.1em solid rgba(255,153,51,0.45);
+  border:0.1em solid rgba(255,255,255,0.5);
   border-radius:0.2em;
   box-shadow:
     inset 0 0 0.3em rgba(0,0,0,1),
-    inset 0 -0.1em 0 rgba(255,153,51,0.35),
-    0 0 0.4em rgba(255,120,30,0.15);
+    inset 0 -0.1em 0 rgba(255,255,255,0.35),
+    0 0 0.4em rgba(255,255,255,0.15);
 }
 
 .film-meta-row{
@@ -149,8 +149,8 @@
   font-size:4.5px;
   font-weight:700;
   letter-spacing:0.14em;
-  color:#ff9933;
-  text-shadow:0 0 4px rgba(255,153,51,0.5);
+  color:var(--flash);
+  text-shadow:0 0 4px rgba(232,143,178,0.55);
   text-transform:uppercase;
   text-align:center;
   white-space:nowrap;
@@ -169,9 +169,9 @@
 .film-barcode-bar{
   position:absolute;
   bottom:0;
-  background:#ff9933;
+  background:#fff;
   border-radius:0;
-  box-shadow:0 0 0.4em rgba(255,153,51,0.45);
+  box-shadow:0 0 0.4em rgba(255,255,255,0.4);
 }
 
 /* Show title under contact sheet (live site only — organizer uses edit bar) */
@@ -205,7 +205,7 @@
 
 .contact-frame.empty{
   background:#070707;
-  border:1px dashed rgba(201,120,66,0.2);
+  border:1px dashed rgba(232,143,178,0.35);
 }
 
 .organizer .contact-frame.empty{
@@ -221,7 +221,7 @@
   justify-content:center;
   font-family:var(--mono);
   font-size:0.65rem;
-  color:rgba(201,120,66,0.45);
+  color:rgba(232,143,178,0.55);
   pointer-events:none;
 }
 
@@ -258,7 +258,7 @@
   z-index:10000;
   pointer-events:none;
   background:#000;
-  border:2px solid #c97842;
+  border:2px solid var(--flash);
   box-shadow:0 16px 48px rgba(0,0,0,0.72);
   overflow:hidden;
   visibility:hidden;

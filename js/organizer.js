@@ -268,6 +268,99 @@ async function syncBoardWithFolder(pageName, boardData) {
   return { data: synced, added, unsupported };
 }
 
+async function purgeBrokenBoardSrc(src, { pageName = currentBoard, announce = true } = {}) {
+  if (!src || !rootHandle) return false;
+
+  const filename = filenameFromSrc(src);
+  /* Don't block-list video files removed by a mistaken poster/image probe. */
+  if (filename && !(pageName === 'video' && isVideoPath(src))) {
+    await addToIgnoreList(pageName, filename);
+  }
+
+  let changed = false;
+
+  if (isContactSheetPage(pageName)) {
+    getMusicSheetsArray().forEach(sheet => {
+      const before = (sheet.frames || []).length;
+      sheet.frames = (sheet.frames || []).filter(f => f.src !== src);
+      if (sheet.frames.length !== before) changed = true;
+    });
+
+    if (filename && typeof readMusicLibraryRegistry === 'function') {
+      const registry = await readMusicLibraryRegistry();
+      const next = registry.filter(f => f !== filename);
+      if (next.length !== registry.length) {
+        await saveMusicLibraryRegistry(next);
+        changed = true;
+      }
+    }
+
+    if (typeof selectedLibrarySrcs !== 'undefined') selectedLibrarySrcs.delete(src);
+
+    if (changed) {
+      await saveBoardData();
+      renderBoardMini();
+      if (typeof refreshMusicLibrary === 'function') await refreshMusicLibrary();
+    } else if (filename && typeof refreshMusicLibrary === 'function') {
+      await refreshMusicLibrary();
+    }
+  } else {
+    boardData = boardData.map(p => {
+      if (p.poster === src && p.src !== src) {
+        changed = true;
+        const next = { ...p };
+        delete next.poster;
+        return next;
+      }
+      return p;
+    });
+    const before = boardData.length;
+    boardData = boardData.filter(p => p.src !== src);
+    changed = changed || boardData.length !== before;
+    if (changed) {
+      await saveBoardData();
+      renderBoardMini();
+    }
+  }
+
+  if (changed && announce) {
+    setStatus('removed broken image from ' + pageName + ' \u2713');
+  }
+  return changed;
+}
+
+async function loadHomeCoverPanel() {
+  const container = document.getElementById('home-roll-panels');
+  if (!container) return;
+
+  if (typeof initHomePanel !== 'function') {
+    container.innerHTML =
+      '<p class="home-roll-empty">cover picker didn\u2019t load — hard refresh (Cmd+Shift+R). ' +
+      'You need <code>js/home-data.js</code> and <code>js/organizer-home.js</code>.</p>';
+    return;
+  }
+
+  try {
+    await initHomePanel();
+  } catch (err) {
+    console.error(err);
+    container.innerHTML =
+      '<p class="home-roll-empty">error loading covers: ' + (err.message || err) + '</p>';
+  }
+}
+
+const homeRollRefreshBtn = document.getElementById('home-roll-refresh-btn');
+if (homeRollRefreshBtn) {
+  homeRollRefreshBtn.addEventListener('click', async () => {
+    if (!rootHandle) {
+      setStatus('connect your project folder first.');
+      return;
+    }
+    await initHomePanel({ pruneBroken: true });
+    setStatus('homepage covers refreshed \u2713');
+  });
+}
+
 /* ---------------- connect ---------------- */
 
 document.getElementById('connect-btn').addEventListener('click', async () => {
@@ -279,7 +372,14 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
     rootHandle = await window.showDirectoryPicker();
     setStatus('connected to: ' + rootHandle.name);
     document.getElementById('app').style.display = 'block';
-    await initBoardsPanel();
+    initOrganizerSections();
+    try {
+      await initBoardsPanel();
+    } catch (err) {
+      console.error(err);
+      setStatus('boards error: ' + (err.message || err));
+    }
+    await loadHomeCoverPanel();
   } catch (err) {
     if (err && err.name === 'AbortError') {
       setStatus('connection cancelled.');
@@ -299,6 +399,83 @@ document.getElementById('connect-btn').addEventListener('click', async () => {
 
 let boardData = [];
 let currentBoard = 'music';
+let currentOrganizerSection = 'home';
+
+function isBoardSection(section) {
+  return section === 'music' || section === 'portrait' || section === 'video';
+}
+
+function showOrganizerSection(section) {
+  currentOrganizerSection = section;
+  const homePanel = document.getElementById('panel-home');
+  const boardsPanel = document.getElementById('panel-boards');
+  const select = document.getElementById('organizer-section-select');
+
+  if (select && select.value !== section) select.value = section;
+
+  if (section === 'home') {
+    homePanel?.classList.remove('is-hidden');
+    boardsPanel?.classList.add('is-hidden');
+    return;
+  }
+
+  homePanel?.classList.add('is-hidden');
+  boardsPanel?.classList.remove('is-hidden');
+}
+
+async function switchBoardPage(pageName) {
+  currentBoard = pageName;
+  const { data, added, unsupported } = await loadAndSyncBoard(pageName);
+  boardData = data;
+  await pruneBrokenPageSources(pageName);
+  reportSyncStatus(added, unsupported);
+  renderBoardMini();
+  updateUndoButton();
+}
+
+async function pruneBrokenPageSources(pageName) {
+  if (!rootHandle || typeof filterLoadableSrcs !== 'function') return;
+
+  let srcs = [];
+  if (isContactSheetPage(pageName)) {
+    srcs = getMusicSheetsArray().flatMap(s => (s.frames || []).map(f => f.src).filter(Boolean));
+  } else if (pageName === 'video') {
+    /* Posters are images; video files can't be probed as images. */
+    srcs = boardData.map(p => p.poster).filter(Boolean);
+  } else {
+    srcs = boardData.map(p => p.src).filter(Boolean);
+  }
+  if (!srcs.length) return;
+
+  const loadable = await filterLoadableSrcs(srcs);
+  const broken = [...new Set(srcs.filter(src => !loadable.has(src)))];
+  if (!broken.length) return;
+
+  for (const src of broken) {
+    await purgeBrokenBoardSrc(src, { pageName, announce: false });
+  }
+  setStatus('removed ' + broken.length + ' broken image(s) from ' + pageName + ' \u2713');
+}
+
+async function switchOrganizerSection(section) {
+  showOrganizerSection(section);
+  if (section === 'home') {
+    await loadHomeCoverPanel();
+  } else if (isBoardSection(section)) {
+    await switchBoardPage(section);
+  }
+}
+
+function initOrganizerSections() {
+  const select = document.getElementById('organizer-section-select');
+  if (!select || select.dataset.bound) return;
+  select.dataset.bound = '1';
+  select.value = currentOrganizerSection;
+  showOrganizerSection(currentOrganizerSection);
+  select.addEventListener('change', async () => {
+    await switchOrganizerSection(select.value);
+  });
+}
 const undoStacks = {};
 const MAX_UNDO = 50;
 let recordingUndo = true;
@@ -372,21 +549,7 @@ function reportSyncStatus(added, unsupported) {
 }
 
 async function initBoardsPanel() {
-  const select = document.getElementById('board-select');
-  select.value = currentBoard;
-  select.onchange = async () => {
-    currentBoard = select.value;
-    const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
-    boardData = data;
-    reportSyncStatus(added, unsupported);
-    renderBoardMini();
-    updateUndoButton();
-  };
-
-  const { data, added, unsupported } = await loadAndSyncBoard(currentBoard);
-  boardData = data;
-  reportSyncStatus(added, unsupported);
-  renderBoardMini();
+  await switchBoardPage(currentBoard);
 
   document.getElementById('boards-sync-btn').onclick = async () => {
     if (isContactSheetPage(currentBoard)) {
@@ -533,18 +696,29 @@ function renderBoardMini() {
 
     if (photo.src) {
       if (isVideoFile(photo.src)) {
+        const showPosterFallback = () => {
+          if (!photo.poster) return;
+          const img = document.createElement('img');
+          setOrganizerPreviewImg(img, photo.poster, ORGANIZER_THUMB_POLAROID);
+          img.alt = photo.caption || 'video thumbnail';
+          mediaWrap.replaceChildren(img);
+        };
+
         const v = document.createElement('video');
         v.src = mediaSrc(photo.src);
         v.muted = true;
         if (photo.poster) v.poster = mediaSrc(photo.poster);
         v.addEventListener('loadedmetadata', () => requestAnimationFrame(refit));
-        v.addEventListener('error', () => el.remove());
+        v.addEventListener('error', showPosterFallback);
         mediaWrap.appendChild(v);
       } else {
         const img = document.createElement('img');
         setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_POLAROID);
         img.addEventListener('load', () => requestAnimationFrame(refit));
-        img.addEventListener('error', () => el.remove());
+        attachBrokenImageHandler(img, async () => {
+          el.remove();
+          await purgeBrokenBoardSrc(photo.src);
+        });
         mediaWrap.appendChild(img);
       }
     } else {
@@ -618,26 +792,6 @@ function renderBoardMini() {
 
     if (photo.src && isVideoFile(photo.src)) {
       appendVideoPosterControls(editBar, photo, mediaWrap.querySelector('video'));
-    }
-
-    /* ---- href (projects listing only) ----
-       If this board is the projects listing page, show a small
-       text field for which project page this cover links to. */
-    if (currentBoard === 'projects') {
-      const hrefRow = document.createElement('input');
-      hrefRow.type = 'text';
-      hrefRow.value = photo.href || '';
-      hrefRow.placeholder = 'links to: project-example.html';
-      hrefRow.style.cssText = 'font-size:0.55rem;padding:2px 4px;font-family:var(--mono);width:100%;box-sizing:border-box;';
-      hrefRow.addEventListener('blur', async () => {
-        const next = hrefRow.value.trim();
-        if (next === (photo.href || '')) return;
-        pushUndoSnapshot();
-        photo.href = next;
-        await saveBoardData();
-        setStatus('saved \u2713');
-      });
-      editBar.appendChild(hrefRow);
     }
 
     el.appendChild(editBar);

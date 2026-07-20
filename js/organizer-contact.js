@@ -264,6 +264,12 @@ function renderMusicLibrary(forceRebuild = false) {
     img.decoding = 'async';
     item.appendChild(img);
 
+    attachBrokenImageHandler(img, async () => {
+      item.remove();
+      selectedLibrarySrcs.delete(src);
+      await purgeBrokenBoardSrc(src, { pageName: 'music' });
+    });
+
     const label = document.createElement('span');
     label.className = 'library-label';
     label.textContent = filename;
@@ -401,6 +407,9 @@ function sheetBodyOptions(sheet, refit, mediaWrapRef) {
       await saveBoardData();
       updateLibraryItemStates();
       setStatus('photo removed from sheet \u2713');
+    },
+    onBrokenSrc: async (src) => {
+      await purgeBrokenBoardSrc(src, { pageName: 'music' });
     },
     onFrameClick: async (slot) => {
       if (!selectedLibrarySrcs.size) {

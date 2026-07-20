@@ -6,142 +6,67 @@
 <title>Amy Myan</title>
 <meta name="description" content="Amy Myan — photographer based in Los Angeles, CA">
 <link rel="stylesheet" href="css/style.css">
-<style>
-  /* ============================================================
-     HOME PAGE — 2x2 photo grid
-     ============================================================
-     Four tiles, each linking to one section of the site. Each
-     tile is one photo + one left-aligned caption underneath it.
-
-     --home-gutter controls ALL the spacing at once — the gap
-     between the 2 columns/rows AND the space on the left/right
-     edges of the screen. Because both use the same variable,
-     the spacing stays equal on both sides and in the middle no
-     matter what number you pick. Raise it for more breathing
-     room between photos, lower it to pack them tighter.
-     ============================================================ */
-
-  .home-grid{
-    --home-gutter: clamp(1.5rem, 4vw, 4rem);
-
-    display:grid;
-    grid-template-columns:1fr 1fr;   /* 2 columns = 2x2 layout */
-    gap:var(--home-gutter);
-    width:100%;                      /* full width of the screen, not a
-                                           narrow centered column anymore */
-    margin:2.5rem 0;
-    padding:0 var(--home-gutter);    /* same spacing as the gap above,
-                                           so the left/right edges match
-                                           the middle gap exactly */
-  }
-
-  /* On narrow phone screens, stack into a single column instead
-     of squeezing 2 tiny columns side by side. */
-  @media (max-width:560px){
-    .home-grid{ grid-template-columns:1fr; }
-  }
-
-  .home-tile{
-    display:block;
-  }
-
-  .home-tile-photo{
-    aspect-ratio:1/1;         /* keeps each tile square — change to
-                                   4/5 or 3/4 for a taller rectangle */
-    background:var(--line);  /* light gray shown until you add a photo */
-    overflow:hidden;
-  }
-
-  .home-tile-photo img{
-    width:100%;
-    height:100%;
-    object-fit:cover;         /* fills the square without stretching */
-    display:block;
-    transition:opacity 0.2s ease;
-  }
-
-  .home-tile:hover .home-tile-photo img{ opacity:0.85; }
-
-  .home-tile-caption{
-    text-align:left;          /* caption sits left-aligned under the photo */
-    font-family:var(--mono);
-    font-size:1.25rem;        /* bumped up from 0.85rem so captions read
-                                   clearly against the bigger photos */
-    padding:0.75rem 0 0;
-  }
-</style>
+<link rel="stylesheet" href="css/home-filmstrip.css?v=20260720zh">
 </head>
 <body>
 
 <nav class="site-nav">
-  <a class="wordmark" href="index.html"><span class="spark">✮⋆˙</span> AMY MYAN <span class="spark">˙⋆✮</span></a>
+  <a class="wordmark" href="index.html"><span class="wordmark-deco">✮⋆˙</span> <span class="wordmark-name">Amy Myan</span> <span class="wordmark-deco">˙⋆✮</span></a>
   <div class="nav-links">
-    <a href="music.html" aria-current="false">music</a>
+    <a href="music.html">music</a>
     <a href="video.html">video</a>
     <a href="portrait.html">portraits</a>
-    <a href="projects.html">projects</a>
     <a href="about.html">about</a>
   </div>
 </nav>
 
-<!-- ============================================================
-     Each tile below points at a fixed image file:
-       assets/home/music.jpg
-       assets/home/portrait.jpg
-       assets/home/projects.jpg
-       assets/home/video.jpg
-     Just save your photo with that exact name into assets/home/
-     (overwriting the old one) — no organizer tool needed for
-     these 4, since there's always exactly one photo per tile.
-     If the file doesn't exist yet, the tile just shows a plain
-     gray box instead of a broken image icon.
-     ============================================================ -->
+<main id="home-film" class="home-film">
+  <p class="home-film-loading">loading film…</p>
 
-<div class="home-grid">
-
-  <a class="home-tile" href="music.html">
-    <div class="home-tile-photo">
-      <img src="assets/home/music.jpg" alt="music"
-           onerror="this.style.display='none'">
+  <div class="home-film-stage">
+    <div class="home-film-assembly">
+      <div class="home-film-viewport">
+        <div class="home-film-gate-mark" aria-hidden="true"></div>
+        <div class="home-film-roll">
+          <div class="home-film-track">
+            <div class="home-film-edge home-film-edge--top">
+              <div class="home-film-sprocket home-film-sprocket--top" aria-hidden="true"></div>
+            </div>
+            <div class="home-film-strip" aria-live="polite"></div>
+            <div class="home-film-edge home-film-edge--bottom">
+              <div class="home-film-sprocket home-film-sprocket--bottom" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <p class="home-tile-caption">live music ♪‧₊˚</p>
-  </a>
 
-  <a class="home-tile" href="portrait.html">
-    <div class="home-tile-photo">
-      <img src="assets/home/portrait.jpg" alt="portrait"
-           onerror="this.style.display='none'">
+    <div class="home-film-controls">
+      <button type="button" class="home-film-advance" aria-label="Advance to next section">
+        <span class="home-film-advance-label">next section</span>
+        <span class="home-film-advance-arrow" aria-hidden="true">→</span>
+      </button>
     </div>
-    <p class="home-tile-caption">portraits ✶⋆.˚</p>
-  </a>
+  </div>
 
-  <a class="home-tile" href="projects.html">
-    <div class="home-tile-photo">
-      <img src="assets/home/projects.jpg" alt="projects"
-           onerror="this.style.display='none'">
-    </div>
-    <p class="home-tile-caption">projects ˚˙✧˖⋆</p>
-  </a>
-
-  <a class="home-tile" href="video.html">
-    <div class="home-tile-photo">
-      <img src="assets/home/video.jpg" alt="video"
-           onerror="this.style.display='none'">
-    </div>
-    <p class="home-tile-caption">video ˚˖𓍢ִ໋❀</p>
-  </a>
-
-</div>
+  <div class="home-film-grain" aria-hidden="true"></div>
+</main>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy Myan</span>
   <span>
     <a href="http://instagram.com/amymyan" target="_blank" rel="noopener">instagram</a>
     &nbsp;·&nbsp;
-    <a href="mailto:amymyant@gmail.com">email</a>
+    <a href="mailto:hello@amymyan.com">email</a>
   </span>
 </footer>
 
+<script src="js/config.js"></script>
+<script src="js/amy-media.js?v=20260720zn"></script>
+<script src="js/home-data.js?v=20260720z"></script>
+<script src="js/home-scrub-images.js?v=20260720z"></script>
+<script src="js/home-film-sound.js?v=20260720k"></script>
+<script src="js/home-filmstrip.js?v=20260720zh"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="js/galaxy.js" defer></script>
 </body>

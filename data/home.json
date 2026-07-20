@@ -1,0 +1,33 @@
+{
+  "rolls": [
+    {
+      "id": "music",
+      "href": "music.html",
+      "title": "live music ♪‧₊˚",
+      "coverSrc": "assets/music/DSC04876.jpg",
+      "scrubSrcs": [
+        "assets/music/DSC09616.jpg",
+        "assets/music/IMG_4376.jpg",
+        "assets/music/DSC03802.jpg",
+        "assets/music/DSC04736.jpg",
+        "assets/music/DSC03761.jpg"
+      ]
+    },
+    {
+      "id": "portrait",
+      "href": "portrait.html",
+      "title": "portraits ✶⋆.˚",
+      "coverSrc": "assets/home/portrait.jpg",
+      "scrubSrcs": []
+    },
+    {
+      "id": "video",
+      "href": "video.html",
+      "title": "video ˚˖𓍢ִ໋❀",
+      "coverSrc": "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png",
+      "scrubSrcs": [
+        "assets/video/Screenshot 2026-07-15 at 2.04.14 AM.png"
+      ]
+    }
+  ]
+}

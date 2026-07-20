@@ -19,6 +19,59 @@ function showBoardError(messageHtml) {
   boardEl.innerHTML = '<p class="board-error">' + messageHtml + '</p>';
 }
 
+function localServerHelpHtml() {
+  return (
+    'start a local server in your project folder, then open the site in your browser:<br>' +
+    '<code>python3 -m http.server 8000</code><br><br>' +
+    'then go to <strong>http://localhost:8000/music.html</strong> (not the file in Finder)'
+  );
+}
+
+function describeSheetLoadError(err) {
+  if (window.location.protocol === 'file:') {
+    return (
+      'photos can\u2019t load when you double-click an html file.<br><br>' +
+      localServerHelpHtml()
+    );
+  }
+  const missing = [];
+  if (typeof normalizeWidthPercent !== 'function' || typeof mediaSrc !== 'function') {
+    missing.push('js/amy-media.js');
+  }
+  if (typeof getContactSheets !== 'function') {
+    missing.push('js/contact-sheet.js');
+  }
+  if (missing.length) {
+    return (
+      'a required script didn\u2019t load: <code>' + missing.join('</code>, <code>') + '</code>.<br><br>' +
+      'this often happens when an ad blocker blocks a file name. try disabling extensions for localhost, or hard-refresh (<code>cmd+shift+r</code>).'
+    );
+  }
+  const msg = err?.message || String(err || 'unknown error');
+  if (msg.includes('404') || msg.includes(' returned 404')) {
+    return (
+      'couldn\u2019t find <code>' + DATA_SOURCE + '</code> (404).<br><br>' +
+      'start the server from the portfolio folder, not a parent folder:<br>' +
+      localServerHelpHtml() +
+      '<br><br><small>' + msg + '</small>'
+    );
+  }
+  if (err instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(msg)) {
+    return (
+      'couldn\u2019t reach <code>' + DATA_SOURCE + '</code>.<br><br>' +
+      'if <code>python3 -m http.server 8000</code> says \u201caddress already in use\u201d, try port 8080 instead:<br>' +
+      '<code>python3 -m http.server 8080</code><br><br>' +
+      'then open <strong>http://localhost:8080/music.html</strong><br><br>' +
+      '<small>' + msg + '</small>'
+    );
+  }
+  return (
+    'couldn\u2019t load photos from <code>' + DATA_SOURCE + '</code>.<br><br>' +
+    localServerHelpHtml() +
+    '<br><br><small>' + msg + '</small>'
+  );
+}
+
 function isNarrowScreen() {
   return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
 }
@@ -269,12 +322,13 @@ async function initBoard() {
   initHoverPreview();
 
   if (window.location.protocol === 'file:') {
-    showBoardError(
-      'photos can\u2019t load when you double-click an html file.<br><br>' +
-      'start a local server in your project folder, then open the site in your browser:<br>' +
-      '<code>python3 -m http.server 8000</code><br><br>' +
-      'then go to <strong>http://localhost:8000</strong>'
-    );
+    showBoardError(describeSheetLoadError({}));
+    return;
+  }
+
+  const preloadError = describeSheetLoadError(null);
+  if (typeof normalizeWidthPercent !== 'function' || typeof getContactSheets !== 'function') {
+    showBoardError(preloadError);
     return;
   }
 
@@ -283,10 +337,7 @@ async function initBoard() {
     renderBoard();
   } catch (err) {
     console.error('Contact sheet load failed:', err);
-    showBoardError(
-      'couldn\u2019t load photos from <code>' + DATA_SOURCE + '</code>.<br><br>' +
-      'open the site through a local server (not by double-clicking the html file).'
-    );
+    showBoardError(describeSheetLoadError(err));
     return;
   }
 
