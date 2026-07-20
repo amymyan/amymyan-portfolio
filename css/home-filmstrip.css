@@ -89,6 +89,11 @@
   width: max-content;
   will-change: transform;
   backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.home-film-track.is-scrubbing {
+  will-change: transform;
 }
 
 .home-film-edge {
@@ -172,6 +177,10 @@
 
 .home-film-frame.is-cover {
   z-index: 2;
+}
+
+.home-film-frame--loop-clone .home-film-cover-link {
+  pointer-events: none;
 }
 
 /* 35mm — landscape 3:2 */

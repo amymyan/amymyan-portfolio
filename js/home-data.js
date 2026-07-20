@@ -161,9 +161,6 @@ function buildStripFrames(rolls) {
       href: roll.href,
       title: roll.title
     });
-    for (const src of roll.scrub) {
-      frames.push({ src, rollId: roll.id, isCover: false });
-    }
   }
 
   return { frames, coverIndices };

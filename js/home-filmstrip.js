@@ -1,4 +1,4 @@
-/* Homepage filmstrip — advance, scrub, cover gate */
+/* Homepage filmstrip — advance cover to cover */
 
 (function initHomeFilmstrip() {
   const root = document.getElementById('home-film');
@@ -26,23 +26,15 @@
   let lastScrubbing = false;
   let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function easeScrub(t) {
-    /* Smooth ease — gentle start, steady scrub, soft land on cover */
-    if (t < 0.12) {
-      const p = t / 0.12;
-      return p * p * 0.06;
-    }
-    if (t < 0.82) {
-      const p = (t - 0.12) / 0.7;
-      const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-      return 0.06 + eased * 0.86;
-    }
-    const p = (t - 0.82) / 0.18;
-    return 0.92 + (1 - Math.pow(1 - p, 3)) * 0.08;
+  function easeAdvance(t) {
+    if (t >= 1) return 1;
+    const smooth = t * t * (3 - 2 * t);
+    return t * 0.62 + smooth * 0.38;
   }
 
-  function scrubDurationForFrames(frameCount) {
-    return Math.min(2400, 720 + frameCount * 55);
+  function advanceDuration(steps) {
+    const n = Math.max(1, Math.abs(steps));
+    return Math.min(1800, 720 + n * 320);
   }
 
   function seededNoise(seed) {
@@ -115,7 +107,7 @@
       frameStep = parseFloat(style.getPropertyValue('--frame-w')) || rollEl.clientWidth;
       return frameStep;
     }
-    frameStep = first.offsetWidth;
+    frameStep = first.getBoundingClientRect().width;
     return frameStep;
   }
 
@@ -135,18 +127,22 @@
       lastScrubbing = scrubbing;
     }
 
-    const rounded = Math.round(index);
-    if (rounded !== lastActiveIndex) {
-      if (lastActiveIndex >= 0 && frameEls[lastActiveIndex]) {
-        frameEls[lastActiveIndex].classList.remove('is-active');
+    if (!scrubbing) {
+      const rounded = Math.round(index);
+      if (rounded !== lastActiveIndex) {
+        if (lastActiveIndex >= 0 && frameEls[lastActiveIndex]) {
+          frameEls[lastActiveIndex].classList.remove('is-active');
+        }
+        if (frameEls[rounded] && coverIndices.includes(rounded)) {
+          frameEls[rounded].classList.add('is-active');
+        }
+        lastActiveIndex = rounded;
       }
-      if (frameEls[rounded] && frames[rounded]?.isCover) {
-        frameEls[rounded].classList.add('is-active');
-      }
-      lastActiveIndex = rounded;
+      gateMark.classList.toggle('is-link-ready', !animating);
+      return;
     }
 
-    gateMark.classList.toggle('is-link-ready', !animating && frames[rounded]?.isCover);
+    gateMark.classList.remove('is-link-ready');
   }
 
   function resetStripMotionState() {
@@ -155,48 +151,33 @@
     trackEl.classList.remove('is-scrubbing');
   }
 
-  function buildFrameEl(frame, index) {
+  function buildFrameEl(frame, index, { eager = false } = {}) {
     const frameEl = document.createElement('div');
-    frameEl.className = 'home-film-frame' + (frame.isCover ? ' is-cover' : '');
+    frameEl.className = 'home-film-frame is-cover';
     frameEl.dataset.index = index;
 
     const photo = document.createElement('div');
     photo.className = 'home-film-photo';
     const img = document.createElement('img');
-    img.alt = frame.isCover ? frame.title : '';
-
-    if (frame.isCover) {
-      img.src = mediaSrc(frame.src);
-      img.loading = 'eager';
-      img.fetchPriority = 'high';
-    } else {
-      img.loading = 'lazy';
-      img.dataset.scrubSrc = frame.src;
-      img.src = mediaSrc(frame.src);
-      if (typeof HomeScrubImages !== 'undefined') {
-        HomeScrubImages.resolveScrubUrl(frame.src).then((url) => {
-          if (url && url !== img.src) img.src = url;
-        });
-      }
-    }
-
+    img.alt = frame.title || '';
+    img.src = mediaSrc(frame.src);
+    img.loading = eager ? 'eager' : 'lazy';
+    if (eager) img.fetchPriority = 'high';
     img.decoding = 'async';
     photo.appendChild(img);
+
+    const link = document.createElement('a');
+    link.className = 'home-film-cover-link';
+    link.href = frame.href;
+    link.innerHTML = '<span class="home-film-cover-title">' + frame.title + '</span>';
+    photo.appendChild(link);
+
     frameEl.appendChild(photo);
-
-    if (frame.isCover) {
-      const link = document.createElement('a');
-      link.className = 'home-film-cover-link';
-      link.href = frame.href;
-      link.innerHTML = '<span class="home-film-cover-title">' + frame.title + '</span>';
-      photo.appendChild(link);
-    }
-
     return frameEl;
   }
 
   function decodeCoverImages() {
-    const imgs = stripEl.querySelectorAll('.home-film-frame.is-cover img');
+    const imgs = stripEl.querySelectorAll('.home-film-frame img');
     return Promise.all([...imgs].map((img) => {
       if (img.complete && img.naturalWidth > 0) {
         return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
@@ -212,87 +193,42 @@
     }));
   }
 
-  function queueAllScrubImages(priorityPaths = []) {
-    if (typeof HomeScrubImages === 'undefined') return;
-    priorityPaths.forEach((path) => HomeScrubImages.queue(path, { priority: true }));
-    frames.filter(f => !f.isCover).forEach((f) => {
-      if (!priorityPaths.includes(f.src)) HomeScrubImages.queue(f.src);
-    });
-  }
-
-  function warmRollImages(fromIndex, toIndex) {
-    if (fromIndex >= toIndex) return;
-    const paths = [];
-    for (let i = fromIndex + 1; i <= toIndex; i++) {
-      if (!frames[i]?.src || frames[i].isCover) continue;
-      paths.push(frames[i].src);
-    }
-    if (typeof HomeScrubImages !== 'undefined' && paths.length) {
-      HomeScrubImages.queueMany(paths, { priority: true });
-    }
-  }
-
-  function warmAdjacentRolls() {
-    const prevStart = coverIndices[currentRollIndex - 1];
-    const nextEnd = coverIndices[currentRollIndex + 1];
-    if (prevStart != null) warmRollImages(prevStart, currentIndex);
-    if (nextEnd != null) warmRollImages(currentIndex, nextEnd);
-  }
-
   function snapToCover(rollIndex) {
     currentRollIndex = rollIndex;
     currentIndex = coverIndices[rollIndex];
     setStripPosition(currentIndex);
-    warmAdjacentRolls();
   }
 
-  function finishAdvance(nextRoll, toIndex) {
-    if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.stopScrub();
+  function finishAdvance(nextRoll, toIndex, { snap = false } = {}) {
     currentRollIndex = nextRoll;
     currentIndex = toIndex;
     resetStripMotionState();
+    if (snap) trackEl.style.transition = 'none';
     setStripPosition(currentIndex);
+    if (snap) {
+      requestAnimationFrame(() => {
+        trackEl.style.transition = '';
+      });
+    }
     animating = false;
     advanceBtn.disabled = false;
-    warmAdjacentRolls();
-    if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.land();
   }
 
-  function animateLoopToStart(fromIndex) {
-    const scrubFrames = [];
-    for (let i = fromIndex + 1; i < frames.length; i++) {
-      if (frames[i].isCover) break;
-      scrubFrames.push(i);
-    }
-    if (!scrubFrames.length) {
-      for (let i = fromIndex - 1; i >= 0; i--) {
-        if (frames[i].isCover) break;
-        scrubFrames.push(i);
-      }
-    }
-
-    const endIndex = scrubFrames.length ? scrubFrames[scrubFrames.length - 1] : fromIndex;
-    warmRollImages(fromIndex, endIndex);
-
-    const frameCount = Math.max(1, endIndex - fromIndex);
-    const duration = scrubDurationForFrames(scrubFrames.length || 1);
+  function runAdvanceAnimation(fromIndex, toIndex, onComplete) {
+    measureFrameStep();
+    const frameCount = toIndex - fromIndex;
+    const duration = advanceDuration(frameCount);
     const start = performance.now();
-    if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.startScrub();
 
     function tick(now) {
       const t = Math.min(1, (now - start) / duration);
-      const pos = fromIndex + easeScrub(t) * frameCount;
-      setStripPosition(pos, { scrubbing: t > 0.08 && t < 0.94 });
-      if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.tickScrub(pos);
+      const pos = fromIndex + easeAdvance(t) * frameCount;
+      setStripPosition(pos, { scrubbing: t > 0.01 && t < 0.99 });
 
       if (t < 1) {
         requestAnimationFrame(tick);
       } else {
-        viewportEl.style.opacity = '0';
-        setTimeout(() => {
-          finishAdvance(0, coverIndices[0]);
-          viewportEl.style.opacity = '';
-        }, reduceMotion ? 0 : 120);
+        onComplete();
       }
     }
 
@@ -304,7 +240,9 @@
     if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.advance();
 
     const nextRoll = (currentRollIndex + 1) % rollCount;
-    const toIndex = coverIndices[currentRollIndex + 1];
+    const toIndex = coverIndices[nextRoll];
+    const loopIndex = frameEls.length - 1;
+    const loopingForward = currentRollIndex === rollCount - 1 && loopIndex > currentIndex;
 
     animating = true;
     advanceBtn.disabled = true;
@@ -316,32 +254,14 @@
         return;
       }
 
-      if (currentRollIndex === rollCount - 1) {
-        animateLoopToStart(currentIndex);
-        return;
-      }
-
-      const fromIndex = currentIndex;
-      const frameCount = Math.max(1, toIndex - fromIndex);
-      warmRollImages(fromIndex, toIndex);
-      const duration = scrubDurationForFrames(frameCount);
-      const start = performance.now();
-      if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.startScrub();
-
-      function tick(now) {
-        const t = Math.min(1, (now - start) / duration);
-        const pos = fromIndex + easeScrub(t) * frameCount;
-        setStripPosition(pos, { scrubbing: t > 0.08 && t < 0.94 });
-        if (typeof HomeFilmSound !== 'undefined') HomeFilmSound.tickScrub(pos);
-
-        if (t < 1) {
-          requestAnimationFrame(tick);
+      const targetIndex = loopingForward ? loopIndex : toIndex;
+      runAdvanceAnimation(currentIndex, targetIndex, () => {
+        if (loopingForward) {
+          finishAdvance(0, coverIndices[0], { snap: true });
         } else {
           finishAdvance(nextRoll, toIndex);
         }
-      }
-
-      requestAnimationFrame(tick);
+      });
     } catch (err) {
       console.error(err);
       finishAdvance(nextRoll, toIndex ?? coverIndices[0]);
@@ -365,9 +285,22 @@
 
       updateFrameWidth();
       stripEl.innerHTML = '';
+
+      const leadingClone = buildFrameEl(frames[frames.length - 1], 0);
+      leadingClone.classList.add('home-film-frame--loop-clone');
+      leadingClone.setAttribute('aria-hidden', 'true');
+      stripEl.appendChild(leadingClone);
+
       frames.forEach((frame, i) => {
-        stripEl.appendChild(buildFrameEl(frame, i));
+        stripEl.appendChild(buildFrameEl(frame, i + 1, { eager: i === 0 }));
       });
+
+      const trailingClone = buildFrameEl(frames[0], frames.length + 1);
+      trailingClone.classList.add('home-film-frame--loop-clone');
+      trailingClone.setAttribute('aria-hidden', 'true');
+      stripEl.appendChild(trailingClone);
+
+      coverIndices = coverIndices.map(i => i + 1);
       frameEls = [...stripEl.querySelectorAll('.home-film-frame')];
       resetStripMotionState();
 
@@ -403,13 +336,7 @@
         ro.observe(rollEl);
       }
 
-      const coverPaths = frames.filter(f => f.isCover).map(f => f.src);
-      if (typeof HomeScrubImages !== 'undefined') {
-        HomeScrubImages.preloadCovers(coverPaths).then(() => {
-          decodeCoverImages().then(() => syncRollScaleSoon());
-        });
-      }
-      queueAllScrubImages();
+      decodeCoverImages().then(() => syncRollScaleSoon());
     } catch (err) {
       console.error(err);
       loadingEl.textContent = 'could not load filmstrip';

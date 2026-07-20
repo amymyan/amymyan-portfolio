@@ -1,9 +1,9 @@
 /* Low-res scrub thumbnails for homepage filmstrip */
 
 const HomeScrubImages = (function initHomeScrubImages() {
-  const SCRUB_MAX_WIDTH = 320;
-  const SCRUB_QUALITY = 0.5;
-  const CONCURRENCY = 3;
+  const SCRUB_MAX_WIDTH = 280;
+  const SCRUB_QUALITY = 0.52;
+  const CONCURRENCY = 6;
 
   const cache = new Map();
   const pending = new Map();
@@ -123,6 +123,12 @@ const HomeScrubImages = (function initHomeScrubImages() {
     paths.forEach((path) => queue(path, options));
   }
 
+  function resolveMany(paths) {
+    const unique = [...new Set((paths || []).filter(Boolean))];
+    unique.forEach((path) => queue(path, { priority: true }));
+    return Promise.all(unique.map((path) => resolveScrubUrl(path)));
+  }
+
   async function preloadCovers(coverPaths, { timeoutMs = 8000 } = {}) {
     const unique = [...new Set(coverPaths.filter(Boolean))];
     await Promise.all(unique.map((path) => {
@@ -146,5 +152,5 @@ const HomeScrubImages = (function initHomeScrubImages() {
     }));
   }
 
-  return { queue, queueMany, resolveScrubUrl, preloadCovers, cache };
+  return { queue, queueMany, resolveMany, resolveScrubUrl, preloadCovers, cache };
 })();
