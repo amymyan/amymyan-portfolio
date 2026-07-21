@@ -127,6 +127,8 @@ function createTile(photo) {
       video.src = mediaSrc(photo.src);
       video.playsInline = true;
       video.preload = 'metadata';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
       if (photo.poster) video.poster = mediaSrc(photo.poster);
       video.addEventListener('loadedmetadata', scheduleBoardRefit);
       video.addEventListener('error', () => el.remove());
@@ -304,6 +306,12 @@ function makeFreeformDraggable(el, board, photo) {
   el.addEventListener('touchstart', onPointerDown, { passive: false });
 }
 
+function attachTileTap(el) {
+  el.addEventListener('click', () => {
+    el.dispatchEvent(new CustomEvent('tile-activate'));
+  });
+}
+
 function layoutNarrow(board) {
   board.classList.add('board--narrow');
 
@@ -319,62 +327,8 @@ function layoutNarrow(board) {
     el.style.position = 'static';
     el.style.width = '100%';
     board.appendChild(el);
-    makeReorderDraggable(el, board);
+    attachTileTap(el);
   });
-}
-
-function makeReorderDraggable(el, board) {
-  let startClientX, startClientY, moved;
-
-  function onPointerDown(e) {
-    if (shouldSkipDrag(e)) return;
-    e.preventDefault();
-    const point = e.touches ? e.touches[0] : e;
-    startClientX = point.clientX;
-    startClientY = point.clientY;
-    moved = 0;
-
-    function onMove(e) {
-      const point = e.touches ? e.touches[0] : e;
-      const dx = point.clientX - startClientX;
-      const dy = point.clientY - startClientY;
-      moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
-
-      if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        el.classList.add('dragging');
-        const target = document.elementFromPoint(point.clientX, point.clientY);
-        const targetTile = target ? target.closest('.polaroid') : null;
-        if (targetTile && targetTile !== el && board.contains(targetTile)) {
-          const rect = targetTile.getBoundingClientRect();
-          const before = point.clientY < rect.top + rect.height / 2;
-          board.insertBefore(el, before ? targetTile : targetTile.nextSibling);
-        }
-      }
-    }
-
-    function onUp() {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-      el.classList.remove('dragging');
-
-      if (moved > CLICK_VS_DRAG_THRESHOLD) {
-        const idsInOrder = Array.from(board.querySelectorAll('.polaroid')).map(t => t.dataset.id);
-        saveMobileOrder(idsInOrder);
-      } else {
-        el.dispatchEvent(new CustomEvent('tile-activate'));
-      }
-    }
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onUp);
-  }
-
-  el.addEventListener('mousedown', onPointerDown);
-  el.addEventListener('touchstart', onPointerDown, { passive: false });
 }
 
 function renderBoard() {

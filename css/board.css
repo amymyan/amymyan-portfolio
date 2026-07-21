@@ -138,6 +138,12 @@
   width:100% !important;
   max-width:none;
   position:static;
+  touch-action:pan-y;
+}
+.board--narrow .polaroid video,
+.board--narrow .polaroid img{
+  pointer-events:none;
+  touch-action:pan-y;
 }
 
 /* ---- lightbox: full-size photo view, used on any board page
