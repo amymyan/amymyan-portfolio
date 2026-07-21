@@ -136,18 +136,11 @@
           "focusY": 50
         },
         {
-          "id": "f17843205383586",
-          "src": "assets/music/DSC09935.jpg",
+          "id": "f17846023400230822",
+          "src": "assets/music/DSC09624.jpg",
           "rotation": 0,
           "focusX": 50,
-          "focusY": 50
-        },
-        {
-          "id": "f17843205383587",
-          "src": "assets/music/DSC09896.jpg",
-          "rotation": 0,
-          "focusX": 49,
-          "focusY": 28
+          "focusY": 33
         },
         {
           "id": "f17843205383585",
@@ -155,6 +148,13 @@
           "rotation": 0,
           "focusX": 53,
           "focusY": 41
+        },
+        {
+          "id": "f17843205383587",
+          "src": "assets/music/DSC09896.jpg",
+          "rotation": 0,
+          "focusX": 49,
+          "focusY": 28
         },
         {
           "id": "f17843205383581",
@@ -176,6 +176,20 @@
           "rotation": 0,
           "focusX": 54,
           "focusY": 24
+        },
+        {
+          "id": "f17843205383586",
+          "src": "assets/music/DSC09935.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17846023400231129",
+          "src": "assets/music/DSC09640.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
         }
       ]
     },

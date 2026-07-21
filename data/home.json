@@ -19,6 +19,15 @@
       ]
     },
     {
+      "id": "video",
+      "href": "video.html",
+      "title": "video ˚˖𓍢ִ໋❀",
+      "coverSrc": "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png",
+      "coverPoolSrcs": [
+        "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png"
+      ]
+    },
+    {
       "id": "portrait",
       "href": "portrait.html",
       "title": "portraits ✶⋆.˚",
@@ -40,15 +49,6 @@
         "assets/portrait/DSC08265.jpg",
         "assets/portrait/DSC08158.jpg",
         "assets/portrait/DSC05708.jpg"
-      ]
-    },
-    {
-      "id": "video",
-      "href": "video.html",
-      "title": "video ˚˖𓍢ִ໋❀",
-      "coverSrc": "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png",
-      "coverPoolSrcs": [
-        "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png"
       ]
     }
   ]

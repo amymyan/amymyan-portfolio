@@ -2,8 +2,8 @@
 
 const HOME_ROLL_DEFAULTS = [
   { id: 'music', href: 'music.html', title: 'live music ♪‧₊˚', coverSrc: 'assets/music/DSC03917.jpg' },
-  { id: 'portrait', href: 'portrait.html', title: 'portraits ✶⋆.˚', coverSrc: 'assets/home/portrait.jpg' },
-  { id: 'video', href: 'video.html', title: 'video ˚˖𓍢ִ໋❀', coverSrc: 'assets/home/video.jpg' }
+  { id: 'video', href: 'video.html', title: 'video ˚˖𓍢ִ໋❀', coverSrc: 'assets/home/video.jpg' },
+  { id: 'portrait', href: 'portrait.html', title: 'portraits ✶⋆.˚', coverSrc: 'assets/home/portrait.jpg' }
 ];
 
 const MAX_SCRUB_PHOTOS = 5;
