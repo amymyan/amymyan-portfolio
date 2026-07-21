@@ -3,6 +3,7 @@
 const ORGANIZER_THUMB_LIBRARY = 160;
 const ORGANIZER_THUMB_FRAME = 320;
 const ORGANIZER_THUMB_POLAROID = 420;
+const ORGANIZER_THUMB_PORTRAIT = 280;
 
 const organizerThumbCache = new Map();
 const organizerLocalUrlCache = new Map();

@@ -1,0 +1,155 @@
+/* Portrait page — 2-column masonry, natural aspect ratios */
+
+.portrait-page,
+.portrait-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.portrait-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.35rem, 1.1vw, 0.55rem);
+  width: 100%;
+  max-width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 2rem clamp(1.25rem, 4vw, 3rem) 3rem;
+  box-sizing: border-box;
+}
+
+.portrait-grid-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.35rem, 1.1vw, 0.55rem);
+}
+
+.portrait-grid figure {
+  margin: 0;
+  overflow: hidden;
+}
+
+.portrait-grid img,
+.portrait-grid video {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: bottom;
+}
+
+.portrait-grid figure:hover img,
+.portrait-grid figure:hover video {
+  opacity: 0.92;
+}
+
+.portrait-grid .empty-note {
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .portrait-grid {
+    padding-top: 1.5rem;
+  }
+}
+
+/* Organizer preview — scaled-down match for live portrait page */
+.organizer .mini-board.portrait-grid-host {
+  min-height: 0;
+  height: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.organizer .portrait-grid-board {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.35rem, 1.1vw, 0.55rem);
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 0;
+  height: auto;
+  padding: 0.75rem 0 1.25rem;
+  background: transparent;
+}
+
+.organizer .portrait-grid-board .portrait-grid-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.35rem, 1.1vw, 0.55rem);
+}
+
+.organizer .portrait-grid-preview-label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  text-align: center;
+  margin: 0 0 0.35rem;
+}
+
+.organizer .portrait-grid-item {
+  position: relative;
+  margin: 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.organizer .portrait-grid-item.dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  z-index: 5;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.organizer .portrait-grid-board.portrait-grid-dragging {
+  cursor: grabbing;
+}
+
+.organizer .portrait-grid-col.portrait-col-drop-target {
+  outline: 1px dashed rgba(232, 143, 178, 0.65);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.organizer .portrait-grid-item img,
+.organizer .portrait-grid-item video {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+.organizer .portrait-grid-item .del {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
+  z-index: 2;
+}
+
+.organizer .portrait-grid-item .cap {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  padding: 0.25rem 0.35rem 0.35rem;
+  opacity: 0.7;
+  outline: none;
+}

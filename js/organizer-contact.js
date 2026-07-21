@@ -6,6 +6,9 @@ const selectedLibrarySrcs = new Set();
 let libraryLastClickIndex = -1;
 
 function getMusicBoardData() {
+  if (!isContactSheetPage(currentBoard)) {
+    return { format: 'contact-sheets', sheets: [] };
+  }
   if (!isContactSheetFormat(boardData)) {
     boardData = normalizeMusicData(boardData);
   }

@@ -80,6 +80,21 @@ function extractBoardImageSrcs(boardRaw) {
   );
 }
 
+function extractPortraitPhotoSrcs(portraitRaw) {
+  if (Array.isArray(portraitRaw)) return extractBoardImageSrcs(portraitRaw);
+  if (portraitRaw?.sheets) {
+    const srcs = [];
+    for (const sheet of portraitRaw.sheets) {
+      for (const frame of sheet.frames || []) {
+        const src = (frame?.src || '').trim();
+        if (src && src.includes('/portrait/') && !isVideoPath(src)) srcs.push(src);
+      }
+    }
+    return uniqueSrcs(srcs);
+  }
+  return [];
+}
+
 function extractVideoStripSrcs(videoRaw) {
   if (!Array.isArray(videoRaw)) return [];
   return uniqueSrcs(
@@ -157,7 +172,7 @@ function buildRollFromSources(rollConfig, photoSrcs, extraFallbacks = []) {
 function buildHomeRolls(homeConfig, sources) {
   const config = normalizeHomeConfig(homeConfig);
   const musicSrcs = extractMusicPhotoSrcs(sources.music);
-  const portraitSrcs = extractBoardImageSrcs(sources.portrait);
+  const portraitSrcs = extractPortraitPhotoSrcs(sources.portrait);
   const videoSrcs = extractVideoStripSrcs(sources.video);
 
   const byId = {

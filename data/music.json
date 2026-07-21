@@ -305,6 +305,13 @@
           "rotation": 0,
           "focusX": 50,
           "focusY": 79
+        },
+        {
+          "id": "f17845922960340659",
+          "src": "assets/music/IMG_4136.jpg",
+          "rotation": 0,
+          "focusX": 48,
+          "focusY": 26
         }
       ]
     },

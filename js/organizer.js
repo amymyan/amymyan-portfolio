@@ -11,7 +11,109 @@ let rootHandle = null;
 const statusEl = document.getElementById('status');
 const miniSelection = createTileSelection('mini-polaroid');
 
+const ORGANIZER_IDB_NAME = 'amy-organizer';
+const ORGANIZER_IDB_STORE = 'handles';
+const ORGANIZER_ROOT_KEY = 'project-root';
+
 function setStatus(msg) { statusEl.textContent = msg; }
+
+function openOrganizerDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(ORGANIZER_IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(ORGANIZER_IDB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveRootHandle(handle) {
+  const db = await openOrganizerDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(ORGANIZER_IDB_STORE, 'readwrite');
+    tx.objectStore(ORGANIZER_IDB_STORE).put(handle, ORGANIZER_ROOT_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadSavedRootHandle() {
+  try {
+    const db = await openOrganizerDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(ORGANIZER_IDB_STORE, 'readonly');
+      const req = tx.objectStore(ORGANIZER_IDB_STORE).get(ORGANIZER_ROOT_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function ensureRootPermission(handle) {
+  if (!handle?.queryPermission) return false;
+  let perm = await handle.queryPermission({ mode: 'readwrite' });
+  if (perm === 'granted') return true;
+  if (perm === 'prompt') {
+    perm = await handle.requestPermission({ mode: 'readwrite' });
+    return perm === 'granted';
+  }
+  return false;
+}
+
+async function activateRootHandle(handle, { remembered = false } = {}) {
+  rootHandle = handle;
+  const suffix = remembered ? ' (remembered)' : '';
+  setStatus('connected to: ' + rootHandle.name + suffix);
+  document.getElementById('app').style.display = 'block';
+  initOrganizerSections();
+  try {
+    await initBoardsPanel();
+  } catch (err) {
+    console.error(err);
+    setStatus('boards error: ' + (err.message || err));
+  }
+  await loadHomeCoverPanel();
+}
+
+async function connectProjectFolder({ pickNew = false } = {}) {
+  if (!window.showDirectoryPicker) {
+    setStatus('your browser doesn\u2019t support this — try Chrome or Edge.');
+    return false;
+  }
+
+  try {
+    let handle = pickNew ? null : await loadSavedRootHandle();
+    if (handle && await ensureRootPermission(handle)) {
+      await activateRootHandle(handle, { remembered: true });
+      return true;
+    }
+
+    handle = await window.showDirectoryPicker();
+    await saveRootHandle(handle);
+    await activateRootHandle(handle);
+    return true;
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      setStatus('connection cancelled.');
+    } else {
+      console.error(err);
+      setStatus('error: ' + (err.message || err));
+    }
+    return false;
+  }
+}
+
+async function tryAutoConnectProjectFolder() {
+  const handle = await loadSavedRootHandle();
+  if (!handle) return false;
+  if (!await ensureRootPermission(handle)) {
+    setStatus('click choose project folder to reconnect');
+    return false;
+  }
+  await activateRootHandle(handle, { remembered: true });
+  return true;
+}
 
 /* Walks down into a folder path (creating folders along the way
    if create:true), starting from your chosen project folder. */
@@ -112,6 +214,7 @@ async function listMediaFiles(pageName) {
 }
 
 function normalizeBoardEntry(item, pageName, index) {
+  if (isPortraitGridPage(pageName)) return normalizePortraitEntry(item, index);
   const src = item.src || '';
   const entry = {
     id: item.id || ('p' + Date.now() + Math.floor(Math.random() * 1000) + index),
@@ -127,8 +230,66 @@ function normalizeBoardEntry(item, pageName, index) {
   return entry;
 }
 
-function newEntryAtTop(pageName, partial, index) {
+function newEntryAtTop(partial, pageName, index) {
+  if (isPortraitGridPage(pageName)) return normalizePortraitEntry(partial, index);
   return normalizeBoardEntry({ ...partial, x: 10, y: 5 }, pageName, index);
+}
+
+function cleanR2Filename(raw, pageName) {
+  let name = (raw || '').trim().replace(/^["']|["']$/g, '');
+  if (!name) return '';
+  name = name.replace(/\\/g, '/');
+  const prefix = 'assets/' + pageName + '/';
+  if (name.startsWith(prefix)) name = name.slice(prefix.length);
+  if (name.startsWith('assets/')) name = name.split('/').pop() || name;
+  return name.trim();
+}
+
+async function registerBoardR2Filenames(input) {
+  if (!rootHandle) {
+    setStatus('connect your project folder first (button above).');
+    return 0;
+  }
+
+  if (!Array.isArray(boardData)) {
+    boardData = await loadBoard(currentBoard);
+  }
+  if (!Array.isArray(boardData)) boardData = [];
+
+  const names = (typeof parseFilenameList === 'function'
+    ? parseFilenameList(input)
+    : input.split(/[\n,]+/))
+    .map(name => cleanR2Filename(name, currentBoard))
+    .filter(Boolean);
+
+  if (!names.length) {
+    setStatus('enter a filename like DSC00205.jpg');
+    return 0;
+  }
+
+  pushUndoSnapshot();
+  let added = 0;
+
+  for (const filename of names) {
+    const src = 'assets/' + currentBoard + '/' + filename;
+    if (boardData.some(i => i.src === src)) continue;
+    boardData.push(newEntryAtTop({
+      src,
+      caption: captionFromFilename(filename)
+    }, currentBoard, boardData.length));
+    await removeFromIgnoreList(currentBoard, filename);
+    added++;
+  }
+
+  if (!added) {
+    setStatus('already registered — check the grid below');
+    return 0;
+  }
+
+  await saveBoardData();
+  renderBoardMini();
+  setStatus('registered ' + added + ' file(s) \u2713 — commit & push data/' + currentBoard + '.json');
+  return added;
 }
 
 function attachRotationHandle(el, mediaWrap, photo, board, refit) {
@@ -251,7 +412,11 @@ async function loadBoard(pageName) {
   if (isContactSheetPage(pageName)) {
     return loadMusicBoard(pageName);
   }
+  if (isPortraitGridPage(pageName)) {
+    return loadPortraitBoard(pageName);
+  }
   let data = await readJSON('data', pageName + '.json');
+  if (!Array.isArray(data)) data = [];
   const purged = purgeEmptyEntries(data);
   if (JSON.stringify(data) !== JSON.stringify(purged)) {
     await writeJSON('data', pageName + '.json', purged);
@@ -363,32 +528,9 @@ if (homeRollRefreshBtn) {
 
 /* ---------------- connect ---------------- */
 
-document.getElementById('connect-btn').addEventListener('click', async () => {
-  if (!window.showDirectoryPicker) {
-    setStatus('your browser doesn\u2019t support this — try Chrome or Edge.');
-    return;
-  }
-  try {
-    rootHandle = await window.showDirectoryPicker();
-    setStatus('connected to: ' + rootHandle.name);
-    document.getElementById('app').style.display = 'block';
-    initOrganizerSections();
-    try {
-      await initBoardsPanel();
-    } catch (err) {
-      console.error(err);
-      setStatus('boards error: ' + (err.message || err));
-    }
-    await loadHomeCoverPanel();
-  } catch (err) {
-    if (err && err.name === 'AbortError') {
-      setStatus('connection cancelled.');
-    } else {
-      console.error(err);
-      setStatus('error: ' + (err.message || err));
-    }
-  }
-});
+document.getElementById('connect-btn').addEventListener('click', () => connectProjectFolder());
+
+tryAutoConnectProjectFolder();
 
 /* ============================================================
    BOARDS PANEL — all content pages (music, portrait, video,
@@ -425,10 +567,22 @@ function showOrganizerSection(section) {
 
 async function switchBoardPage(pageName) {
   currentBoard = pageName;
-  const { data, added, unsupported } = await loadAndSyncBoard(pageName);
-  boardData = data;
-  await pruneBrokenPageSources(pageName);
-  reportSyncStatus(added, unsupported);
+  let added = 0;
+  let unsupported = [];
+  try {
+    const result = await loadAndSyncBoard(pageName);
+    boardData = result.data;
+    added = result.added;
+    unsupported = result.unsupported;
+    await pruneBrokenPageSources(pageName);
+    reportSyncStatus(added, unsupported);
+  } catch (err) {
+    console.error(err);
+    boardData = isContactSheetPage(pageName)
+      ? normalizeMusicData([])
+      : (isPortraitGridPage(pageName) ? [] : []);
+    setStatus('fixed ' + pageName + ' page data — try again');
+  }
   renderBoardMini();
   updateUndoButton();
 }
@@ -530,6 +684,14 @@ async function undoBoardChange() {
 }
 
 async function saveBoardData() {
+  if (isContactSheetPage(currentBoard)) {
+    await writeJSON('data', currentBoard + '.json', getMusicBoardData());
+    return;
+  }
+  if (!Array.isArray(boardData)) boardData = [];
+  if (isPortraitGridPage(currentBoard)) {
+    boardData = boardData.map((item, i) => normalizePortraitEntry(item, i));
+  }
   await writeJSON('data', currentBoard + '.json', boardData);
 }
 
@@ -576,34 +738,31 @@ async function initBoardsPanel() {
   });
 
   document.getElementById('boards-register-btn').onclick = async () => {
-    if (isContactSheetPage(currentBoard)) {
+    try {
+      if (isContactSheetPage(currentBoard)) {
+        const name = prompt(
+          'Enter the exact filename(s) on R2 in assets/' + currentBoard + '/\n' +
+          '(one per line or comma-separated — e.g. DSC00205.jpg):'
+        );
+        if (!name || !name.trim()) return;
+        const count = await registerMusicFilenames(name);
+        if (!count) return;
+        parseFilenameList(name).forEach(fn => selectedLibrarySrcs.add(srcFromFilename(fn)));
+        updateLibrarySelection();
+        setStatus(`registered ${count} file(s) \u2713 — now in library, select and add to a contact sheet`);
+        return;
+      }
+
       const name = prompt(
-        'Enter the exact filename(s) on R2 in assets/' + currentBoard + '/\n' +
+        'Enter filename(s) on R2 in assets/' + currentBoard + '/\n' +
         '(one per line or comma-separated — e.g. DSC00205.jpg):'
       );
       if (!name || !name.trim()) return;
-      const count = await registerMusicFilenames(name);
-      if (!count) return;
-      parseFilenameList(name).forEach(fn => selectedLibrarySrcs.add(srcFromFilename(fn)));
-      updateLibrarySelection();
-      setStatus(`registered ${count} file(s) \u2713 — now in library, select and add to a contact sheet`);
-      return;
+      await registerBoardR2Filenames(name);
+    } catch (err) {
+      console.error(err);
+      setStatus('register failed: ' + (err.message || err));
     }
-    const name = prompt(
-      'Enter the exact filename on R2 in assets/' + currentBoard + '/\n(e.g. DSC00205.jpg):'
-    );
-    if (!name || !name.trim()) return;
-    const src = 'assets/' + currentBoard + '/' + name.trim();
-    if (boardData.some(i => i.src === src)) {
-      setStatus('already on this page — scroll the preview to find it, or pick a different file');
-      return;
-    }
-    pushUndoSnapshot();
-    boardData.push(newEntryAtTop({ src, caption: captionFromFilename(name.trim()) }, currentBoard, boardData.length));
-    await removeFromIgnoreList(currentBoard, name.trim());
-    await saveBoardData();
-    renderBoardMini();
-    setStatus('registered ' + name.trim() + ' \u2713 — commit & push data/' + currentBoard + '.json');
   };
 
   document.getElementById('boards-add-btn').onclick = () =>
@@ -657,6 +816,7 @@ async function initBoardsPanel() {
         fitBoardHeight(board, { minHeight: 520, padding: 80 });
         return;
       }
+      if (isPortraitGridPage(currentBoard)) return;
       if (!board.querySelector('.mini-polaroid')) return;
       reflowBoardTiles(board);
       fitBoardHeight(board, { minHeight: 520, padding: 80 });
@@ -670,9 +830,15 @@ function renderBoardMini() {
     renderContactSheetsMini();
     return;
   }
+  if (isPortraitGridPage(currentBoard)) {
+    renderPortraitGridMini();
+    return;
+  }
   updateMusicOrganizerUI();
+  resetGeneralBoardHint();
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
+  board.className = 'mini-board';
   miniSelection.clear(board);
   const legacy = board.dataset.coordPage !== currentBoard;
   const refit = () => fitBoardHeight(board, { minHeight: 520, padding: 80 });
