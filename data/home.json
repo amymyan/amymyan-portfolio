@@ -33,23 +33,22 @@
       "id": "portrait",
       "href": "portrait.html",
       "title": "portraits ✶⋆.˚",
-      "coverSrc": "assets/home/portrait.jpg",
+      "coverSrc": "assets/portrait/DSC05619.jpg",
       "coverPoolSrcs": [
-        "assets/home/portrait.jpg",
-        "assets/portrait/AMY483037148-R1-020.jpg",
-        "assets/portrait/DSC02311.jpg",
-        "assets/portrait/DSC07109.jpg",
-        "assets/portrait/DSC07600.jpg",
-        "assets/portrait/DSC08026.jpg",
-        "assets/portrait/DSC05148.jpg",
-        "assets/portrait/DSC05716.jpg",
-        "assets/portrait/DSC07289.jpg",
-        "assets/portrait/DSC03220.jpg",
         "assets/portrait/DSC05619.jpg",
-        "assets/portrait/DSC06170.jpg",
-        "assets/portrait/DSC08265.jpg",
+        "assets/portrait/DSC03220.jpg",
+        "assets/portrait/DSC07600.jpg",
+        "assets/portrait/DSC02311.jpg",
+        "assets/portrait/DSC05148.jpg",
         "assets/portrait/DSC08158.jpg",
-        "assets/portrait/DSC05708.jpg"
+        "assets/portrait/DSC07416.jpg",
+        "assets/portrait/DSC07109.jpg",
+        "assets/portrait/AMY483037148-R1-020.jpg",
+        "assets/portrait/DSC08026.jpg",
+        "assets/portrait/DSC07439.jpg",
+        "assets/portrait/DSC05708.jpg",
+        "assets/portrait/DSC05716.jpg",
+        "assets/portrait/DSC08265.jpg"
       ]
     }
   ]
