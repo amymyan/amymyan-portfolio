@@ -125,16 +125,19 @@
 
 .board.board--narrow{
   display:flex;
-  flex-wrap:wrap;
-  align-content:flex-start;
-  gap:12px;
+  flex-direction:column;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  gap:2rem;
   height:auto;
   min-height:0;
   overflow:visible;
   padding:1.5rem clamp(1rem, 4vw, 2rem);
 }
 .board--narrow .polaroid{
-  max-width:46vw;   /* roughly 2 per row on a typical phone screen */
+  width:100% !important;
+  max-width:none;
+  position:static;
 }
 
 /* ---- lightbox: full-size photo view, used on any board page

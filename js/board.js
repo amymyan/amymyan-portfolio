@@ -317,6 +317,7 @@ function layoutNarrow(board) {
   ordered.forEach(photo => {
     const el = createTile(photo);
     el.style.position = 'static';
+    el.style.width = '100%';
     board.appendChild(el);
     makeReorderDraggable(el, board);
   });
@@ -345,7 +346,7 @@ function makeReorderDraggable(el, board) {
         const targetTile = target ? target.closest('.polaroid') : null;
         if (targetTile && targetTile !== el && board.contains(targetTile)) {
           const rect = targetTile.getBoundingClientRect();
-          const before = point.clientX < rect.left + rect.width / 2;
+          const before = point.clientY < rect.top + rect.height / 2;
           board.insertBefore(el, before ? targetTile : targetTile.nextSibling);
         }
       }
