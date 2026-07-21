@@ -385,6 +385,27 @@
   padding:1px 2px;
 }
 
+.library-item--broken{
+  border-color:rgba(255,255,255,0.15);
+}
+
+.library-item--broken img{
+  opacity:0.25;
+}
+
+.library-item--broken::before{
+  content:'?';
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--mono);
+  font-size:0.65rem;
+  color:rgba(255,255,255,0.45);
+  pointer-events:none;
+}
+
 .library-item img{
   width:100%;
   height:100%;

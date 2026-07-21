@@ -75,9 +75,21 @@ async function fetchR2LibraryManifest() {
   }
 }
 
+function getSheetFrameFilenames() {
+  const filenames = new Set();
+  getMusicSheetsArray().forEach(sheet => {
+    (sheet.frames || []).forEach(frame => {
+      const fn = filenameFromMusicSrc(frame.src);
+      if (fn) filenames.add(fn);
+    });
+  });
+  return filenames;
+}
+
 async function collectMusicLibraryFilenames() {
   const merged = new Set();
   const ignored = await readIgnoreList('music');
+  const onSheets = getSheetFrameFilenames();
 
   if (rootHandle) {
     const local = await listMediaFiles('music');
@@ -86,19 +98,23 @@ async function collectMusicLibraryFilenames() {
 
   (await readMusicLibraryRegistry()).forEach(f => merged.add(f));
   (await fetchR2LibraryManifest()).forEach(f => merged.add(f));
+  onSheets.forEach(f => merged.add(f));
 
-  getMusicSheetsArray().forEach(sheet => {
-    (sheet.frames || []).forEach(frame => {
-      const fn = filenameFromMusicSrc(frame.src);
-      if (fn) merged.add(fn);
-    });
-  });
+  for (const fn of onSheets) {
+    if (ignored.has(fn)) await removeFromIgnoreList('music', fn);
+  }
 
-  return [...merged].filter(f => !ignored.has(f)).sort();
+  return [...merged]
+    .filter(f => !ignored.has(f) || onSheets.has(f))
+    .sort();
 }
 
 async function refreshMusicLibrary() {
   if (!isContactSheetPage(currentBoard)) return 0;
+
+  const onSheets = [...getSheetFrameFilenames()];
+  if (onSheets.length) await addToMusicLibraryRegistry(onSheets);
+
   musicLibraryFiles = await collectMusicLibraryFilenames();
   renderMusicLibrary(true);
   return musicLibraryFiles.length;
@@ -267,15 +283,14 @@ function renderMusicLibrary(forceRebuild = false) {
     img.decoding = 'async';
     item.appendChild(img);
 
-    attachBrokenImageHandler(img, async () => {
-      item.remove();
-      selectedLibrarySrcs.delete(src);
-      await purgeBrokenBoardSrc(src, { pageName: 'music' });
-    });
-
     const label = document.createElement('span');
     label.className = 'library-label';
     label.textContent = filename;
+
+    attachBrokenImageHandler(img, () => {
+      item.classList.add('library-item--broken');
+    });
+
     item.appendChild(label);
 
     item.addEventListener('click', (e) => {
@@ -525,7 +540,7 @@ function renderContactSheetsMini() {
   const board = document.getElementById('boards-mini-board');
   board.innerHTML = '';
   sheetSelection.clear(board);
-  board.classList.add('organizer');
+  board.className = 'mini-board contact-sheet-board';
 
   const refit = () => {
     reflowContactSheets(board);

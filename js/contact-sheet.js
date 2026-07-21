@@ -487,7 +487,6 @@ function attachContactFramePan(frameEl, mediaWrap, img, frameData, sourceSlot, o
 }
 
 function buildContactSheetBody(sheet, options = {}) {
-  const filmStock = sheet.filmStock || DEFAULT_FILM_STOCK;
   const { cols, rowCount, frames } = sheetGridLayout(sheet);
   const body = document.createElement('div');
   body.className = 'contact-sheet-body';
@@ -497,10 +496,6 @@ function buildContactSheetBody(sheet, options = {}) {
     strip.className = 'contact-strip';
     const rowStartSlot = row * cols;
 
-    if (options.mode !== 'live') {
-      strip.appendChild(buildFilmTopEdge(sheet, row, cols, rowStartSlot));
-    }
-
     const rowEl = document.createElement('div');
     rowEl.className = 'contact-row';
     rowEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -509,10 +504,6 @@ function buildContactSheetBody(sheet, options = {}) {
       rowEl.appendChild(buildContactFrameElement(frames[slot] || null, slot, options));
     }
     strip.appendChild(rowEl);
-
-    if (options.mode !== 'live') {
-      strip.appendChild(buildFilmBottomEdge(sheet, row, cols, rowStartSlot, filmStock, options));
-    }
     body.appendChild(strip);
   }
 
