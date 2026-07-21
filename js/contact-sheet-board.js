@@ -296,7 +296,6 @@ function layoutNarrow(board) {
     const el = createSheetElement(sheet);
     el.style.position = 'static';
     el.style.width = '100%';
-    el.style.marginBottom = '2rem';
     board.appendChild(el);
   });
 }
