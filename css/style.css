@@ -29,6 +29,9 @@
   --display: 'Times New Roman', Times, serif;
   --body:    'Times New Roman', Times, serif;
   --mono:    'Times New Roman', Times, serif;
+
+  --nav-wordmark-size: clamp(1.95rem, 4.5vw, 2.5rem);
+  --nav-link-size: clamp(0.95rem, 1.7vw, 1.12rem);
 }
 
 /* Reset: makes sure padding/borders don't make elements bigger
@@ -81,81 +84,68 @@ button{
   top:0;
   z-index:100;
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   align-items:center;
-  justify-content:space-between;
-  gap:1rem;
-  padding:1.75rem clamp(1.25rem, 4vw, 3rem);
+  justify-content:center;
+  gap:0.35rem;
+  padding:1.4rem clamp(1.25rem, 4vw, 3rem) 1rem;
   border-bottom:1px solid var(--line);
   background:rgba(255,255,255,0.92);
   backdrop-filter:blur(8px);
+  text-align:center;
 }
 
-.wordmark{
+.site-nav .wordmark{
   font-family:var(--display);
   font-style:normal;
   font-weight:bold;
-  font-size:1.70rem;
+  font-size:var(--nav-wordmark-size);
   letter-spacing:0.02em;
   white-space:nowrap;
   text-transform:none;
+  display:inline-block;
+  line-height:1.2;
 }
 
-.wordmark-name{
+.site-nav .wordmark-name{
   text-transform:uppercase;
 }
 
 /* Decorative stars — emoji/symbol font so ✮⋆˙ render at the right size */
-.wordmark-deco{
+.site-nav .wordmark-deco{
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
   font-weight:normal;
   font-size:0.92em;
   letter-spacing:0.03em;
 }
 
-.nav-links{
+.site-nav .nav-links{
   display:flex;
   flex-wrap:wrap;
-  gap:1.5rem;
+  align-items:center;
+  justify-content:center;
+  gap:1.75rem;
   font-family:var(--mono);
-  font-size:0.85rem;
+  font-size:var(--nav-link-size);
   letter-spacing:0.03em;
 }
 
-.nav-links a{
+.site-nav .nav-links a{
   position:relative;
   padding-bottom:2px;
   opacity:0.75;
   transition:opacity 0.2s ease;
 }
-.nav-links a:hover,
-.nav-links a[aria-current="page"]{ opacity:1; }
+.site-nav .nav-links a:hover,
+.site-nav .nav-links a[aria-current="page"]{ opacity:1; }
 
 /* underline under whichever nav link matches the current page */
-.nav-links a[aria-current="page"]::after{
+.site-nav .nav-links a[aria-current="page"]::after{
   content:"";
   position:absolute;
   left:0; right:0; bottom:-3px;
   height:1px;
   background:var(--ink);
-}
-
-/* When nav links wrap below the name, center both rows */
-@media (max-width:720px){
-  .site-nav{
-    justify-content:center;
-    gap:0.85rem;
-  }
-
-  .site-nav .wordmark{
-    flex:1 1 100%;
-    text-align:center;
-  }
-
-  .site-nav .nav-links{
-    flex:1 1 100%;
-    justify-content:center;
-  }
 }
 
 /* ---------- footer ---------- */
