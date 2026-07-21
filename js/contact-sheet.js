@@ -497,7 +497,9 @@ function buildContactSheetBody(sheet, options = {}) {
     strip.className = 'contact-strip';
     const rowStartSlot = row * cols;
 
-    strip.appendChild(buildFilmTopEdge(sheet, row, cols, rowStartSlot));
+    if (options.mode !== 'live') {
+      strip.appendChild(buildFilmTopEdge(sheet, row, cols, rowStartSlot));
+    }
 
     const rowEl = document.createElement('div');
     rowEl.className = 'contact-row';
@@ -508,7 +510,9 @@ function buildContactSheetBody(sheet, options = {}) {
     }
     strip.appendChild(rowEl);
 
-    strip.appendChild(buildFilmBottomEdge(sheet, row, cols, rowStartSlot, filmStock, options));
+    if (options.mode !== 'live') {
+      strip.appendChild(buildFilmBottomEdge(sheet, row, cols, rowStartSlot, filmStock, options));
+    }
     body.appendChild(strip);
   }
 

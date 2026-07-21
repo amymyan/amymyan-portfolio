@@ -11,7 +11,6 @@
   const prevBtn = root.querySelector('.home-film-nav--prev');
   const nextBtn = root.querySelector('.home-film-nav--next');
   const navButtons = [prevBtn, nextBtn].filter(Boolean);
-  const gateMark = root.querySelector('.home-film-gate-mark');
   const loadingEl = root.querySelector('.home-film-loading');
   const sprocketTopEl = root.querySelector('.home-film-sprocket--top');
   const sprocketBottomEl = root.querySelector('.home-film-sprocket--bottom');
@@ -94,11 +93,9 @@
   }
 
   function peekPx() {
-    const gate = root.querySelector('.home-film-gate-mark');
-    if (gate && rollEl?.clientWidth) {
-      return (rollEl.clientWidth - gate.offsetWidth) / 2;
-    }
-    return 108;
+    if (!rollEl?.clientWidth) return 108;
+    const w = rollEl.clientWidth;
+    return Math.min(76, Math.max(30, w * 0.09));
   }
 
   function updateFrameWidth() {
@@ -146,9 +143,6 @@
         }
         lastActiveIndex = rounded;
       }
-      gateMark.classList.toggle('is-link-ready', !animating);
-    } else {
-      gateMark.classList.remove('is-link-ready');
     }
 
     updateCoverVisibility();
@@ -376,7 +370,6 @@
 
     animating = true;
     warmScrollCovers(nextRoll, prevRoll);
-    gateMark.classList.remove('is-link-ready');
 
     try {
       if (reduceMotion) {

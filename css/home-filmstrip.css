@@ -78,22 +78,6 @@
   background: var(--paper);
 }
 
-.home-film-gate-mark {
-  position: absolute;
-  top: calc(0.85rem + 1.35em);
-  bottom: calc(0.85rem + 1.35em);
-  left: var(--peek);
-  right: var(--peek);
-  border: 1px solid rgba(10, 8, 6, 0.18);
-  pointer-events: none;
-  z-index: 5;
-  transition: border-color 0.25s ease;
-}
-
-.home-film-gate-mark.is-link-ready {
-  border-color: rgba(10, 8, 6, 0.5);
-}
-
 .home-film-roll {
   font-size: var(--roll-u);
   background: var(--film-ink);

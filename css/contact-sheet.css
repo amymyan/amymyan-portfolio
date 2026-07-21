@@ -47,6 +47,18 @@
   gap:0.2em;
 }
 
+.contact-sheet-board .contact-row{
+  column-gap:0.8em;
+  row-gap:0.2em;
+}
+
+.contact-sheet-board .contact-sheet-body{
+  display:flex;
+  flex-direction:column;
+  gap:3em;
+  padding:1.35em 0.7em 1.5em;
+}
+
 /* ---- film edges (Kodak Portra 400 reference) ---- */
 .film-edge{
   background:#0a0806;
