@@ -25,7 +25,6 @@
   width:100%;
   min-height:75vh;
   overflow:visible;
-  background:rgba(255,255,255,0.55);
   touch-action:pan-y;
 }
 
