@@ -89,7 +89,6 @@ button{
   justify-content:center;
   gap:0.35rem;
   padding:1.4rem clamp(1.25rem, 4vw, 3rem) 1rem;
-  border-bottom:1px solid var(--line);
   background:rgba(255,255,255,0.92);
   backdrop-filter:blur(8px);
   text-align:center;
@@ -146,6 +145,27 @@ button{
   left:0; right:0; bottom:-3px;
   height:1px;
   background:var(--ink);
+}
+
+/* Homepage — wordmark only, no tab row */
+.page-home .site-nav .nav-links{
+  display:none;
+}
+
+.page-home .site-nav{
+  gap:0;
+  padding-bottom:0.85rem;
+}
+
+.page-home{
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  min-height:100dvh;
+}
+
+.page-home .site-footer{
+  margin-top:auto;
 }
 
 /* ---------- footer ---------- */
