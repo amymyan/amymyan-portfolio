@@ -274,6 +274,14 @@ function createSheetElement(sheet) {
   });
 }
 
+function sortSheetsByBoardPosition(list) {
+  return [...list].sort((a, b) => {
+    const dy = (a.y ?? 0) - (b.y ?? 0);
+    if (dy !== 0) return dy;
+    return (a.x ?? 0) - (b.x ?? 0);
+  });
+}
+
 function layoutWide(board) {
   board.classList.remove('board--narrow');
 
@@ -292,7 +300,7 @@ function layoutWide(board) {
 
 function layoutNarrow(board) {
   board.classList.add('board--narrow');
-  sheets.forEach(sheet => {
+  sortSheetsByBoardPosition(sheets).forEach(sheet => {
     const el = createSheetElement(sheet);
     el.style.position = 'static';
     el.style.width = '100%';
