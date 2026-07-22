@@ -12,9 +12,12 @@
     padding:3.5rem clamp(1.25rem, 4vw, 3rem) 4rem;
   }
   .about-photo{
-    max-width:320px;      /* caps how big the photo can get — raise or
-                                lower this number to resize it */
+    max-width:320px;
     margin:0 auto 2.5rem;
+  }
+  .about-photo--small{
+    max-width:140px;
+    margin:2rem auto 0;
   }
   .about-photo img{
     width:100%;
@@ -41,29 +44,9 @@
     font-family:var(--body);
     font-size:0.95rem;
     line-height:1.7;
-    margin:0 0 3rem;
-  }
-  .about-contact a{ text-decoration:underline; text-underline-offset:3px; }
-  .about-section{
-    text-align:center;
-    margin:0 0 2.5rem;
-  }
-  .about-section h2{
-    font-family:var(--mono);
-    font-size:0.75rem;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    opacity:0.55;
-    margin:0 0 0.75rem;
-    font-weight:400;
-  }
-  .about-section p{
-    font-family:var(--body);
-    font-size:0.95rem;
-    line-height:1.7;
     margin:0;
   }
-  .about-section a{ text-decoration:underline; text-underline-offset:2px; }
+  .about-contact a{ text-decoration:underline; text-underline-offset:3px; }
 </style>
 </head>
 <body>
@@ -80,10 +63,6 @@
 
 <div class="about-wrap">
 
-  <div class="about-photo">
-    <img src="assets/about/portrait.jpg" alt="Amy Myan" onerror="this.parentElement.style.display='none'">
-  </div>
-
   <p class="about-lines">
     born &amp; based in los angeles, ca<br>
     show/tour coverage, portraits, bts<br>
@@ -96,33 +75,8 @@
     <a href="mailto:hello@amymyan.com">hello@amymyan.com</a>
   </p>
 
-  <!-- Second photo, shown between the contact info and "featured in".
-       Just save a photo as assets/about/photo2.jpg (same folder as
-       your headshot above) and it'll appear here automatically. -->
-  <div class="about-photo">
-    <img src="assets/about/photo2.jpg" alt="" onerror="this.parentElement.style.display='none'">
-  </div>
-
-  <div class="about-section">
-    <h2>featured in</h2>
-    <p>Local Wolves Magazine<br>Haute Magazine<br>Front Row Weekly</p>
-  </div>
-
-  <div class="about-section">
-    <h2>previous artists worked with</h2>
-    <p>
-      <a href="https://www.instagram.com/artemas___/" target="_blank" rel="noopener">Artemas</a>,
-      <a href="https://www.instagram.com/clairerosinkranz/" target="_blank" rel="noopener">Claire Rosinkranz</a>,
-      <a href="https://www.instagram.com/djotime/" target="_blank" rel="noopener">DJO</a>,
-      <a href="https://www.instagram.com/josh.conway/" target="_blank" rel="noopener">Josh Conway</a>,
-      <a href="https://www.instagram.com/kristiane/" target="_blank" rel="noopener">Kristiane</a>,
-      <a href="https://www.instagram.com/indigofaraway/" target="_blank" rel="noopener">Indigo DeSouza</a>,
-      <a href="https://www.instagram.com/abbyholliday/" target="_blank" rel="noopener">Abby Holliday</a>,
-      <a href="https://www.instagram.com/therealmrfantasy/" target="_blank" rel="noopener">Mr. Fantasy</a>,
-      <a href="https://www.instagram.com/maddieparkk/" target="_blank" rel="noopener">Maddie Park</a>,
-      <a href="https://www.instagram.com/iamannaelyse/" target="_blank" rel="noopener">Anna Elyse</a>,
-      + more
-    </p>
+  <div class="about-photo about-photo--small">
+    <img id="about-photo2" src="" alt="">
   </div>
 
 </div>
@@ -136,7 +90,23 @@
   </span>
 </footer>
 
-<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="js/config.js"></script>
+<script src="js/amy-media.js?v=20260720zn"></script>
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+(function loadAboutPhoto() {
+  const photo2 = document.getElementById('about-photo2');
+  if (!photo2 || typeof mediaSrc !== 'function') return;
+
+  photo2.src = mediaSrc('assets/about/photo2.jpeg');
+
+  photo2.addEventListener('error', () => {
+    const frame = photo2.closest('.about-photo');
+    if (frame) frame.hidden = true;
+  });
+})();
+</script>
 <script src="js/galaxy.js" defer></script>
 </body>
 </html>

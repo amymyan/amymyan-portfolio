@@ -170,6 +170,13 @@ function initHoverPreview() {
     openTimer: null,
     hoverFrame: null
   };
+
+  function dismissPreviewOnMove() {
+    hideHoverPreview({ immediate: true });
+  }
+
+  window.addEventListener('scroll', dismissPreviewOnMove, { passive: true, capture: true });
+  window.addEventListener('wheel', dismissPreviewOnMove, { passive: true, capture: true });
 }
 
 function clearHoverOpenTimer() {
@@ -178,20 +185,33 @@ function clearHoverOpenTimer() {
   hoverPreview.openTimer = null;
 }
 
-function hideHoverPreview() {
+function hideHoverPreview({ immediate = false } = {}) {
   if (!hoverPreview) return;
   clearHoverOpenTimer();
   hoverPreview.hoverFrame = null;
+  hoverPreview.pendingSrc = null;
+  hoverPreview.anchorRect = null;
+
   const { el } = hoverPreview;
   if (hoverPreview.closeTimer) {
     clearTimeout(hoverPreview.closeTimer);
     hoverPreview.closeTimer = null;
   }
-  hoverPreview.pendingSrc = null;
-  hoverPreview.anchorRect = null;
-  if (!el.classList.contains('is-visible')) return;
 
-  el.classList.remove('is-visible');
+  const wasVisible = el.classList.contains('is-visible');
+  el.classList.remove('is-visible', 'is-closing');
+  el.style.removeProperty('transform');
+
+  if (!wasVisible) return;
+
+  if (immediate) {
+    el.style.opacity = '0';
+    el.style.visibility = 'hidden';
+    return;
+  }
+
+  el.style.removeProperty('opacity');
+  el.style.removeProperty('visibility');
   el.classList.add('is-closing');
 
   function finishClose() {
@@ -200,7 +220,7 @@ function hideHoverPreview() {
   }
 
   el.addEventListener('transitionend', finishClose);
-  hoverPreview.closeTimer = setTimeout(finishClose, 260);
+  hoverPreview.closeTimer = setTimeout(finishClose, 140);
 }
 
 function showHoverPreview(anchorRect) {
