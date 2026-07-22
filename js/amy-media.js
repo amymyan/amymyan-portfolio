@@ -16,6 +16,42 @@ function mediaSrc(path) {
   return base ? base + '/' + encoded.replace(/^\//, '') : encoded;
 }
 
+function imageCdnOrigin() {
+  const custom = (window.IMAGE_CDN_ORIGIN || '').replace(/\/$/, '');
+  if (custom) return custom;
+  if (typeof window !== 'undefined' && window.location?.origin &&
+      !window.location.origin.startsWith('file:')) {
+    return window.location.origin;
+  }
+  return '';
+}
+
+/* Smaller display URLs for grids/thumbs — full mediaSrc for lightbox.
+   Uses Cloudflare /cdn-cgi/image/ when DISPLAY_IMAGE_CDN_PARAMS is set. */
+function mediaSrcDisplay(path) {
+  const params = window.DISPLAY_IMAGE_CDN_PARAMS;
+  const origin = imageCdnOrigin();
+  if (!path || !params || !origin || /^https?:\/\//i.test(path)) return mediaSrc(path);
+  return `${origin}/cdn-cgi/image/${params}/${mediaSrc(path)}`;
+}
+
+function preloadMediaPaths(paths) {
+  const seen = new Set();
+  (paths || []).forEach(path => {
+    const src = (path || '').trim();
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    const display = mediaSrcDisplay(src);
+    const img = new Image();
+    img.src = display;
+    const full = mediaSrc(src);
+    if (full !== display) {
+      const fullImg = new Image();
+      fullImg.src = full;
+    }
+  });
+}
+
 /* Optional CDN resize for scrub frames — set in config.js, e.g.
    window.SCRUB_IMAGE_CDN_PARAMS = 'width=480,quality=55,format=auto';
    Only works if your media host supports /cdn-cgi/image/… URLs. */
