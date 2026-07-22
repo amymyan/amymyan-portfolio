@@ -29,6 +29,7 @@
 .portrait-grid figure {
   margin: 0;
   overflow: hidden;
+  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
 }
 
 .portrait-grid img,
@@ -37,6 +38,7 @@
   width: 100%;
   height: auto;
   vertical-align: bottom;
+  pointer-events: none;
 }
 
 .portrait-grid figure:hover img,
@@ -46,6 +48,39 @@
 
 .portrait-grid .empty-note {
   width: 100%;
+}
+
+/* Lightbox — full-size portrait view */
+.lightbox-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.92);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+.lightbox-overlay.open{ display:flex; }
+
+.lightbox-content img,
+.lightbox-content video{
+  max-width:92vw;
+  max-height:92vh;
+  object-fit:contain;
+  display:block;
+}
+
+.lightbox-close{
+  position:fixed;
+  top:1.25rem;
+  right:1.5rem;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:2.25rem;
+  line-height:1;
+  cursor:pointer;
+  padding:0.25rem 0.5rem;
 }
 
 /* Organizer preview — scaled-down match for live portrait page */

@@ -1,7 +1,7 @@
 /* Homepage — 35mm filmstrip, landscape 3:2 frames */
 
 .home-film {
-  --peek: clamp(30px, 9%, 76px);
+  --peek: clamp(38px, 12%, 100px);
   --frame-w: calc(100% - var(--peek) * 2);
   --frame-gap: 0px;
   --frame-step: var(--frame-w);

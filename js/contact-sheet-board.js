@@ -81,31 +81,71 @@ function buildLightbox() {
   overlay.className = 'lightbox-overlay';
   overlay.innerHTML = `
     <button class="lightbox-close" aria-label="close">&times;</button>
+    <button type="button" class="lightbox-nav lightbox-nav--prev" aria-label="Previous photo">&larr;</button>
+    <button type="button" class="lightbox-nav lightbox-nav--next" aria-label="Next photo">&rarr;</button>
     <div class="lightbox-content"></div>
   `;
   document.body.appendChild(overlay);
 
+  const prevBtn = overlay.querySelector('.lightbox-nav--prev');
+  const nextBtn = overlay.querySelector('.lightbox-nav--next');
+  let gallery = [];
+  let index = 0;
+
+  function updateNavButtons() {
+    const showNav = gallery.length > 1;
+    prevBtn.hidden = !showNav;
+    nextBtn.hidden = !showNav;
+  }
+
+  function showPhotoAt(i) {
+    if (!gallery.length) return;
+    index = (i + gallery.length) % gallery.length;
+    const photo = gallery[index];
+    const content = overlay.querySelector('.lightbox-content');
+    content.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = mediaSrc(photo.src);
+    img.alt = photo.caption || '';
+    content.appendChild(img);
+    updateNavButtons();
+  }
+
   function close() {
     overlay.classList.remove('open');
     overlay.querySelector('.lightbox-content').innerHTML = '';
+    gallery = [];
+    index = 0;
+    updateNavButtons();
   }
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) close();
   });
   overlay.querySelector('.lightbox-close').addEventListener('click', close);
+  prevBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showPhotoAt(index - 1);
+  });
+  nextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showPhotoAt(index + 1);
+  });
   document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('open')) return;
     if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') showPhotoAt(index - 1);
+    if (e.key === 'ArrowRight') showPhotoAt(index + 1);
   });
 
+  updateNavButtons();
+
   return {
-    open(photo) {
-      const content = overlay.querySelector('.lightbox-content');
-      content.innerHTML = '';
-      const img = document.createElement('img');
-      img.src = mediaSrc(photo.src);
-      img.alt = photo.caption || '';
-      content.appendChild(img);
+    openGallery(photos, startIndex = 0) {
+      gallery = (photos || []).filter(p => p?.src?.trim());
+      if (!gallery.length) return;
+      index = Math.min(Math.max(0, startIndex), gallery.length - 1);
+      showPhotoAt(index);
       overlay.classList.add('open');
     }
   };
@@ -251,26 +291,36 @@ function scheduleHoverPreview(frame, src) {
   }, HOVER_PREVIEW_DELAY_MS);
 }
 
-function attachLiveFrame(frame, frameData) {
-  const src = mediaSrc(frameData.src);
+function makeAttachLiveFrame(sheet) {
+  const { frames } = sheetGridLayout(sheet);
+  const photoList = frames.filter(f => f?.src?.trim());
 
-  frame.addEventListener('mouseenter', () => {
-    scheduleHoverPreview(frame, src);
-  });
+  return function attachLiveFrame(frame, frameData) {
+    const src = mediaSrc(frameData.src);
 
-  frame.addEventListener('mouseleave', hideHoverPreview);
+    frame.addEventListener('mouseenter', () => {
+      scheduleHoverPreview(frame, src);
+    });
 
-  frame.addEventListener('click', (e) => {
-    e.stopPropagation();
-    hideHoverPreview();
-    lightbox.open({ src: frameData.src });
-  });
+    frame.addEventListener('mouseleave', hideHoverPreview);
+
+    frame.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideHoverPreview();
+      const slot = parseInt(frame.dataset.slot, 10);
+      let startIndex = Number.isFinite(slot) && frames[slot] === frameData
+        ? photoList.indexOf(frameData)
+        : photoList.findIndex(f => f.src === frameData.src);
+      if (startIndex < 0) startIndex = 0;
+      lightbox.openGallery(photoList, startIndex);
+    });
+  };
 }
 
 function createSheetElement(sheet) {
   return buildContactSheetElement(sheet, {
     mode: 'live',
-    attachLiveFrame
+    attachLiveFrame: makeAttachLiveFrame(sheet)
   });
 }
 

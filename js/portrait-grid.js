@@ -1,11 +1,56 @@
 /* Portrait page — 2-column masonry, natural aspect ratios */
 
+function buildPortraitLightbox() {
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = `
+    <button class="lightbox-close" aria-label="close">&times;</button>
+    <div class="lightbox-content"></div>
+  `;
+  document.body.appendChild(overlay);
+
+  function close() {
+    overlay.classList.remove('open');
+    overlay.querySelector('.lightbox-content').innerHTML = '';
+  }
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.lightbox-close').addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+
+  return {
+    open(item) {
+      const content = overlay.querySelector('.lightbox-content');
+      content.innerHTML = '';
+      if (isVideoPath(item.src)) {
+        const video = document.createElement('video');
+        video.src = mediaSrc(item.src);
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        content.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = mediaSrc(item.src);
+        img.alt = item.caption || '';
+        content.appendChild(img);
+      }
+      overlay.classList.add('open');
+    }
+  };
+}
+
 (async function initPortraitGrid() {
   const grid = document.getElementById('portrait-grid');
   const emptyNote = document.getElementById('portrait-empty');
   if (!grid) return;
 
   const source = grid.dataset.source || 'data/portrait.json';
+  const lightbox = buildPortraitLightbox();
 
   let items = [];
   try {
@@ -48,6 +93,8 @@
       img.decoding = 'async';
       figure.appendChild(img);
     }
+
+    figure.addEventListener('click', () => lightbox.open(item));
 
     cols[portraitMasonryColumnIndex(index)].appendChild(figure);
   });

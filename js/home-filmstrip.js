@@ -93,9 +93,9 @@
   }
 
   function peekPx() {
-    if (!rollEl?.clientWidth) return 108;
+    if (!rollEl?.clientWidth) return 120;
     const w = rollEl.clientWidth;
-    return Math.min(76, Math.max(30, w * 0.09));
+    return Math.min(100, Math.max(38, w * 0.12));
   }
 
   function updateFrameWidth() {

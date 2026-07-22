@@ -47,15 +47,17 @@
 }
 
 .contact-sheet-board .contact-row{
-  column-gap:0.8em;
+  column-gap:var(--sheet-col-gap, 0.8em);
   row-gap:0.2em;
 }
 
 .contact-sheet-board .contact-sheet-body{
+  --sheet-col-gap:0.8em;
+  --sheet-row-gap:3em;
   display:flex;
   flex-direction:column;
-  gap:3em;
-  padding:1.35em 0.7em 1.5em;
+  gap:var(--sheet-row-gap);
+  padding:var(--sheet-col-gap) 0.7em var(--sheet-row-gap);
 }
 
 .contact-sheet-board.board--narrow{

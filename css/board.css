@@ -179,4 +179,31 @@
   line-height:1;
   cursor:pointer;
   padding:0.25rem 0.5rem;
+  z-index:2002;
 }
+
+.lightbox-nav{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  color:#fff;
+  font-family:var(--mono);
+  font-size:2.25rem;
+  line-height:1;
+  cursor:pointer;
+  padding:0.75rem 1rem;
+  opacity:0.72;
+  z-index:2002;
+  transition:opacity 0.15s ease;
+}
+
+.lightbox-nav:hover,
+.lightbox-nav:focus-visible{
+  opacity:1;
+  outline:none;
+}
+
+.lightbox-nav--prev{ left:0.75rem; }
+.lightbox-nav--next{ right:0.75rem; }
