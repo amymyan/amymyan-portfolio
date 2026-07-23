@@ -7,10 +7,6 @@
   overflow:visible;
 }
 
-.contact-sheet-board .contact-sheet{
-  contain:none;
-}
-
 .contact-sheet{
   position:absolute;
   user-select:none;

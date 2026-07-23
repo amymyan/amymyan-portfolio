@@ -18,10 +18,6 @@
 
 window.MEDIA_BASE_URL = 'https://pub-a296b21e7cf6462a8d3760710a67b7ae.r2.dev';
 
-/* Resize photos for faster page loads (Cloudflare Image Resizing on your Pages/custom domain).
-   Lightbox still loads full-size originals from R2. */
-window.DISPLAY_IMAGE_CDN_PARAMS = 'width=1400,quality=82,format=auto';
-
 /* FOLDER STRUCTURE NOTE
    The site builds URLs as:  MEDIA_BASE_URL + "/" + path-from-json
    Example: https://pub-xxx.r2.dev/assets/video/my-clip.mp4

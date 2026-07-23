@@ -378,16 +378,6 @@ function layoutNarrow(board) {
   });
 }
 
-function preloadAllSheetImages() {
-  const paths = [];
-  sheets.forEach(sheet => {
-    sheetGridLayout(sheet).frames.forEach(frame => {
-      if (frame?.src?.trim()) paths.push(frame.src);
-    });
-  });
-  preloadMediaPaths(paths);
-}
-
 function renderBoard() {
   boardEl.innerHTML = '';
   hideHoverPreview();
@@ -402,8 +392,6 @@ function renderBoard() {
       fitBoardHeight(boardEl);
     });
   }
-
-  preloadAllSheetImages();
 }
 
 async function initBoard() {

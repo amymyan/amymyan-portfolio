@@ -292,25 +292,12 @@ function buildContactFrameElement(frameData, slot, options = {}) {
 
     const img = document.createElement('img');
     img.alt = '';
+    img.loading = 'lazy';
     img.decoding = 'async';
     applyFrameFocus(img, frameData);
     if (mode === 'organizer' && typeof setOrganizerPreviewImg === 'function') {
-      img.loading = 'lazy';
       setOrganizerPreviewImg(img, frameData.src, ORGANIZER_THUMB_FRAME);
-    } else if (mode === 'live') {
-      img.loading = 'eager';
-      const fullSrc = mediaSrc(frameData.src);
-      const displaySrc = mediaSrcDisplay(frameData.src);
-      img.src = displaySrc;
-      if (displaySrc !== fullSrc) {
-        img.addEventListener('error', () => {
-          if (img.dataset.fullFallback) return;
-          img.dataset.fullFallback = '1';
-          img.src = fullSrc;
-        }, { once: true });
-      }
     } else {
-      img.loading = 'lazy';
       img.src = mediaSrc(frameData.src);
     }
     media.appendChild(img);

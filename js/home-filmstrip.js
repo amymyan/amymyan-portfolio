@@ -164,18 +164,10 @@
     photo.className = 'home-film-photo';
     const img = document.createElement('img');
     img.alt = frame.title || '';
-    img.src = mediaSrcDisplay(frame.src);
-    img.loading = 'eager';
+    img.src = mediaSrc(frame.src);
+    img.loading = eager ? 'eager' : 'lazy';
     if (eager) img.fetchPriority = 'high';
     img.decoding = 'async';
-    const fullSrc = mediaSrc(frame.src);
-    if (img.src !== fullSrc) {
-      img.addEventListener('error', () => {
-        if (img.dataset.fullFallback) return;
-        img.dataset.fullFallback = '1';
-        img.src = fullSrc;
-      }, { once: true });
-    }
     photo.appendChild(img);
 
     const link = document.createElement('a');
@@ -201,9 +193,9 @@
     getRollFrameEls(rollId).forEach(el => {
       const img = el.querySelector('img');
       if (!img) return;
-      const displaySrc = mediaSrcDisplay(src);
-      if (img.getAttribute('src') === displaySrc) return;
-      img.src = displaySrc;
+      const next = mediaSrc(src);
+      if (img.getAttribute('src') === next) return;
+      img.src = next;
       if (img.decode) img.decode().catch(() => {});
     });
   }
@@ -213,24 +205,14 @@
   }
 
   function preloadSrc(src) {
-    const url = mediaSrcDisplay(src);
+    const url = mediaSrc(src);
     if (!src || !url || preloadedUrls.has(url)) return Promise.resolve();
     preloadedUrls.add(url);
     return new Promise((resolve) => {
       const img = new Image();
       const finish = () => resolve();
       img.onload = finish;
-      img.onerror = () => {
-        const full = mediaSrc(src);
-        if (full !== url) {
-          const fullImg = new Image();
-          fullImg.onload = finish;
-          fullImg.onerror = finish;
-          fullImg.src = full;
-        } else {
-          finish();
-        }
-      };
+      img.onerror = finish;
       img.src = url;
     });
   }

@@ -87,18 +87,10 @@ function buildPortraitLightbox() {
       figure.appendChild(video);
     } else {
       const img = document.createElement('img');
-      img.src = mediaSrcDisplay(item.src);
+      img.src = mediaSrc(item.src);
       img.alt = item.caption || '';
-      img.loading = 'eager';
+      img.loading = 'lazy';
       img.decoding = 'async';
-      const fullSrc = mediaSrc(item.src);
-      if (img.src !== fullSrc) {
-        img.addEventListener('error', () => {
-          if (img.dataset.fullFallback) return;
-          img.dataset.fullFallback = '1';
-          img.src = fullSrc;
-        }, { once: true });
-      }
       figure.appendChild(img);
     }
 
@@ -106,6 +98,4 @@ function buildPortraitLightbox() {
 
     cols[portraitMasonryColumnIndex(index)].appendChild(figure);
   });
-
-  preloadMediaPaths(items.map(item => item.src));
 })();

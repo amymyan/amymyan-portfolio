@@ -139,25 +139,10 @@ function createTile(photo) {
       el.appendChild(video);
     } else {
       const img = document.createElement('img');
-      const fullSrc = mediaSrc(photo.src);
-      const displaySrc = mediaSrcDisplay(photo.src);
-      img.src = displaySrc;
+      img.src = mediaSrc(photo.src);
       img.alt = photo.caption || '';
-      img.loading = 'eager';
-      img.decoding = 'async';
-      if (displaySrc !== fullSrc) {
-        img.addEventListener('error', () => {
-          if (img.dataset.fullFallback) {
-            el.remove();
-            return;
-          }
-          img.dataset.fullFallback = '1';
-          img.src = fullSrc;
-        });
-      } else {
-        img.addEventListener('error', () => el.remove());
-      }
       img.addEventListener('load', scheduleBoardRefit);
+      img.addEventListener('error', () => el.remove());
       el.appendChild(img);
     }
   } else {
@@ -359,10 +344,6 @@ function renderBoard() {
     layoutWide(board, layout);
     requestAnimationFrame(() => fitBoardHeight(board));
   }
-
-  preloadMediaPaths(
-    photos.filter(photo => photo?.src && !isVideoPath(photo.src)).map(photo => photo.src)
-  );
 }
 
 async function initBoard() {

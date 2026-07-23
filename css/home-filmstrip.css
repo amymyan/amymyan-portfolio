@@ -159,6 +159,7 @@
   width: var(--frame-w);
   background: var(--film-ink);
   position: relative;
+  contain: layout style paint;
   transform: translateZ(0);
 }
 
