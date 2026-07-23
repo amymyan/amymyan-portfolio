@@ -21,6 +21,7 @@
   let rollCurrentSrc = new Map();
   let rollVisibility = new Map();
   let rollQueuedSrc = new Map();
+  let preloadedUrls = new Set();
   let visibilityInitialized = false;
   let rollCount = 0;
   let currentRollIndex = 0;
@@ -171,13 +172,11 @@
     if (img.src !== fullSrc) {
       img.addEventListener('error', () => {
         if (img.dataset.fullFallback) return;
-          img.dataset.fullFallback = '1';
-          img.src = fullSrc;
-          bindImageRetain(img);
-        }, { once: true });
-      }
-      bindImageRetain(img);
-      photo.appendChild(img);
+        img.dataset.fullFallback = '1';
+        img.src = fullSrc;
+      }, { once: true });
+    }
+    photo.appendChild(img);
 
     const link = document.createElement('a');
     link.className = 'home-film-cover-link';
@@ -214,8 +213,26 @@
   }
 
   function preloadSrc(src) {
-    if (!src) return Promise.resolve();
-    return retainMediaUrl(mediaSrcDisplay(src));
+    const url = mediaSrcDisplay(src);
+    if (!src || !url || preloadedUrls.has(url)) return Promise.resolve();
+    preloadedUrls.add(url);
+    return new Promise((resolve) => {
+      const img = new Image();
+      const finish = () => resolve();
+      img.onload = finish;
+      img.onerror = () => {
+        const full = mediaSrc(src);
+        if (full !== url) {
+          const fullImg = new Image();
+          fullImg.onload = finish;
+          fullImg.onerror = finish;
+          fullImg.src = full;
+        } else {
+          finish();
+        }
+      };
+      img.src = url;
+    });
   }
 
   function queueRollCover(rollId) {
