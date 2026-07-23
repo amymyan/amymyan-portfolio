@@ -302,13 +302,11 @@ function buildContactFrameElement(frameData, slot, options = {}) {
       const fullSrc = mediaSrc(frameData.src);
       const displaySrc = mediaSrcDisplay(frameData.src);
       img.src = displaySrc;
-      bindImageRetain(img);
       if (displaySrc !== fullSrc) {
         img.addEventListener('error', () => {
           if (img.dataset.fullFallback) return;
           img.dataset.fullFallback = '1';
           img.src = fullSrc;
-          bindImageRetain(img);
         }, { once: true });
       }
     } else {

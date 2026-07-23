@@ -26,18 +26,6 @@
   gap: var(--portrait-gutter);
 }
 
-.portrait-grid figure,
-.portrait-grid img {
-  content-visibility: visible;
-  contain: none;
-}
-
-.portrait-grid img {
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
 .portrait-grid figure {
   margin: 0;
   overflow: hidden;

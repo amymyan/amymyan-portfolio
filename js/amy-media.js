@@ -35,117 +35,21 @@ function mediaSrcDisplay(path) {
   return `${origin}/cdn-cgi/image/${params}/${mediaSrc(path)}`;
 }
 
-const _retainedUrls = new Set();
-const _retainPromises = new Map();
-
-function getMediaRetainRoot() {
-  let root = document.getElementById('media-retain-cache');
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'media-retain-cache';
-    root.setAttribute('aria-hidden', 'true');
-    root.style.cssText =
-      'position:fixed;left:0;top:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1';
-    document.body.appendChild(root);
-  }
-  return root;
-}
-
-/* Keep decoded bitmaps in a hidden DOM node so scroll-back doesn't flash white. */
-function retainMediaUrl(url) {
-  const src = (url || '').trim();
-  if (!src || _retainedUrls.has(src)) {
-    return _retainPromises.get(src) || Promise.resolve();
-  }
-  _retainedUrls.add(src);
-
-  const promise = new Promise((resolve) => {
-    const pin = document.createElement('img');
-    pin.alt = '';
-    pin.loading = 'eager';
-    pin.decoding = 'async';
-    const finish = () => {
-      if (pin.decode) pin.decode().then(resolve).catch(resolve);
-      else resolve();
-    };
-    pin.onload = finish;
-    pin.onerror = finish;
-    pin.src = src;
-    getMediaRetainRoot().appendChild(pin);
-  });
-
-  _retainPromises.set(src, promise);
-  return promise;
-}
-
-function bindImageRetain(img) {
-  if (!img || img.dataset.retainBound) return;
-  img.dataset.retainBound = '1';
-  const pin = () => {
-    const url = img.currentSrc || img.src;
-    if (url) retainMediaUrl(url);
-  };
-  if (img.complete && img.naturalWidth) pin();
-  else img.addEventListener('load', pin, { once: true });
-}
-
-async function preloadMediaPaths(paths, { concurrency = 10, retain = true } = {}) {
+function preloadMediaPaths(paths) {
   const seen = new Set();
-  const urls = [];
   (paths || []).forEach(path => {
     const src = (path || '').trim();
-    if (!src || seen.has(src) || isVideoPath(src)) return;
+    if (!src || seen.has(src)) return;
     seen.add(src);
-    urls.push(mediaSrcDisplay(src));
-  });
-
-  if (!urls.length) return;
-
-  let cursor = 0;
-  async function worker() {
-    while (cursor < urls.length) {
-      const url = urls[cursor++];
-      if (retain) await retainMediaUrl(url);
-      else {
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.onload = resolve;
-          img.onerror = resolve;
-          img.src = url;
-        });
-      }
+    const display = mediaSrcDisplay(src);
+    const img = new Image();
+    img.src = display;
+    const full = mediaSrc(src);
+    if (full !== display) {
+      const fullImg = new Image();
+      fullImg.src = full;
     }
-  }
-
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, urls.length) }, () => worker())
-  );
-}
-
-/* Load what's on screen first, then the rest. */
-async function preloadMediaPathsNearViewport(items, rootEl, { margin = 900, concurrency = 10 } = {}) {
-  const scrollY = window.scrollY;
-  const viewTop = scrollY - margin;
-  const viewBottom = scrollY + window.innerHeight + margin;
-  const boardTop = rootEl?.offsetTop || 0;
-
-  const seen = new Set();
-  const near = [];
-  const far = [];
-
-  (items || []).forEach(item => {
-    const path = typeof item === 'string' ? item : item.path;
-    const y = typeof item === 'object' ? (item.y ?? 0) : 0;
-    const src = (path || '').trim();
-    if (!src || seen.has(src) || isVideoPath(src)) return;
-    seen.add(src);
-    const absY = boardTop + y;
-    if (absY >= viewTop && absY <= viewBottom) near.push(src);
-    else far.push(src);
   });
-
-  await preloadMediaPaths(near, { concurrency });
-  await preloadMediaPaths(far, { concurrency });
 }
 
 /* Optional CDN resize for scrub frames — set in config.js, e.g.

@@ -379,15 +379,13 @@ function layoutNarrow(board) {
 }
 
 function preloadAllSheetImages() {
-  const items = [];
+  const paths = [];
   sheets.forEach(sheet => {
     sheetGridLayout(sheet).frames.forEach(frame => {
-      if (frame?.src?.trim()) {
-        items.push({ path: frame.src, y: sheet.y ?? 0 });
-      }
+      if (frame?.src?.trim()) paths.push(frame.src);
     });
   });
-  preloadMediaPathsNearViewport(items, boardEl);
+  preloadMediaPaths(paths);
 }
 
 function renderBoard() {
