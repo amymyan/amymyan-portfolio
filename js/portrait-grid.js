@@ -100,6 +100,7 @@ function buildPortraitLightbox() {
         }, { once: true });
       }
       figure.appendChild(img);
+      bindImageRetain(img);
     }
 
     figure.addEventListener('click', () => lightbox.open(item));
