@@ -145,6 +145,7 @@ function createTile(photo) {
       img.alt = photo.caption || '';
       img.loading = 'eager';
       img.decoding = 'async';
+      bindImageRetain(img);
       if (displaySrc !== fullSrc) {
         img.addEventListener('error', () => {
           if (img.dataset.fullFallback) {
@@ -153,6 +154,7 @@ function createTile(photo) {
           }
           img.dataset.fullFallback = '1';
           img.src = fullSrc;
+          bindImageRetain(img);
         });
       } else {
         img.addEventListener('error', () => el.remove());

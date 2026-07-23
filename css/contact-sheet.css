@@ -9,6 +9,21 @@
 
 .contact-sheet-board .contact-sheet{
   contain:none;
+  content-visibility:visible;
+}
+
+.contact-sheet-board .contact-sheet-body,
+.contact-sheet-board .contact-frame,
+.contact-sheet-board .frame-media,
+.contact-sheet-board .frame-media img{
+  content-visibility:visible;
+  contain:none;
+}
+
+.contact-sheet-board .frame-media img{
+  transform:translateZ(0);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
 }
 
 .contact-sheet{

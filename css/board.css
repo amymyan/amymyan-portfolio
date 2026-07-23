@@ -76,6 +76,11 @@
   width:100%;
   height:auto;
   pointer-events:none;
+  content-visibility:visible;
+  contain:none;
+  transform:translateZ(0);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
 }
 .polaroid .video-caption{
   display:block;
