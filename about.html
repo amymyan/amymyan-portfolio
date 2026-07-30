@@ -59,6 +59,10 @@
 
 <div class="about-wrap">
 
+  <div class="about-photo">
+    <img id="about-photo1" src="" alt="Amy MyAn">
+  </div>
+
   <p class="about-lines">
     born &amp; based in los angeles, ca<br>
     show/tour coverage, portraits, bts<br>
@@ -90,10 +94,20 @@
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 
-(function loadAboutPhoto() {
+(function loadAboutPhotos() {
+  const photo1 = document.getElementById('about-photo1');
   const photo2 = document.getElementById('about-photo2');
-  if (!photo2 || typeof mediaSrc !== 'function') return;
+  if (typeof mediaSrc !== 'function') return;
 
+  if (photo1) {
+    photo1.src = mediaSrc('assets/about/photo1.png');
+    photo1.addEventListener('error', () => {
+      const frame = photo1.closest('.about-photo');
+      if (frame) frame.hidden = true;
+    });
+  }
+
+  if (!photo2) return;
   photo2.src = mediaSrc('assets/about/photo2.jpeg');
 
   photo2.addEventListener('error', () => {
