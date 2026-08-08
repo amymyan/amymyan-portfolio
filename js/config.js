@@ -16,7 +16,7 @@
 
    ============================================================ */
 
-window.MEDIA_BASE_URL = 'https://pub-a296b21e7cf6462a8d3760710a67b7ae.r2.dev';
+window.MEDIA_BASE_URL = 'https://cdn.amymyan.com';
 
 /* FOLDER STRUCTURE NOTE
    The site builds URLs as:  MEDIA_BASE_URL + "/" + path-from-json
