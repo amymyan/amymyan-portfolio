@@ -10,7 +10,7 @@
 .contact-sheet{
   position:absolute;
   user-select:none;
-  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor:var(--site-cursor);
   contain:layout style;
   --sheet-u:10px;
   font-size:var(--sheet-u);
@@ -172,7 +172,7 @@
   font-weight:700;
   letter-spacing:0.14em;
   color:var(--flash);
-  text-shadow:0 0 4px rgba(232,143,178,0.55);
+  text-shadow:0 0 4px rgba(255,20,147,0.55);
   text-transform:uppercase;
   text-align:center;
   white-space:nowrap;
@@ -227,7 +227,7 @@
 
 .contact-frame.empty{
   background:#070707;
-  border:1px dashed rgba(232,143,178,0.35);
+  border:1px dashed rgba(255,20,147,0.35);
 }
 
 .organizer .contact-frame.empty{
@@ -243,7 +243,7 @@
   justify-content:center;
   font-family:var(--mono);
   font-size:0.65rem;
-  color:rgba(232,143,178,0.55);
+  color:rgba(255,20,147,0.55);
   pointer-events:none;
 }
 
@@ -272,7 +272,7 @@
 
 /* Live site: hover via single shared preview (no in-frame scale) */
 .contact-sheet-board .contact-frame{
-  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor:var(--site-cursor);
 }
 
 #contact-hover-preview{
@@ -505,7 +505,7 @@
   margin:0;
   -webkit-appearance:none;
   appearance:none;
-  background:rgba(232,143,178,0.4);
+  background:rgba(255,20,147,0.4);
   border-radius:999px;
   cursor:pointer;
 }

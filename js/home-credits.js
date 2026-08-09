@@ -18,7 +18,8 @@
     'gianna yaccino',
     'naomi sato',
     'maddie park',
-    'alexandra davis'
+    'alexandra davis',
+    'anna elyse'
   ];
 
   const separator = '        ✮        ';

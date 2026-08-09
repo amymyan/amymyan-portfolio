@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>organizer (private) — Amy MyAn</title>
-<link rel="stylesheet" href="css/style.css?v=20260812e">
-<link rel="stylesheet" href="css/contact-sheet.css?v=20260720zx">
-<link rel="stylesheet" href="css/portrait-grid.css?v=20260720h">
+<link rel="stylesheet" href="css/style.css?v=20260812v">
+<link rel="stylesheet" href="css/contact-sheet.css?v=20260812q">
+<link rel="stylesheet" href="css/portrait-grid.css?v=20260812q">
 <style>
   body{ padding-bottom:4rem; }
   body.organizer .site-nav{ backdrop-filter:none; }
@@ -71,7 +71,7 @@
      correct, same as the live site. */
   .mini-polaroid{
     position:absolute;
-    cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+    cursor:var(--site-cursor);
     user-select:none;
   }
   .mini-polaroid.dragging{ z-index:999; }
@@ -82,7 +82,7 @@
   .board-marquee{
     position:absolute;
     border:1px solid var(--flash);
-    background:rgba(232,143,178,0.15);
+    background:rgba(255,20,147,0.15);
     pointer-events:none;
     z-index:500;
   }
@@ -145,11 +145,11 @@
   }
   .home-roll-pick.is-cover{
     border-color:var(--flash);
-    box-shadow:0 0 0 2px rgba(232,143,178,0.35);
+    box-shadow:0 0 0 2px rgba(255,20,147,0.35);
   }
   .home-roll-pick.is-pool{
     border-color:var(--flash);
-    box-shadow:0 0 0 2px rgba(232,143,178,0.35);
+    box-shadow:0 0 0 2px rgba(255,20,147,0.35);
   }
   .home-roll-pick.is-scrub:not(.is-cover){
     border-color:var(--ink);
@@ -323,7 +323,7 @@
     margin:0;
     -webkit-appearance:none;
     appearance:none;
-    background:rgba(232,143,178,0.4);
+    background:rgba(255,20,147,0.4);
     border-radius:999px;
     cursor:pointer;
   }
@@ -338,7 +338,7 @@
   }
   .mini-polaroid .size-control input[type="range"]::-moz-range-track{
     height:3px;
-    background:rgba(232,143,178,0.4);
+    background:rgba(255,20,147,0.4);
     border-radius:999px;
     border:none;
   }
@@ -509,6 +509,7 @@
 <script src="js/organizer-portrait.js?v=20260720e"></script>
 <script src="js/home-data.js?v=20260810f"></script>
 <script src="js/organizer-home.js?v=20260810f"></script>
-<script src="js/galaxy.js" defer></script>
+<script src="js/cursor-glow.js" defer></script>
+<script src="js/galaxy.js?v=20260812v" defer></script>
 </body>
 </html>

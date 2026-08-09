@@ -31,7 +31,7 @@
 /* Each photo/video tile. Width is a % of the board (set in
    organizer.html) — height follows automatically. */
 .polaroid{
-  cursor:url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor:var(--site-cursor);
   user-select:none;
   will-change:transform;
   transform-origin:center center;
@@ -42,7 +42,7 @@
 .board-marquee{
   position:absolute;
   border:1px solid var(--flash);
-  background:rgba(232,143,178,0.15);
+  background:rgba(255,20,147,0.15);
   pointer-events:none;
   z-index:500;
 }

@@ -7,11 +7,13 @@
   --frame-step: var(--frame-w);
   --stage-w: min(1240px, 98vw);
   --roll-u: 10px;
-  --film-ink: #ffffff;
-  --film-line: #ffffff;
+  --film-ink: #0a0a0a;
   --film-edge: var(--film-ink);
-  --film-divider: var(--film-ink);
+  --film-divider: #000000;
   --film-frame-gap: 14px;
+  --film-edge-grey: rgba(255, 255, 255, 0.3);
+  --film-hole-grey: rgba(255, 255, 255, 0.42);
+  --film-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --controls-gap: clamp(0.65rem, 2vw, 2rem);
   --credits-gap: clamp(1.25rem, 3.5vw, 2.25rem);
 
@@ -115,6 +117,31 @@
   background: var(--film-ink);
   border: none;
   overflow: hidden;
+  position: relative;
+}
+
+.home-film-roll::before,
+.home-film-roll::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  z-index: 4;
+  background: var(--film-edge-grey);
+  -webkit-mask-image: var(--film-noise);
+  mask-image: var(--film-noise);
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+}
+
+.home-film-roll::before {
+  top: 0;
+}
+
+.home-film-roll::after {
+  bottom: 0;
 }
 
 .home-film-track {
@@ -151,12 +178,49 @@
   background: var(--film-ink);
 }
 
+.home-film-sprocket--top::after,
+.home-film-sprocket--bottom::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  z-index: 2;
+  background: var(--film-edge-grey);
+  -webkit-mask-image: var(--film-noise);
+  mask-image: var(--film-noise);
+  -webkit-mask-size: 72px 72px;
+  mask-size: 72px 72px;
+}
+
+.home-film-sprocket--top::after {
+  bottom: 0;
+}
+
+.home-film-sprocket--bottom::after {
+  top: 0;
+}
+
 .home-film-sprocket-hole {
   position: absolute;
-  background: var(--paper);
+  background: #000000;
   border: none;
   border-radius: 0.12em;
   box-shadow: none;
+}
+
+.home-film-sprocket-hole::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid var(--film-hole-grey);
+  -webkit-mask-image: var(--film-noise);
+  mask-image: var(--film-noise);
+  -webkit-mask-size: 48px 48px;
+  mask-size: 48px 48px;
+  pointer-events: none;
 }
 
 .home-film-sprocket--top .home-film-sprocket-hole {
@@ -284,7 +348,7 @@
   border: none;
   background: none;
   color: rgba(255, 255, 255, 0.55);
-  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor: var(--site-cursor);
   transition: color 0.12s ease, opacity 0.12s ease, transform 0.12s ease;
 }
 

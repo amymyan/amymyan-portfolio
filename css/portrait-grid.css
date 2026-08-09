@@ -29,7 +29,7 @@
 .portrait-grid figure {
   margin: 0;
   overflow: hidden;
-  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor: var(--site-cursor);
 }
 
 .portrait-grid img,
@@ -172,7 +172,7 @@
   color: var(--ink);
   font-size: 0.72rem;
   line-height: 1;
-  cursor: url('../assets/cursor-hover.png') 12 12, pointer;
+  cursor: var(--site-cursor);
   z-index: 2;
 }
 

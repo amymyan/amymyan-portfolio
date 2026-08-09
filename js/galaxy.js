@@ -9,7 +9,7 @@
 
   const ctx = canvas.getContext('2d');
   const PINK = getComputedStyle(document.documentElement)
-    .getPropertyValue('--flash').trim() || '#E88FB2';
+    .getPropertyValue('--flash').trim() || '#FF1493';
 
   let width = 0;
   let height = 0;
@@ -34,6 +34,10 @@
     return rand(3, 7);
   }
 
+  function pickColor() {
+    return Math.random() < 0.35 ? '#ffffff' : PINK;
+  }
+
   function createParticles() {
     particles.length = 0;
     const count = Math.min(180, Math.floor((width * height) / 8000));
@@ -44,6 +48,7 @@
         y: Math.random() * height,
         size: pickSize(kind),
         kind,
+        color: pickColor(),
         angle: Math.random() * Math.PI * 2,
         spin: rand(-0.025, 0.025),
         vx: rand(-0.14, 0.14),
@@ -80,42 +85,42 @@
     ctx.closePath();
   }
 
-  function drawDot(x, y, size, alpha) {
+  function drawDot(x, y, size, alpha, color) {
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  function drawStar5(x, y, size, angle, alpha) {
+  function drawStar5(x, y, size, angle, alpha, color) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = color;
     polygonStar(5, size, size * 0.42, 0);
     ctx.fill();
     ctx.restore();
   }
 
-  function drawStar6(x, y, size, angle, alpha) {
+  function drawStar6(x, y, size, angle, alpha, color) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = color;
     polygonStar(6, size, size * 0.48, 0);
     ctx.fill();
     ctx.restore();
   }
 
-  function drawDiamond4(x, y, size, angle, alpha) {
+  function drawDiamond4(x, y, size, angle, alpha, color) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = PINK;
+    ctx.fillStyle = color;
     polygonStar(4, size, size * 0.28, Math.PI / 4);
     ctx.fill();
     ctx.restore();
@@ -133,13 +138,13 @@
       const alpha = 0.22 + 0.58 * (0.5 + 0.5 * Math.sin(time * 0.001 * p.pulse + p.phase));
 
       if (p.kind === 'dot') {
-        drawDot(p.x, p.y, p.size, alpha);
+        drawDot(p.x, p.y, p.size, alpha, p.color);
       } else if (p.kind === 'star5') {
-        drawStar5(p.x, p.y, p.size, p.angle, alpha);
+        drawStar5(p.x, p.y, p.size, p.angle, alpha, p.color);
       } else if (p.kind === 'star6') {
-        drawStar6(p.x, p.y, p.size, p.angle, alpha);
+        drawStar6(p.x, p.y, p.size, p.angle, alpha, p.color);
       } else {
-        drawDiamond4(p.x, p.y, p.size, p.angle, alpha);
+        drawDiamond4(p.x, p.y, p.size, p.angle, alpha, p.color);
       }
     });
 
