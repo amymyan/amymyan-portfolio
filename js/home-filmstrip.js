@@ -32,6 +32,72 @@
   let lastActiveIndex = -1;
   let lastScrubbing = false;
   let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const AUTO_SCROLL_INDEX_PER_SEC = 0.13;
+  let autoScrollPaused = false;
+  let autoScrollRaf = null;
+  let lastAutoScrollTime = 0;
+
+  function pauseAutoScroll() {
+    autoScrollPaused = true;
+  }
+
+  function resumeAutoScroll() {
+    autoScrollPaused = false;
+    lastAutoScrollTime = performance.now();
+  }
+
+  function wrapScrollIndex(index) {
+    const trailingCloneIndex = frameEls.length - 1;
+    if (index >= trailingCloneIndex) return index - rollCount;
+    if (index <= 0) return index + rollCount;
+    return index;
+  }
+
+  function syncRollIndexFromPosition(index) {
+    const rounded = Math.round(Math.max(1, Math.min(rollCount, index)));
+    currentRollIndex = (rounded - 1 + rollCount) % rollCount;
+  }
+
+  function tickAutoScroll(now) {
+    autoScrollRaf = requestAnimationFrame(tickAutoScroll);
+    if (animating || reduceMotion || autoScrollPaused || !frameEls.length) {
+      lastAutoScrollTime = now;
+      return;
+    }
+
+    const dt = Math.min(0.05, (now - (lastAutoScrollTime || now)) / 1000);
+    lastAutoScrollTime = now;
+
+    let next = currentIndex + AUTO_SCROLL_INDEX_PER_SEC * dt;
+    const trailingCloneIndex = frameEls.length - 1;
+
+    if (next >= trailingCloneIndex) {
+      next = wrapScrollIndex(next);
+      trackEl.style.transition = 'none';
+      currentIndex = next;
+      syncRollIndexFromPosition(next);
+      setStripPosition(next, { scrubbing: true });
+      requestAnimationFrame(() => {
+        trackEl.style.transition = '';
+      });
+      return;
+    }
+
+    currentIndex = next;
+    syncRollIndexFromPosition(next);
+    setStripPosition(next, { scrubbing: true });
+  }
+
+  function startAutoScroll() {
+    if (reduceMotion || autoScrollRaf) return;
+    lastAutoScrollTime = performance.now();
+    autoScrollRaf = requestAnimationFrame(tickAutoScroll);
+  }
+
+  function stopAutoScroll() {
+    if (autoScrollRaf) cancelAnimationFrame(autoScrollRaf);
+    autoScrollRaf = null;
+  }
 
   function easeAdvance(t) {
     if (t >= 1) return 1;
@@ -92,15 +158,17 @@
     });
   }
 
-  function peekPx() {
-    if (!rollEl?.clientWidth) return 120;
-    const w = rollEl.clientWidth;
-    return Math.min(100, Math.max(38, w * 0.12));
+  function framesVisibleTarget() {
+    if (!rollEl?.clientWidth) return 1.65;
+    return rollEl.clientWidth < 560 ? 1.35 : 1.65;
   }
 
   function updateFrameWidth() {
     if (!rollEl) return;
-    const fw = Math.max(200, rollEl.clientWidth - peekPx() * 2);
+    const rollW = rollEl.clientWidth;
+    const gap = parseFloat(getComputedStyle(root).getPropertyValue('--film-frame-gap')) || 14;
+    const visible = framesVisibleTarget();
+    const fw = Math.max(160, (rollW - gap) / visible);
     root.style.setProperty('--frame-w', fw + 'px');
   }
 
@@ -317,6 +385,7 @@
       });
     }
     preloadAllQueuedCovers();
+    resumeAutoScroll();
   }
 
   function runAdvanceAnimation(fromIndex, toIndex, onComplete) {
@@ -342,6 +411,7 @@
 
   function animateStep(direction) {
     if (animating || !direction) return;
+    pauseAutoScroll();
 
     const leadingCloneIndex = 0;
     const trailingCloneIndex = frameEls.length - 1;
@@ -469,6 +539,7 @@
       }
 
       decodeCoverImages().then(() => syncRollScaleSoon());
+      startAutoScroll();
     } catch (err) {
       console.error(err);
       loadingEl.textContent = 'could not load filmstrip';
