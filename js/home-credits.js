@@ -34,26 +34,57 @@
   let halfLen = 0;
   let last = 0;
   let resizeTimer = null;
+  let lastViewportW = window.innerWidth;
+  let lastViewportH = window.innerHeight;
+  let measureCtx = null;
 
-  function estimateHalfLength() {
-    const textEl = textPath.parentElement;
-    const fontSize = parseFloat(getComputedStyle(textEl).fontSize) || 36;
-    const letterSpacing = parseFloat(getComputedStyle(textEl).letterSpacing) || 0;
-    const charW = fontSize * 0.52 + letterSpacing;
-    return (run.length * charW) / 2;
+  function getCanvasMeasureCtx(textEl) {
+    if (!measureCtx) {
+      measureCtx = document.createElement('canvas').getContext('2d');
+    }
+    const style = getComputedStyle(textEl);
+    measureCtx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    return measureCtx;
   }
 
-  function measureHalfLength() {
-    const measured = textPath.getComputedTextLength();
-    if (measured > 0) return measured / 2;
-    return estimateHalfLength();
+  function measureStraightCssWidth(text, textEl) {
+    const ctx = getCanvasMeasureCtx(textEl);
+    const style = getComputedStyle(textEl);
+    const spacing = parseFloat(style.letterSpacing) || 0;
+    let width = ctx.measureText(text).width;
+    if (spacing && text.length > 1) width += spacing * (text.length - 1);
+    return width;
   }
 
-  function getScrollSpeed() {
+  function getSvgUserScale() {
     const svg = textPath.ownerSVGElement;
     const vb = svg?.viewBox?.baseVal;
     const vbWidth = vb?.width || 1200;
-    const scale = svg ? svg.getBoundingClientRect().width / vbWidth : 1;
+    const rectW = svg?.getBoundingClientRect().width || vbWidth;
+    return rectW > 0 ? rectW / vbWidth : 1;
+  }
+
+  function estimateHalfLength() {
+    const textEl = textPath.parentElement;
+    const scale = getSvgUserScale();
+    const straightSvg = measureStraightCssWidth(run, textEl) / scale;
+    return straightSvg * 1.12;
+  }
+
+  function measureHalfLength() {
+    const textEl = textPath.parentElement;
+    const scale = getSvgUserScale();
+    const straightSvg = measureStraightCssWidth(run, textEl) / scale;
+    const pathEstimate = straightSvg * 1.12;
+    const pathMeasured = textPath.getComputedTextLength() / 2;
+
+    if (pathMeasured > pathEstimate * 0.9) return pathMeasured;
+    if (mobileQuery.matches) return pathEstimate;
+    return pathMeasured > 0 ? pathMeasured : pathEstimate;
+  }
+
+  function getScrollSpeed() {
+    const scale = getSvgUserScale();
     const pxPerSec = mobileQuery.matches ? 115 : 95;
     if (scale > 0) return pxPerSec / scale;
     return (14 * halfLen) / run.length;
@@ -104,10 +135,16 @@
   }
 
   function onViewportChange() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w === lastViewportW && h === lastViewportH) return;
+    lastViewportW = w;
+    lastViewportH = h;
+
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       remeasure({ preserveOffset: true });
-    }, 200);
+    }, 250);
   }
 
   if (reducedMotion) {
@@ -126,6 +163,7 @@
   }
 
   window.addEventListener('resize', onViewportChange, { passive: true });
-  window.visualViewport?.addEventListener('resize', onViewportChange, { passive: true });
-  window.visualViewport?.addEventListener('scroll', onViewportChange, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onViewportChange, { passive: true });
+  }
 })();
