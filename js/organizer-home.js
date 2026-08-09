@@ -21,7 +21,8 @@ async function saveHomeConfig(config) {
           coverSrc: r.coverSrc || pool[0] || '',
           coverPoolSrcs: pool
         };
-      })
+      }),
+    coverGridSrcs: uniqueSrcs((config.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean))
   });
   homeConfigData = config;
 }
@@ -42,7 +43,7 @@ function setRollPool(entry, pool) {
   entry.coverSrc = entry.coverPoolSrcs[0] || entry.coverSrc || '';
 }
 
-function renderHomeRollPanel(container, roll, config) {
+function renderHomeRollPanel(container, roll, config, rolls) {
   const entry = config.rolls.find(r => r.id === roll.id) || {};
   let pool = getRollPool(entry, roll);
   if (!pool.length && roll.photos.length) pool = [roll.photos[0]];
@@ -116,8 +117,10 @@ function renderHomeRollPanel(container, roll, config) {
           return;
         }
         setRollPool(entry, next);
+        resolveCoverGridSrcs(config, rolls);
         syncPoolUI();
         await saveHomeConfig(config);
+        refreshHomeCoverGridPanel(config, rolls);
         setStatus('random pool saved \u2713 — ' + roll.title);
       });
 
@@ -134,21 +137,108 @@ function renderHomeRollPanel(container, roll, config) {
 
   selectAllBtn.addEventListener('click', async () => {
     setRollPool(entry, roll.photos);
+    resolveCoverGridSrcs(config, rolls);
     syncPoolUI();
     await saveHomeConfig(config);
+    refreshHomeCoverGridPanel(config, rolls);
     setStatus('all photos selected \u2713 — ' + roll.title);
   });
 
   clearAllBtn.addEventListener('click', async () => {
     if (!roll.photos.length) return;
     setRollPool(entry, [roll.photos[0]]);
+    resolveCoverGridSrcs(config, rolls);
     syncPoolUI();
     await saveHomeConfig(config);
+    refreshHomeCoverGridPanel(config, rolls);
     setStatus('pool reset to one photo \u2713 — ' + roll.title);
   });
 
   syncPoolUI();
   container.appendChild(section);
+}
+
+function renderHomeCoverGridPanel(container, config, rolls) {
+  if (!container) return;
+
+  resolveCoverGridSrcs(config, rolls);
+  const order = config.coverGridSrcs || [];
+  const cols = 4;
+  const shown = Math.floor(order.length / cols) * cols;
+
+  container.innerHTML = '';
+
+  const head = document.createElement('div');
+  head.className = 'home-cover-grid-organizer-head';
+  head.innerHTML =
+    '<h3>cover photo grid</h3>' +
+    '<p class="home-roll-meta">drag to set the order on the homepage grid below the filmstrip. ' +
+    shown + ' of ' + order.length + ' photos show on the live site (4 per row).</p>';
+  container.appendChild(head);
+
+  if (!order.length) {
+    const empty = document.createElement('p');
+    empty.className = 'home-roll-empty';
+    empty.textContent = 'select photos in the rolls above first';
+    container.appendChild(empty);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'home-cover-grid-organizer-grid';
+
+  let dragSrc = null;
+
+  order.forEach((src, index) => {
+    const item = document.createElement('div');
+    item.className = 'home-cover-grid-organizer-item';
+    item.dataset.src = src;
+    item.draggable = true;
+    if (index >= shown) item.classList.add('is-trimmed');
+
+    const img = document.createElement('img');
+    img.src = mediaSrc(src);
+    img.alt = '';
+    img.loading = 'lazy';
+    item.appendChild(img);
+
+    item.addEventListener('dragstart', e => {
+      dragSrc = src;
+      item.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('is-dragging');
+      dragSrc = null;
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    item.addEventListener('drop', async e => {
+      e.preventDefault();
+      if (!dragSrc || dragSrc === src) return;
+      const list = [...config.coverGridSrcs];
+      const from = list.indexOf(dragSrc);
+      const to = list.indexOf(src);
+      if (from < 0 || to < 0) return;
+      list.splice(from, 1);
+      list.splice(to, 0, dragSrc);
+      config.coverGridSrcs = list;
+      await saveHomeConfig(config);
+      setStatus('grid order saved \u2713');
+      renderHomeCoverGridPanel(container, config, rolls);
+    });
+
+    grid.appendChild(item);
+  });
+
+  container.appendChild(grid);
+}
+
+function refreshHomeCoverGridPanel(config, rolls) {
+  const gridContainer = document.getElementById('home-cover-grid-organizer');
+  if (gridContainer) renderHomeCoverGridPanel(gridContainer, config, rolls);
 }
 
 async function purgeBrokenHomeRollSrc(rollId, src, { refresh = true } = {}) {
@@ -162,6 +252,9 @@ async function purgeBrokenHomeRollSrc(rollId, src, { refresh = true } = {}) {
       roll.coverPoolSrcs = (roll.coverPoolSrcs || []).filter(s => s !== src);
       if (roll.coverSrc === src) roll.coverSrc = roll.coverPoolSrcs[0] || '';
       roll.scrubSrcs = [];
+    }
+    if (Array.isArray(homeConfigData.coverGridSrcs)) {
+      homeConfigData.coverGridSrcs = homeConfigData.coverGridSrcs.filter(s => s !== src);
     }
     await saveHomeConfig(homeConfigData);
   }
@@ -200,16 +293,19 @@ let homePanelLoading = false;
 
 async function initHomePanel({ pruneBroken = false } = {}) {
   const container = document.getElementById('home-roll-panels');
+  const gridContainer = document.getElementById('home-cover-grid-organizer');
   if (!container) return;
 
   if (!rootHandle) {
     container.innerHTML = '<p class="home-roll-loading">connect your project folder above to load cover options…</p>';
+    if (gridContainer) gridContainer.innerHTML = '';
     return;
   }
 
   if (homePanelLoading) return;
   homePanelLoading = true;
   container.innerHTML = '<p class="home-roll-loading">loading rolls…</p>';
+  if (gridContainer) gridContainer.innerHTML = '';
 
   try {
     const [music, portrait, video] = await Promise.all([
@@ -222,19 +318,30 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     if (pruneBroken) await pruneBrokenHomeRollSources();
 
     const rolls = buildHomeRolls(homeConfigData, { music, portrait, video });
+    const gridBefore = JSON.stringify(homeConfigData.coverGridSrcs || []);
+    resolveCoverGridSrcs(homeConfigData, rolls);
+    if (JSON.stringify(homeConfigData.coverGridSrcs || []) !== gridBefore) {
+      await saveHomeConfig(homeConfigData);
+    }
 
     container.innerHTML = '';
     if (!rolls.length) {
       container.innerHTML = '<p class="home-roll-empty">no rolls found — check data/home.json</p>';
+      if (gridContainer) gridContainer.innerHTML = '';
       return;
     }
 
     rolls.forEach(roll => {
-      renderHomeRollPanel(container, roll, homeConfigData);
+      renderHomeRollPanel(container, roll, homeConfigData, rolls);
     });
+
+    if (gridContainer) {
+      renderHomeCoverGridPanel(gridContainer, homeConfigData, rolls);
+    }
   } catch (err) {
     console.error(err);
     container.innerHTML = '<p class="home-roll-empty">error: ' + (err.message || err) + '</p>';
+    if (gridContainer) gridContainer.innerHTML = '';
   } finally {
     homePanelLoading = false;
   }

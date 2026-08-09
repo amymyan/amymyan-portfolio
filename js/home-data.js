@@ -140,7 +140,34 @@ function normalizeHomeConfig(raw) {
     };
   });
 
-  return { rolls };
+  return { rolls, coverGridSrcs: uniqueSrcs((raw?.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)) };
+}
+
+function collectCoverPoolSrcs(rolls) {
+  const out = [];
+  const seen = new Set();
+  (rolls || []).forEach(roll => {
+    (roll.coverPoolSrcs || []).forEach(src => {
+      const path = (src || '').trim();
+      if (path && !seen.has(path)) {
+        seen.add(path);
+        out.push(path);
+      }
+    });
+  });
+  return out;
+}
+
+function resolveCoverGridSrcs(config, rolls) {
+  const pool = collectCoverPoolSrcs(rolls);
+  const poolSet = new Set(pool);
+  const ordered = uniqueSrcs((config?.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean))
+    .filter(src => poolSet.has(src));
+  pool.forEach(src => {
+    if (!ordered.includes(src)) ordered.push(src);
+  });
+  if (config) config.coverGridSrcs = ordered;
+  return ordered;
 }
 
 function ensureCoverInPhotos(photos, coverSrc, fallback) {
@@ -240,5 +267,6 @@ async function loadHomeFilmstripData() {
   ]);
 
   const rolls = buildHomeRolls(homeConfig || {}, { music, portrait, video });
-  return { rolls, ...buildStripFrames(rolls) };
+  const coverGridSrcs = resolveCoverGridSrcs(homeConfig || {}, rolls);
+  return { rolls, coverGridSrcs, ...buildStripFrames(rolls) };
 }
