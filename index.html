@@ -6,8 +6,8 @@
 <title>Amy MyAn</title>
 <meta name="description" content="Amy MyAn is a Los Angeles-based music photographer and videographer specializing in show/tour coverage, BTS, and portraits.">
 <link rel="icon" href="assets/favicon.png?v=20260722" type="image/png">
-<link rel="stylesheet" href="css/style.css?v=20260720r">
-<link rel="stylesheet" href="css/home-filmstrip.css?v=20260809k">
+<link rel="stylesheet" href="css/style.css?v=20260809x">
+<link rel="stylesheet" href="css/home-filmstrip.css?v=20260809x">
 </head>
 <body class="page-home">
 
@@ -42,13 +42,21 @@
     </div>
 
     <div class="home-film-controls">
-      <button type="button" class="home-film-nav home-film-nav--prev" aria-label="Previous section">←</button>
-      <button type="button" class="home-film-nav home-film-nav--next" aria-label="Next section">→</button>
+      <button type="button" class="home-film-transport home-film-transport--prev" aria-label="Previous section">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></svg>
+      </button>
+      <button type="button" class="home-film-transport home-film-transport--toggle is-playing" aria-label="Pause filmstrip">
+        <svg class="home-film-icon home-film-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z"/></svg>
+        <svg class="home-film-icon home-film-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/></svg>
+      </button>
+      <button type="button" class="home-film-transport home-film-transport--next" aria-label="Next section">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2V6zM6 6l8.5 6L6 18V6z"/></svg>
+      </button>
     </div>
 
     <div class="home-film-credits" aria-label="Artists">
-      <svg class="home-film-credits-svg" viewBox="0 0 1200 72" preserveAspectRatio="none" aria-hidden="true">
-        <path id="home-credits-path" fill="none" d="M-120,36 C80,10 220,62 380,36 S620,10 820,36 S1020,62 1320,36" />
+      <svg class="home-film-credits-svg" viewBox="0 0 1200 96" preserveAspectRatio="none" aria-hidden="true">
+        <path id="home-credits-path" fill="none" d="M-120,48 C80,14 220,82 380,48 S620,14 820,48 S1020,82 1320,48" />
         <text class="home-film-credits-text">
           <textPath id="home-credits-textpath" href="#home-credits-path" startOffset="0%"></textPath>
         </text>
@@ -71,8 +79,8 @@
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260720zn"></script>
 <script src="js/home-data.js?v=20260720zv"></script>
-<script src="js/home-filmstrip.js?v=20260809j"></script>
-<script src="js/home-credits.js?v=20260809k"></script>
+<script src="js/home-filmstrip.js?v=20260809u"></script>
+<script src="js/home-credits.js?v=20260809z"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="js/galaxy.js" defer></script>
 </body>

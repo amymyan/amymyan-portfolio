@@ -8,9 +8,10 @@
   const trackEl = root.querySelector('.home-film-track');
   const rollEl = root.querySelector('.home-film-roll');
   const viewportEl = root.querySelector('.home-film-viewport');
-  const prevBtn = root.querySelector('.home-film-nav--prev');
-  const nextBtn = root.querySelector('.home-film-nav--next');
-  const navButtons = [prevBtn, nextBtn].filter(Boolean);
+  const prevBtn = root.querySelector('.home-film-transport--prev');
+  const nextBtn = root.querySelector('.home-film-transport--next');
+  const playPauseBtn = root.querySelector('.home-film-transport--toggle');
+  const transportButtons = [prevBtn, nextBtn, playPauseBtn].filter(Boolean);
   const loadingEl = root.querySelector('.home-film-loading');
   const sprocketTopEl = root.querySelector('.home-film-sprocket--top');
   const sprocketBottomEl = root.querySelector('.home-film-sprocket--bottom');
@@ -32,10 +33,25 @@
   let lastActiveIndex = -1;
   let lastScrubbing = false;
   let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let isPlaying = !reduceMotion;
   const AUTO_SCROLL_INDEX_PER_SEC = 0.13;
   let autoScrollPaused = false;
   let autoScrollRaf = null;
   let lastAutoScrollTime = 0;
+
+  function updatePlayPauseButton() {
+    if (!playPauseBtn) return;
+    playPauseBtn.classList.toggle('is-playing', isPlaying);
+    playPauseBtn.classList.toggle('is-paused', !isPlaying);
+    playPauseBtn.setAttribute('aria-label', isPlaying ? 'Pause filmstrip' : 'Play filmstrip');
+  }
+
+  function setPlaying(playing) {
+    isPlaying = playing;
+    if (isPlaying) resumeAutoScroll();
+    else pauseAutoScroll();
+    updatePlayPauseButton();
+  }
 
   function pauseAutoScroll() {
     autoScrollPaused = true;
@@ -385,7 +401,7 @@
       });
     }
     preloadAllQueuedCovers();
-    resumeAutoScroll();
+    if (isPlaying) resumeAutoScroll();
   }
 
   function runAdvanceAnimation(fromIndex, toIndex, onComplete) {
@@ -477,7 +493,7 @@
       }
 
       loadingEl.textContent = 'loading film…';
-      navButtons.forEach(btn => { btn.disabled = true; });
+      transportButtons.forEach(btn => { btn.disabled = true; });
 
       updateFrameWidth();
       stripEl.innerHTML = '';
@@ -507,14 +523,24 @@
       preloadAllQueuedCovers();
 
       loadingEl.hidden = true;
-      navButtons.forEach(btn => { btn.disabled = false; });
+      transportButtons.forEach(btn => { btn.disabled = false; });
+
+      if (reduceMotion) {
+        isPlaying = false;
+        pauseAutoScroll();
+      }
+      updatePlayPauseButton();
 
       prevBtn?.addEventListener('click', () => animateStep(-1));
       nextBtn?.addEventListener('click', () => animateStep(1));
+      playPauseBtn?.addEventListener('click', () => setPlaying(!isPlaying));
 
       document.addEventListener('keydown', (e) => {
         if (e.target.closest('input, textarea, [contenteditable="true"]')) return;
-        if (e.key === 'ArrowRight' || e.key === ' ') {
+        if (e.key === ' ') {
+          e.preventDefault();
+          setPlaying(!isPlaying);
+        } else if (e.key === 'ArrowRight') {
           e.preventDefault();
           animateStep(1);
         } else if (e.key === 'ArrowLeft') {
@@ -539,11 +565,11 @@
       }
 
       decodeCoverImages().then(() => syncRollScaleSoon());
-      startAutoScroll();
+      if (isPlaying) startAutoScroll();
     } catch (err) {
       console.error(err);
       loadingEl.textContent = 'could not load filmstrip';
-      navButtons.forEach(btn => { btn.disabled = frames.length === 0; });
+      transportButtons.forEach(btn => { btn.disabled = frames.length === 0; });
     }
   }
 
