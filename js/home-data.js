@@ -3,7 +3,7 @@
 const HOME_ROLL_DEFAULTS = [
   { id: 'music', href: 'music.html', title: 'live music ♪‧₊˚', coverSrc: 'assets/music/DSC03917.jpg' },
   { id: 'video', href: 'video.html', title: 'video ˚˖𓍢ִ໋❀', coverSrc: 'assets/home/video.jpg' },
-  { id: 'portrait', href: 'portrait.html', title: 'portraits ✶⋆.˚', coverSrc: 'assets/home/portrait.jpg' }
+  { id: 'portrait', href: 'portrait.html', title: 'portrait ✶⋆.˚', coverSrc: 'assets/home/portrait.jpg' }
 ];
 
 const MAX_SCRUB_PHOTOS = 5;
@@ -133,7 +133,7 @@ function normalizeHomeConfig(raw) {
     return {
       id: def.id,
       href: saved.href || def.href,
-      title: saved.title || def.title,
+      title: def.title,
       coverSrc,
       coverPoolSrcs,
       scrubSrcs: []
@@ -260,7 +260,7 @@ async function fetchJSON(path) {
 
 async function loadHomeFilmstripData() {
   const [homeConfig, music, portrait, video] = await Promise.all([
-    fetchJSON('data/home.json'),
+    fetchJSON('data/home.json?v=20260812w'),
     fetchJSON('data/music.json'),
     fetchJSON('data/portrait.json'),
     fetchJSON('data/video.json')
