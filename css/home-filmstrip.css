@@ -24,11 +24,24 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: stretch;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.home-film-hero {
+  width: 100%;
+  height: calc(100dvh - var(--home-nav-h, 5.5rem));
+  min-height: calc(100dvh - var(--home-nav-h, 5.5rem));
+  max-height: calc(100dvh - var(--home-nav-h, 5.5rem));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .home-film-grain {
@@ -62,13 +75,24 @@
 .home-film-stage {
   max-width: var(--stage-w);
   margin: 0 auto;
-  padding: clamp(0.85rem, 2.5vh, 1.35rem) clamp(0.35rem, 1.5vw, 0.75rem) 0;
+  padding: clamp(0.35rem, 1.2vh, 0.85rem) clamp(0.35rem, 1.5vw, 0.75rem);
   width: 100%;
-  flex-shrink: 0;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .home-film-assembly {
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* ---- film gate ---- */
@@ -76,11 +100,16 @@
   width: 100%;
   position: relative;
   overflow: hidden;
-  padding: 0.65rem 0;
+  padding: clamp(0.2rem, 0.8vh, 0.65rem) 0;
   background: var(--paper);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
 }
 
 .home-film-roll {
+  width: 100%;
   font-size: var(--roll-u);
   background: var(--film-ink);
   border-top: 3px solid var(--film-edge);
@@ -252,6 +281,7 @@
   gap: 1.35rem;
   margin-top: var(--controls-gap);
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .home-film-transport {
@@ -325,13 +355,8 @@
 }
 
 .home-film-credits {
-  width: 100vw;
-  max-width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  width: 100%;
+  max-width: 100%;
   margin-top: var(--credits-gap);
   margin-bottom: var(--credits-gap);
   padding: 0;
@@ -455,7 +480,7 @@
   justify-content: center;
   width: 100%;
   max-width: 100%;
-  margin: 0 auto;
+  margin: clamp(2rem, 5vw, 3.5rem) auto;
   box-sizing: border-box;
 }
 

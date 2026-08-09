@@ -7,7 +7,7 @@
 <meta name="description" content="Amy MyAn is a Los Angeles-based music photographer and videographer specializing in show/tour coverage, BTS, and portraits.">
 <link rel="icon" href="assets/favicon.png?v=20260722" type="image/png">
 <link rel="stylesheet" href="css/style.css?v=20260810h">
-<link rel="stylesheet" href="css/home-filmstrip.css?v=20260811e">
+<link rel="stylesheet" href="css/home-filmstrip.css?v=20260811h">
 </head>
 <body class="page-home">
 
@@ -24,44 +24,46 @@
 <main id="home-film" class="home-film">
   <p class="home-film-loading">loading film…</p>
 
-  <div class="home-film-stage">
-    <div class="home-film-assembly">
-        <div class="home-film-viewport">
-          <div class="home-film-roll">
-          <div class="home-film-track">
-            <div class="home-film-edge home-film-edge--top">
-              <div class="home-film-sprocket home-film-sprocket--top" aria-hidden="true"></div>
-            </div>
-            <div class="home-film-strip" aria-live="polite"></div>
-            <div class="home-film-edge home-film-edge--bottom">
-              <div class="home-film-sprocket home-film-sprocket--bottom" aria-hidden="true"></div>
+  <div class="home-film-hero">
+    <div class="home-film-stage">
+      <div class="home-film-assembly">
+          <div class="home-film-viewport">
+            <div class="home-film-roll">
+            <div class="home-film-track">
+              <div class="home-film-edge home-film-edge--top">
+                <div class="home-film-sprocket home-film-sprocket--top" aria-hidden="true"></div>
+              </div>
+              <div class="home-film-strip" aria-live="polite"></div>
+              <div class="home-film-edge home-film-edge--bottom">
+                <div class="home-film-sprocket home-film-sprocket--bottom" aria-hidden="true"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="home-film-controls">
-      <button type="button" class="home-film-transport home-film-transport--prev" aria-label="Previous section">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></svg>
-      </button>
-      <button type="button" class="home-film-transport home-film-transport--toggle is-playing" aria-label="Pause filmstrip">
-        <svg class="home-film-icon home-film-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z"/></svg>
-        <svg class="home-film-icon home-film-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/></svg>
-      </button>
-      <button type="button" class="home-film-transport home-film-transport--next" aria-label="Next section">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2V6zM6 6l8.5 6L6 18V6z"/></svg>
-      </button>
+      <div class="home-film-controls">
+        <button type="button" class="home-film-transport home-film-transport--prev" aria-label="Previous section">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></svg>
+        </button>
+        <button type="button" class="home-film-transport home-film-transport--toggle is-playing" aria-label="Pause filmstrip">
+          <svg class="home-film-icon home-film-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z"/></svg>
+          <svg class="home-film-icon home-film-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/></svg>
+        </button>
+        <button type="button" class="home-film-transport home-film-transport--next" aria-label="Next section">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2V6zM6 6l8.5 6L6 18V6z"/></svg>
+        </button>
+      </div>
     </div>
+  </div>
 
-    <div class="home-film-credits" aria-label="Artists">
+  <div class="home-film-credits" aria-label="Artists">
       <svg class="home-film-credits-svg" viewBox="0 0 1200 128" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
         <path id="home-credits-path" fill="none" d="M-120,64 C80,30 220,98 380,64 S620,30 820,64 S1020,98 1320,64" />
         <text class="home-film-credits-text">
           <textPath id="home-credits-textpath" href="#home-credits-path" startOffset="0%"></textPath>
         </text>
       </svg>
-    </div>
   </div>
 
   <div class="home-cover-grid" id="home-cover-grid" aria-label="Film cover photos"></div>
@@ -87,10 +89,10 @@
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260720zn"></script>
 <script src="js/home-data.js?v=20260810f"></script>
-<script src="js/home-filmstrip.js?v=20260809u"></script>
+<script src="js/home-filmstrip.js?v=20260811f"></script>
 <script src="js/home-credits.js?v=20260810x"></script>
 <script src="js/home-cover-grid.js?v=20260810y"></script>
-<script src="js/home-section-links.js?v=20260810y"></script>
+<script src="js/home-section-links.js?v=20260811h"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 <script src="js/galaxy.js" defer></script>
 </body>

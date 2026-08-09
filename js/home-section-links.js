@@ -15,17 +15,14 @@
     gap: 80,
     border: 2,
     navPadX: 48,
-    navPadTop: 28,
-    navPadBottom: 36
+    navPadY: 0
   };
 
   function applyScale() {
     const scale = Math.min(1, Math.max(BASE.minScale, window.innerWidth / BASE.refWidth));
     nav.style.gap = (BASE.gap * scale) + 'px';
     nav.style.padding =
-      (BASE.navPadTop * scale) + 'px ' +
-      (BASE.navPadX * scale) + 'px ' +
-      (BASE.navPadBottom * scale) + 'px';
+      '0 ' + (BASE.navPadX * scale) + 'px';
 
     links.forEach(link => {
       link.style.fontSize = (BASE.fontSize * scale) + 'px';

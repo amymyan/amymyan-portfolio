@@ -156,6 +156,7 @@
   }
 
   function syncRollScale() {
+    syncHeroViewport();
     updateFrameWidth();
     const first = stripEl.querySelector('.home-film-frame');
     const frameCount = stripEl.querySelectorAll('.home-film-frame').length;
@@ -174,9 +175,47 @@
     });
   }
 
+  function measureNavHeight() {
+    const nav = document.querySelector('.site-nav');
+    return nav ? nav.getBoundingClientRect().height : 88;
+  }
+
+  function syncHeroViewport() {
+    const navH = measureNavHeight();
+    root.style.setProperty('--home-nav-h', navH + 'px');
+  }
+
+  function getHeroFilmBudget() {
+    const hero = root.querySelector('.home-film-hero');
+    const stage = root.querySelector('.home-film-stage');
+    const controls = root.querySelector('.home-film-controls');
+    if (!hero || !stage) return null;
+
+    const stageStyle = getComputedStyle(stage);
+    const padY =
+      parseFloat(stageStyle.paddingTop) +
+      parseFloat(stageStyle.paddingBottom);
+    const controlsH = controls ? controls.offsetHeight : 0;
+    const controlsMargin = controls
+      ? parseFloat(getComputedStyle(controls).marginTop)
+      : 0;
+
+    return hero.clientHeight - controlsH - controlsMargin - padY - 8;
+  }
+
   function framesVisibleTarget() {
     if (!rollEl?.clientWidth) return 1.65;
-    return rollEl.clientWidth < 560 ? 1.35 : 1.65;
+
+    const w = rollEl.clientWidth;
+    const hero = root.querySelector('.home-film-hero');
+    const heroH = hero?.clientHeight || window.innerHeight;
+
+    let visible = 1.65;
+    if (w < 520 || heroH < 460) visible = 1;
+    else if (w < 768 || heroH < 560) visible = 1.2;
+    else if (w < 960) visible = 1.45;
+
+    return visible;
   }
 
   function updateFrameWidth() {
@@ -184,7 +223,15 @@
     const rollW = rollEl.clientWidth;
     const gap = parseFloat(getComputedStyle(root).getPropertyValue('--film-frame-gap')) || 14;
     const visible = framesVisibleTarget();
-    const fw = Math.max(160, (rollW - gap) / visible);
+    let fw = Math.max(120, (rollW - gap) / visible);
+
+    const budget = getHeroFilmBudget();
+    if (budget && budget > 0) {
+      const maxFw = budget / 0.92;
+      fw = Math.min(fw, maxFw);
+    }
+
+    root.style.setProperty('--frames-visible', String(visible));
     root.style.setProperty('--frame-w', fw + 'px');
   }
 
@@ -574,4 +621,6 @@
   }
 
   boot();
+  syncHeroViewport();
+  window.addEventListener('orientationchange', syncRollScaleSoon);
 })();
