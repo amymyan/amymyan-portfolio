@@ -11,9 +11,8 @@
   --film-edge: var(--ink);
   --film-divider: var(--ink);
   --film-frame-gap: 14px;
-  --controls-gap: clamp(0.85rem, 3vh, 2rem);
-  --credits-gap-above: clamp(3.5rem, 11vh, 7rem);
-  --credits-gap-below: clamp(1.15rem, 3vh, 2.1rem);
+  --controls-gap: clamp(0.65rem, 2vw, 2rem);
+  --credits-gap: clamp(1.25rem, 3.5vw, 2.25rem);
 
   position: relative;
   width: 100%;
@@ -252,7 +251,7 @@
   justify-content: center;
   gap: 1.35rem;
   margin-top: var(--controls-gap);
-  margin-bottom: var(--credits-gap-above);
+  margin-bottom: 0;
 }
 
 .home-film-transport {
@@ -326,14 +325,21 @@
 }
 
 .home-film-credits {
-  width: 100%;
-  max-width: var(--stage-w);
-  margin: 0 auto var(--credits-gap-below);
-  padding: clamp(0.75rem, 2vh, 1.25rem) clamp(0.35rem, 1.5vw, 0.75rem) 0;
-  height: clamp(88px, 16vw, 120px);
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  margin-top: var(--credits-gap);
+  margin-bottom: var(--credits-gap);
+  padding: 0;
+  height: clamp(96px, calc(100vw * 128 / 1200), 220px);
   overflow: visible;
   pointer-events: none;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .home-film-credits-svg {
@@ -346,8 +352,33 @@
 .home-film-credits-text {
   fill: var(--flash);
   font-family: var(--body);
-  font-size: clamp(1.35rem, 4.2vw, 2.15rem);
+  font-size: 2.25rem;
   letter-spacing: 0.14em;
+}
+
+@media (max-width: 1000px) {
+  .home-film-credits-text {
+    font-size: 2.75rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .home-film-credits-text {
+    font-size: 3.35rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-film-credits-text {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-film-credits-text {
+    font-size: 4.85rem;
+    letter-spacing: 0.07em;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -357,12 +388,6 @@
 }
 
 @media (max-height: 660px) {
-  .home-film {
-    --controls-gap: clamp(0.55rem, 2vh, 1rem);
-    --credits-gap-above: clamp(2.25rem, 8vh, 3.5rem);
-    --credits-gap-below: clamp(0.85rem, 2.5vh, 1.4rem);
-  }
-
   .home-film-stage {
     padding-top: clamp(0.45rem, 1.5vh, 0.75rem);
   }
@@ -373,12 +398,6 @@
 }
 
 @media (max-height: 540px) {
-  .home-film {
-    --controls-gap: clamp(0.4rem, 1.4vh, 0.75rem);
-    --credits-gap-above: clamp(1.65rem, 6.5vh, 2.65rem);
-    --credits-gap-below: clamp(0.65rem, 2vh, 1rem);
-  }
-
   .home-film-stage {
     padding-top: 0.35rem;
   }
@@ -398,43 +417,17 @@
   }
 
   .home-film-credits {
-    height: clamp(104px, 28vw, 132px);
-  }
-
-  .home-film-credits-text {
-    font-size: clamp(1.2rem, 5.5vw, 1.55rem);
-    letter-spacing: 0.07em;
-  }
-
-  .home-cover-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .home-section-links {
-    flex-wrap: nowrap;
-    gap: clamp(0.4rem, 2vw, 0.55rem);
-    max-width: 100%;
-    padding: 1.15rem 0.6rem 1.65rem;
-  }
-
-  .home-section-link {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 2.25rem;
-    padding: 0.38rem 0.2rem;
-    font-size: clamp(0.56rem, 2.45vw, 0.7rem);
-    letter-spacing: 0.01em;
-    border-width: 1.5px;
+    height: clamp(96px, calc(100vw * 128 / 1200), 160px);
   }
 }
 
 .home-cover-grid {
   width: 100%;
   max-width: none;
-  margin: 1.75rem 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--grid-cols, 4), minmax(0, 1fr));
   gap: 0;
 }
 
@@ -457,32 +450,31 @@
 
 .home-section-links {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: stretch;
   justify-content: center;
-  gap: clamp(2.5rem, 8vw, 5rem);
   width: 100%;
-  max-width: var(--stage-w);
+  max-width: 100%;
   margin: 0 auto;
-  padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.25rem, 4vw, 3rem) clamp(2.25rem, 5vw, 3.25rem);
+  box-sizing: border-box;
 }
 
 .home-section-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 11.5rem;
-  min-height: clamp(3rem, 7vw, 3.75rem);
-  padding: 0.65rem 2rem;
+  flex: 1 1 0;
+  min-width: 0;
   border: 2px solid var(--ink);
   border-radius: 0;
   font-family: var(--mono);
-  font-size: clamp(1.15rem, 2.8vw, 1.45rem);
   letter-spacing: 0.03em;
   text-align: center;
   color: var(--ink);
   background: var(--paper);
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .home-section-link:hover,
