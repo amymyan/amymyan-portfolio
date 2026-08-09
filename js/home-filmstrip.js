@@ -210,12 +210,10 @@
     const hero = root.querySelector('.home-film-hero');
     const heroH = hero?.clientHeight || window.innerHeight;
 
-    let visible = 1.65;
-    if (w < 520 || heroH < 460) visible = 1;
-    else if (w < 768 || heroH < 560) visible = 1.2;
-    else if (w < 960) visible = 1.45;
-
-    return visible;
+    if (w < 520 || heroH < 460) return 1;
+    if (w < 768 || heroH < 560) return 1.12;
+    if (w < 960) return 1.35;
+    return 1.65;
   }
 
   function updateFrameWidth() {
@@ -230,6 +228,11 @@
       const maxFw = budget / 0.92;
       fw = Math.min(fw, maxFw);
     }
+
+    // Never show more than two frames — keep one partially off-screen for cover swaps.
+    const maxVisible = rollCount > 1 ? Math.min(1.92, rollCount - 0.08) : 1;
+    const minFw = (rollW + gap) / maxVisible - gap;
+    fw = Math.max(fw, minFw);
 
     root.style.setProperty('--frames-visible', String(visible));
     root.style.setProperty('--frame-w', fw + 'px');
@@ -394,6 +397,17 @@
     });
   }
 
+  function isRollCompletelyOffScreen(rollId) {
+    if (!rollEl) return false;
+    const viewport = rollEl.getBoundingClientRect();
+    const els = getRollFrameEls(rollId);
+    if (!els.length) return false;
+    return els.every(el => {
+      const rect = el.getBoundingClientRect();
+      return rect.right <= viewport.left || rect.left >= viewport.right;
+    });
+  }
+
   function updateCoverVisibility() {
     if (!rollEl || !frameEls.length) return;
 
@@ -404,8 +418,12 @@
         rollVisibility.set(rollId, isVisible);
         return;
       }
-      if (wasVisible && !isVisible) applyQueuedCover(rollId);
-      rollVisibility.set(rollId, isVisible);
+      if (wasVisible && isRollCompletelyOffScreen(rollId)) {
+        applyQueuedCover(rollId);
+        rollVisibility.set(rollId, false);
+      } else {
+        rollVisibility.set(rollId, isVisible);
+      }
     });
 
     visibilityInitialized = true;
