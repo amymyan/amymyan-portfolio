@@ -6,7 +6,7 @@
 <title>About — Amy MyAn</title>
 <meta name="description" content="Amy MyAn is a Los Angeles-based music photographer and videographer specializing in show/tour coverage, BTS, and portraits.">
 <link rel="icon" href="assets/favicon.png?v=20260722" type="image/png">
-<link rel="stylesheet" href="css/style.css?v=20260812v">
+<link rel="stylesheet" href="css/style.css?v=20260812w">
 <style>
   .about-wrap{
     max-width:640px;
@@ -16,10 +16,6 @@
   .about-photo{
     max-width:240px;
     margin:0 auto 2.5rem;
-  }
-  .about-photo--small{
-    max-width:140px;
-    margin:2rem auto 0;
   }
   .about-photo img{
     width:100%;
@@ -74,10 +70,6 @@
     <a href="mailto:hello@amymyan.com">hello@amymyan.com</a>
   </p>
 
-  <div class="about-photo about-photo--small">
-    <img id="about-photo2" src="" alt="">
-  </div>
-
 </div>
 
 <footer class="site-footer">
@@ -96,22 +88,11 @@ document.getElementById('year').textContent = new Date().getFullYear();
 
 (function loadAboutPhotos() {
   const photo1 = document.getElementById('about-photo1');
-  const photo2 = document.getElementById('about-photo2');
-  if (typeof mediaSrc !== 'function') return;
+  if (typeof mediaSrc !== 'function' || !photo1) return;
 
-  if (photo1) {
-    photo1.src = mediaSrc('assets/about/photo1.png');
-    photo1.addEventListener('error', () => {
-      const frame = photo1.closest('.about-photo');
-      if (frame) frame.hidden = true;
-    });
-  }
-
-  if (!photo2) return;
-  photo2.src = mediaSrc('assets/about/photo2.jpeg');
-
-  photo2.addEventListener('error', () => {
-    const frame = photo2.closest('.about-photo');
+  photo1.src = mediaSrc('assets/about/photo1.png');
+  photo1.addEventListener('error', () => {
+    const frame = photo1.closest('.about-photo');
     if (frame) frame.hidden = true;
   });
 })();
