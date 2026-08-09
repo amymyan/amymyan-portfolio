@@ -12,12 +12,9 @@
   /* ---- COLORS ----
      Every color on the site is named here once, so you only
      ever need to change it in ONE place. */
-  --paper:   #FFFFFF;   /* page background — pure white */
-  --ink:     #000000;   /* all normal text — pure black */
-  --line:    #E7E7E7;   /* light gray used ONLY for empty photo
-                             placeholders and thin divider lines
-                             (kept slightly gray on purpose —
-                             pure white would make them invisible) */
+  --paper:   #000000;   /* page background */
+  --ink:     #FFFFFF;   /* text on dark backgrounds */
+  --line:    #2A2A2A;   /* dividers + empty placeholders on black */
   --flash:   #E88FB2;   /* pink — ONLY used when you hover over a
                              link. Change this hex code to change
                              the hover color site-wide. */
@@ -57,7 +54,7 @@ html,body{
 }
 
 a{
-  color:inherit;       /* links start out the same color as normal text (black) */
+  color:inherit;       /* links match body text (white on black) */
   text-decoration:none;
 
   /* A different sparkle cursor specifically for anything clickable.
@@ -88,7 +85,7 @@ button{
   align-items:center;
   justify-content:center;
   gap:0.35rem;
-  padding:1.4rem clamp(1.25rem, 4vw, 3rem) 1rem;
+  padding:1.25rem clamp(1.25rem, 4vw, 3rem);
   background:var(--paper);
   text-align:center;
 }
@@ -103,10 +100,17 @@ button{
   text-transform:none;
   display:inline-block;
   line-height:1.2;
+  color:var(--flash);
 }
 
 body .site-nav a.wordmark{
   font-size:clamp(2.45rem, 6vw, 3.35rem);
+  color:var(--flash);
+}
+
+body .site-nav a.wordmark:hover,
+body .site-nav a.wordmark:focus-visible{
+  color:var(--flash);
 }
 
 .site-nav .wordmark-name{
@@ -157,7 +161,7 @@ body .site-nav a.wordmark{
 
 .page-home .site-nav{
   gap:0;
-  padding-bottom:0.45rem;
+  padding:1.25rem clamp(1.25rem, 4vw, 3rem);
 }
 
 .page-home{

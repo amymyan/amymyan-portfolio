@@ -201,10 +201,10 @@
   display:block;
   text-align:center;
   font-family:var(--body);
-  font-size:0.85rem;
+  font-size:clamp(1.05rem, 2.4vw, 1.2rem);
   letter-spacing:0.03em;
-  color:var(--ink);
-  opacity:0.75;
+  color:var(--flash);
+  opacity:1;
   margin:0.35rem 0 0;
   pointer-events:none;
   width:100%;
