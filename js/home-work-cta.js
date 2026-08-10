@@ -5,7 +5,8 @@
 
   const TEXT = "let's work!";
   const TYPE_MS = 88;
-  const GLOW_MS = 500;
+  const HOLD_MS = 1500;
+  const GLOW_MS = 900;
   const FADE_MS = 280;
   const REST_MS = 350;
 
@@ -37,15 +38,18 @@
         return;
       }
 
-      link.classList.add('is-complete', 'is-glowing');
+      link.classList.add('is-complete');
       schedule(() => {
-        link.classList.add('is-hidden');
+        link.classList.add('is-glowing');
         schedule(() => {
-          textEl.textContent = '';
-          link.classList.remove('is-complete', 'is-glowing', 'is-hidden');
-          schedule(runLoop, REST_MS);
-        }, FADE_MS);
-      }, GLOW_MS);
+          link.classList.add('is-hidden');
+          schedule(() => {
+            textEl.textContent = '';
+            link.classList.remove('is-complete', 'is-glowing', 'is-hidden');
+            schedule(runLoop, REST_MS);
+          }, FADE_MS);
+        }, GLOW_MS);
+      }, HOLD_MS);
     }
 
     typeNext();

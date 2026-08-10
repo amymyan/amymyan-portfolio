@@ -347,7 +347,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
   cursor: var(--site-cursor);
   transition: color 0.12s ease, opacity 0.12s ease, transform 0.12s ease;
 }

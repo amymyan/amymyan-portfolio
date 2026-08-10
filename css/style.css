@@ -12,9 +12,9 @@
   /* ---- COLORS ----
      Every color on the site is named here once, so you only
      ever need to change it in ONE place. */
-  --paper:   #000000;   /* page background */
-  --ink:     #FFFFFF;   /* text on dark backgrounds */
-  --line:    #2A2A2A;   /* dividers + empty placeholders on black */
+  --paper:   #FFFFFF;   /* page background */
+  --ink:     #000000;   /* text on light backgrounds */
+  --line:    #E0E0E0;   /* dividers + empty placeholders */
   --flash:   #FF1493;
 
   /* ---- FONTS ----
@@ -28,7 +28,7 @@
   --nav-wordmark-size: clamp(2.45rem, 6vw, 3.35rem);
   --nav-link-size: clamp(0.95rem, 1.7vw, 1.12rem);
   --nav-pad-y: clamp(1.85rem, 4.5vw, 2.35rem);
-  --site-cursor: url('../assets/cursor.png?v=20260812u') 24 24, auto;
+  --site-cursor: url('../assets/cursor.png?v=20260813g') 12 12, auto;
   --cursor-trail-offset-x: 0px;
   --cursor-trail-offset-y: 0px;
 }
