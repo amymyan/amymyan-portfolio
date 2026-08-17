@@ -104,7 +104,7 @@
   position: relative;
   overflow: hidden;
   padding: clamp(0.2rem, 0.8vh, 0.65rem) 0;
-  background: var(--paper);
+  background: transparent;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
