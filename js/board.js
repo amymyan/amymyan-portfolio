@@ -111,6 +111,105 @@ function scheduleBoardRefit() {
   }
 }
 
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+const ICON_FS_ENTER = '<svg class="video-icon-fs-enter" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm12 0h-2v3h-3v2h5v-5zM7 7h3V5H5v5h2V7zm12 3h-2V7h-3V5h5v5z"/></svg>';
+const ICON_FS_EXIT = '<svg class="video-icon-fs-exit" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>';
+
+function videoControlButton(className, label, svg) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'video-btn ' + className;
+  btn.setAttribute('aria-label', label);
+  btn.innerHTML = svg;
+  return btn;
+}
+
+function activeFullscreenEl() {
+  return document.fullscreenElement || document.webkitFullscreenElement;
+}
+
+function syncVideoFullscreenButtons() {
+  const fsEl = activeFullscreenEl();
+  document.querySelectorAll('.video-player').forEach(wrap => {
+    const fs = fsEl === wrap;
+    wrap.classList.toggle('is-fullscreen', fs);
+    const btn = wrap.querySelector('.video-btn--fs');
+    if (btn) btn.setAttribute('aria-label', fs ? 'exit full screen' : 'full screen');
+  });
+}
+
+['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+  document.addEventListener(evt, syncVideoFullscreenButtons);
+});
+
+function toggleVideoFullscreen(wrap, video) {
+  if (activeFullscreenEl() === wrap) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document);
+    return;
+  }
+  const req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+  if (req) {
+    const result = req.call(wrap);
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {
+        if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+      });
+    }
+  } else if (video.webkitEnterFullscreen) {
+    video.webkitEnterFullscreen();
+  }
+}
+
+function attachVideoControls(video) {
+  const wrap = document.createElement('div');
+  wrap.className = 'video-player';
+
+  const playBtn = videoControlButton('video-btn--play', 'play', ICON_PLAY);
+  const pauseBtn = videoControlButton('video-btn--pause', 'pause', ICON_PAUSE);
+  const fsBtn = videoControlButton('video-btn--fs', 'full screen', ICON_FS_ENTER + ICON_FS_EXIT);
+
+  wrap.appendChild(video);
+  wrap.appendChild(playBtn);
+  wrap.appendChild(pauseBtn);
+  wrap.appendChild(fsBtn);
+
+  function syncPlaying() {
+    wrap.classList.toggle('is-playing', !video.paused);
+  }
+
+  video.addEventListener('play', syncPlaying);
+  video.addEventListener('pause', syncPlaying);
+  video.addEventListener('ended', () => {
+    video.pause();
+    video.load();
+  });
+
+  playBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    video.play();
+  });
+  pauseBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    video.pause();
+  });
+  fsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleVideoFullscreen(wrap, video);
+  });
+
+  [playBtn, pauseBtn, fsBtn].forEach(btn => {
+    btn.addEventListener('mousedown', (e) => e.stopPropagation());
+    btn.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+  });
+
+  return wrap;
+}
+
 function createTile(photo) {
   const el = document.createElement('div');
   el.className = 'polaroid';
@@ -132,11 +231,7 @@ function createTile(photo) {
       if (photo.poster) video.poster = mediaSrc(photo.poster);
       video.addEventListener('loadedmetadata', scheduleBoardRefit);
       video.addEventListener('error', () => el.remove());
-      video.addEventListener('ended', () => {
-        video.pause();
-        video.load();
-      });
-      el.appendChild(video);
+      el.appendChild(attachVideoControls(video));
     } else {
       const img = document.createElement('img');
       img.src = mediaSrc(photo.src);
@@ -207,7 +302,7 @@ function layoutWide(board, layout) {
 }
 
 function shouldSkipDrag(e) {
-  return e.target.closest('.video-caption');
+  return e.target.closest('.video-caption, .video-btn');
 }
 
 function makeFreeformDraggable(el, board, photo) {
