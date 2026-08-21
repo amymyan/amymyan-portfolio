@@ -55,11 +55,16 @@ function setLiveContactFrameImg(img, src, onBroken) {
       return;
     }
     img.dataset.previewFallback = '1';
+    img.removeAttribute('srcset');
     img.src = full;
   });
 
-  if (preview && preview !== full) img.src = preview;
-  else img.src = full;
+  if (preview && preview !== full) {
+    img.src = preview;
+    img.srcset = preview + ' 2x';
+  } else {
+    img.src = full;
+  }
 
   if (img.complete && img.naturalWidth) markReady();
 }

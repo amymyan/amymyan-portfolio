@@ -267,11 +267,13 @@
 }
 
 .contact-sheet-board .contact-frame .frame-media img{
-  opacity:0;
+  visibility:hidden;
 }
 
 .contact-sheet-board .contact-frame .frame-media img.is-ready{
-  opacity:1;
+  visibility:visible;
+  transform:translateZ(0);
+  backface-visibility:hidden;
 }
 
 .contact-frame .frame-media.rotated img{

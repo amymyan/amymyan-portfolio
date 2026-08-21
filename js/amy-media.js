@@ -91,8 +91,9 @@ function reflowBoardTiles(board, tileSelector = '.polaroid, .mini-polaroid') {
 function syncContactSheetScale(board) {
   const u = boardUnit(board);
   if (!u) return;
+  const snapped = Math.max(1, Math.round(u * 2) / 2);
   board.querySelectorAll('.contact-sheet').forEach(el => {
-    el.style.setProperty('--sheet-u', u + 'px');
+    el.style.setProperty('--sheet-u', snapped + 'px');
   });
 }
 
