@@ -38,6 +38,32 @@ function applyFrameFocus(img, frameData) {
   img.style.objectPosition = `${normalizeFrameFocus(frameData.focusX)}% ${normalizeFrameFocus(frameData.focusY)}%`;
 }
 
+function setLiveContactFrameImg(img, src, onBroken) {
+  const full = mediaSrc(src);
+  const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
+
+  function markReady() {
+    img.loading = 'eager';
+    img.classList.add('is-ready');
+  }
+
+  img.loading = 'lazy';
+  img.addEventListener('load', markReady, { once: true });
+  img.addEventListener('error', () => {
+    if (img.dataset.previewFallback === '1' || !preview || img.getAttribute('src') === full) {
+      if (typeof onBroken === 'function') onBroken();
+      return;
+    }
+    img.dataset.previewFallback = '1';
+    img.src = full;
+  });
+
+  if (preview && preview !== full) img.src = preview;
+  else img.src = full;
+
+  if (img.complete && img.naturalWidth) markReady();
+}
+
 function normalizeContactSheet(sheet, index) {
   const colsPerRow = normalizeCols(sheet.colsPerRow);
   const frames = (sheet.frames || [])
@@ -292,22 +318,20 @@ function buildContactFrameElement(frameData, slot, options = {}) {
 
     const img = document.createElement('img');
     img.alt = '';
-    img.loading = 'lazy';
     img.decoding = 'async';
     applyFrameFocus(img, frameData);
     if (mode === 'organizer' && typeof setOrganizerPreviewImg === 'function') {
       setOrganizerPreviewImg(img, frameData.src, ORGANIZER_THUMB_FRAME);
     } else {
-      img.src = mediaSrc(frameData.src);
+      setLiveContactFrameImg(img, frameData.src, () => {
+        media.remove();
+        frame.className = 'contact-frame empty';
+        if (frameData?.src && typeof options.onBrokenSrc === 'function') {
+          options.onBrokenSrc(frameData.src, slot);
+        }
+      });
     }
     media.appendChild(img);
-    attachBrokenImageHandler(img, () => {
-      media.remove();
-      frame.className = 'contact-frame empty';
-      if (frameData?.src && typeof options.onBrokenSrc === 'function') {
-        options.onBrokenSrc(frameData.src, slot);
-      }
-    });
     frame.appendChild(media);
 
     if (mode === 'organizer') {

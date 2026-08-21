@@ -223,6 +223,13 @@
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
+        },
+        {
+          "id": "f17846052909821365",
+          "src": "assets/music/DSC03761.jpg",
+          "rotation": 0,
+          "focusX": 51,
+          "focusY": 34
         }
       ]
     },

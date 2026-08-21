@@ -16,6 +16,13 @@ function mediaSrc(path) {
   return base ? base + '/' + encoded.replace(/^\//, '') : encoded;
 }
 
+/* Same-origin contact-sheet previews (tiny JPEGs in the repo). */
+function mediaPreviewSrc(path) {
+  const match = (path || '').match(/^assets\/([^/]+)\/([^/]+)$/);
+  if (!match) return null;
+  return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]);
+}
+
 /* Optional CDN resize for scrub frames — set in config.js, e.g.
    window.SCRUB_IMAGE_CDN_PARAMS = 'width=480,quality=55,format=auto';
    Only works if your media host supports /cdn-cgi/image/… URLs. */

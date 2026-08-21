@@ -263,6 +263,15 @@
   object-fit:cover;
   display:block;
   pointer-events:none;
+  background:#000;
+}
+
+.contact-sheet-board .contact-frame .frame-media img{
+  opacity:0;
+}
+
+.contact-sheet-board .contact-frame .frame-media img.is-ready{
+  opacity:1;
 }
 
 .contact-frame .frame-media.rotated img{
