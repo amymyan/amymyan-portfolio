@@ -223,13 +223,6 @@
           "rotation": 0,
           "focusX": 50,
           "focusY": 50
-        },
-        {
-          "id": "f17846052909821365",
-          "src": "assets/music/DSC03761.jpg",
-          "rotation": 0,
-          "focusX": 51,
-          "focusY": 34
         }
       ]
     },
@@ -477,7 +470,7 @@
     },
     {
       "id": "sheet-1784360727879",
-      "title": "mr. fantasy's sexy little tour",
+      "title": "mr. fantasy - mr. fantasy's sexy little tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
       "x": 2.2559027777777794,
@@ -793,7 +786,7 @@
     },
     {
       "id": "sheet-1786946745679",
-      "title": "melanie martinez - hades: the sacrifcie tour",
+      "title": "melanie martinez - hades: the sacrifice tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
       "x": 2.12962962962963,
@@ -889,7 +882,7 @@
     },
     {
       "id": "sheet-1786947242427",
-      "title": "riff wood: usa tour 2026",
+      "title": "riff wood - usa tour 2026",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
       "x": 10.9375,
