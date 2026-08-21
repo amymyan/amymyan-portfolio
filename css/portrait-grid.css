@@ -27,9 +27,12 @@
 }
 
 .portrait-grid figure {
+  position: relative;
+  width: 100%;
   margin: 0;
   overflow: hidden;
   cursor: var(--site-cursor);
+  aspect-ratio: 2 / 3;
 }
 
 .portrait-grid img,
@@ -41,8 +44,23 @@
   pointer-events: none;
 }
 
-.portrait-grid figure:hover img,
-.portrait-grid figure:hover video {
+.portrait-grid figure:not(.is-loaded) img,
+.portrait-grid figure:not(.is-loaded) video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+
+.portrait-grid figure.is-loaded img,
+.portrait-grid figure.is-loaded video {
+  opacity: 1;
+}
+
+.portrait-grid figure.is-loaded:hover img,
+.portrait-grid figure.is-loaded:hover video {
   opacity: 0.92;
 }
 

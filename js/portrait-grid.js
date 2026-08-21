@@ -70,10 +70,19 @@ function buildPortraitLightbox() {
 
   const cols = createPortraitMasonryColumns(grid);
 
+  function revealFigure(figure, media) {
+    if (figure.classList.contains('is-loaded')) return;
+    if (media.naturalWidth && media.naturalHeight) {
+      figure.style.aspectRatio = media.naturalWidth + ' / ' + media.naturalHeight;
+    }
+    figure.classList.add('is-loaded');
+  }
+
   items.forEach((item, index) => {
     const figure = document.createElement('figure');
     figure.dataset.id = item.id || '';
     const isVideo = /\.(mp4|webm|mov)$/i.test(item.src);
+    const aboveFold = index < 4;
 
     if (isVideo) {
       const video = document.createElement('video');
@@ -82,15 +91,24 @@ function buildPortraitLightbox() {
       video.loop = true;
       video.playsInline = true;
       video.controls = false;
+      video.preload = aboveFold ? 'auto' : 'metadata';
+      video.addEventListener('loadeddata', () => revealFigure(figure, video));
       video.addEventListener('mouseenter', () => video.play().catch(() => {}));
       video.addEventListener('mouseleave', () => video.pause());
       figure.appendChild(video);
     } else {
       const img = document.createElement('img');
-      img.src = mediaSrc(item.src);
       img.alt = item.caption || '';
-      img.loading = 'lazy';
+      img.loading = aboveFold ? 'eager' : 'lazy';
       img.decoding = 'async';
+      if (aboveFold) img.fetchPriority = 'high';
+      img.addEventListener('load', () => {
+        const show = () => revealFigure(figure, img);
+        if (img.decode) img.decode().then(show).catch(show);
+        else show();
+      });
+      img.src = mediaSrc(item.src);
+      if (img.complete && img.naturalWidth) revealFigure(figure, img);
       figure.appendChild(img);
     }
 
