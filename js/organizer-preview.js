@@ -4,6 +4,8 @@ const ORGANIZER_THUMB_LIBRARY = 160;
 const ORGANIZER_THUMB_FRAME = 320;
 const ORGANIZER_THUMB_POLAROID = 420;
 const ORGANIZER_THUMB_PORTRAIT = 280;
+const SITE_PREVIEW_MAX_PX = 960;
+const SITE_PREVIEW_QUALITY = 0.8;
 
 const organizerThumbCache = new Map();
 const organizerLocalUrlCache = new Map();
@@ -48,7 +50,7 @@ function loadImageElement(url) {
   });
 }
 
-async function resizeToJpegBlob(img, maxPx) {
+async function resizeToJpegBlob(img, maxPx, quality = 0.72) {
   const maxDim = Math.max(img.naturalWidth, img.naturalHeight) || 1;
   const scale = Math.min(1, maxPx / maxDim);
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -60,9 +62,54 @@ async function resizeToJpegBlob(img, maxPx) {
   const ctx = canvas.getContext('2d', { alpha: false });
   ctx.drawImage(img, 0, 0, w, h);
 
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.72));
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
   if (!blob) throw new Error('canvas blob failed');
   return URL.createObjectURL(blob);
+}
+
+async function writeSitePreviewFromFile(src, file) {
+  if (!src || !file || typeof getDir !== 'function') return false;
+  if (typeof isVideoPath === 'function' && isVideoPath(src)) return false;
+  const parsed = parseAssetPath(src);
+  if (!parsed) return false;
+  if (!/\.(jpe?g|png|webp|gif)$/i.test(parsed.filename)) return false;
+
+  const objectUrl = URL.createObjectURL(file);
+  let previewUrl = '';
+  try {
+    const img = await loadImageElement(objectUrl);
+    previewUrl = await resizeToJpegBlob(img, SITE_PREVIEW_MAX_PX, SITE_PREVIEW_QUALITY);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  const blob = await fetch(previewUrl).then(r => r.blob());
+  URL.revokeObjectURL(previewUrl);
+
+  const dir = await getDir('assets/previews/' + parsed.page, { create: true });
+  const outHandle = await dir.getFileHandle(parsed.filename, { create: true });
+  const writable = await outHandle.createWritable();
+  await writable.write(blob);
+  await writable.close();
+  return true;
+}
+
+async function ensureSitePreview(src) {
+  if (!src || typeof rootHandle === 'undefined' || !rootHandle) return false;
+  const parsed = parseAssetPath(src);
+  if (!parsed) return false;
+  try {
+    const dir = await getDir('assets/' + parsed.page);
+    const file = await (await dir.getFileHandle(parsed.filename)).getFile();
+    return await writeSitePreviewFromFile(src, file);
+  } catch {
+    return false;
+  }
+}
+
+async function ensureSitePreviews(srcs) {
+  const list = [...new Set((srcs || []).filter(Boolean))];
+  await Promise.all(list.map(src => ensureSitePreview(src).catch(() => false)));
 }
 
 async function createOrganizerThumbUrl(src, maxPx) {

@@ -16,11 +16,11 @@ function mediaSrc(path) {
   return base ? base + '/' + encoded.replace(/^\//, '') : encoded;
 }
 
-/* Same-origin contact-sheet previews (tiny JPEGs in the repo). */
+/* Same-origin contact-sheet previews (resized JPEGs in the repo). */
 function mediaPreviewSrc(path) {
   const match = (path || '').match(/^assets\/([^/]+)\/([^/]+)$/);
   if (!match) return null;
-  return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]);
+  return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]) + '?v=960';
 }
 
 /* Optional CDN resize for scrub frames — set in config.js, e.g.

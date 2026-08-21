@@ -777,7 +777,11 @@ async function initBoardsPanel() {
       for (const file of files) {
         const savedName = await writeMediaFile('assets/' + currentBoard, file);
         await removeFromIgnoreList(currentBoard, savedName);
-        uploaded.push(srcFromFilename(savedName));
+        const src = srcFromFilename(savedName);
+        if (typeof writeSitePreviewFromFile === 'function') {
+          await writeSitePreviewFromFile(src, file).catch(() => {});
+        }
+        uploaded.push(src);
       }
       e.target.value = '';
       await refreshMusicLibrary();
@@ -791,8 +795,12 @@ async function initBoardsPanel() {
     for (const file of files) {
       const savedName = await writeMediaFile('assets/' + currentBoard, file);
       await removeFromIgnoreList(currentBoard, savedName);
+      const src = 'assets/' + currentBoard + '/' + savedName;
+      if (typeof writeSitePreviewFromFile === 'function') {
+        await writeSitePreviewFromFile(src, file).catch(() => {});
+      }
       boardData.push(newEntryAtTop({
-        src: 'assets/' + currentBoard + '/' + savedName,
+        src,
         caption: file.name.replace(/\.[^.]+$/, '')
       }, currentBoard, boardData.length));
     }

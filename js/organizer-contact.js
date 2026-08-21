@@ -202,6 +202,9 @@ async function addPhotosToSheet(sheet, srcs, { startSlot = null, mediaWrap = nul
   if (!added) return 0;
 
   pending.forEach(src => selectedLibrarySrcs.delete(src));
+  if (typeof ensureSitePreviews === 'function') {
+    await ensureSitePreviews(pending);
+  }
   await saveBoardData();
 
   if (mediaWrap) {
@@ -334,6 +337,9 @@ async function createSheetFromSelection() {
   }));
 
   selectedLibrarySrcs.clear();
+  if (typeof ensureSitePreviews === 'function') {
+    await ensureSitePreviews(frames.map(f => f.src));
+  }
   await saveBoardData();
   renderBoardMini();
   setStatus('contact sheet created \u2713');
