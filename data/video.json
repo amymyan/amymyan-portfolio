@@ -4,7 +4,7 @@
     "src": "assets/video/version 2 video.MOV",
     "caption": "5SOS - Live in Los Angeles at the Kia Forum",
     "x": 3.810162037037036,
-    "y": 1.7156732818226754,
+    "y": 1.0325811418377213,
     "width": 59,
     "rotation": 0,
     "poster": "assets/video/Screenshot 2026-07-14 at 11.52.47 AM.png"
@@ -13,8 +13,8 @@
     "id": "p17841066837613861",
     "src": "assets/video/AmyMyAn_ClaireRosinkranz_Kiss.mp4",
     "caption": "Claire Rosinkranz - Local Wolves Cover BTS",
-    "x": 68.50914351851851,
-    "y": 7.979781539351848,
+    "x": 11.564699074074072,
+    "y": 37.52800925925926,
     "width": 25,
     "rotation": 0,
     "poster": "assets/video/Screenshot 2026-07-15 at 2.04.14 AM.png"
@@ -23,10 +23,30 @@
     "id": "p17872936367622832",
     "src": "assets/video/lower file size.mp4",
     "caption": "Maddie Park - FUYL Music Video",
-    "x": 10.14722222222222,
-    "y": 47.00787037037037,
+    "x": 40.83206741898148,
+    "y": 52.36585648148147,
     "width": 50,
     "rotation": 0,
     "poster": "assets/video/Screenshot 2026-08-20 at 11.20.55 PM.png"
+  },
+  {
+    "id": "p17898621183677593",
+    "src": "assets/video/andreabejar.mp4",
+    "caption": "Andrea Bejar - Photoshoot BTS",
+    "x": 65.71678240740741,
+    "y": 4.032407407407404,
+    "width": 31,
+    "rotation": 0,
+    "poster": "assets/video/BTS of LW x AB-24.jpg"
+  },
+  {
+    "id": "p17898623366508284",
+    "src": "assets/video/disneyland full.mov",
+    "caption": "disneyland california",
+    "x": 2.7398148148148147,
+    "y": 84.13993055555555,
+    "width": 57,
+    "rotation": 0,
+    "poster": "assets/video/Screenshot 2026-09-19 at 11.34.24 AM.png"
   }
 ]
