@@ -213,6 +213,10 @@ async function listMediaFiles(pageName) {
   return files.sort();
 }
 
+function isVideoGridPage(pageName) {
+  return pageName === 'video';
+}
+
 function normalizeBoardEntry(item, pageName, index) {
   if (isPortraitGridPage(pageName)) return normalizePortraitEntry(item, index);
   const src = item.src || '';
@@ -227,6 +231,10 @@ function normalizeBoardEntry(item, pageName, index) {
   };
   if (item.href) entry.href = item.href;
   if (item.poster) entry.poster = item.poster;
+  if (isVideoFile(src) || item.poster) {
+    entry.posterFocusX = normalizePosterFocus(item.posterFocusX);
+    entry.posterFocusY = normalizePosterFocus(item.posterFocusY);
+  }
   return entry;
 }
 
@@ -341,13 +349,156 @@ function attachRotationHandle(el, mediaWrap, photo, board, refit) {
   });
 }
 
-function appendVideoPosterControls(editBar, photo, videoEl) {
+function normalizePosterFocus(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 50;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function applyPosterFocus(el, photo) {
+  if (!el || !el.style) return;
+  el.style.objectPosition =
+    normalizePosterFocus(photo.posterFocusX) + '% ' +
+    normalizePosterFocus(photo.posterFocusY) + '%';
+}
+
+function createPosterCropMedia(photo, videoEl) {
+  if (photo.poster) {
+    const img = document.createElement('img');
+    img.alt = photo.caption || 'video thumbnail';
+    img.src = mediaSrc(photo.poster);
+    applyPosterFocus(img, photo);
+    return img;
+  }
+
+  const video = document.createElement('video');
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  if (videoEl?.src) video.src = videoEl.src;
+  else if (photo.src) video.src = mediaSrc(photo.src);
+  applyPosterFocus(video, photo);
+  return video;
+}
+
+function appendPosterCropControl(parent, photo, videoEl) {
+  photo.posterFocusX = normalizePosterFocus(photo.posterFocusX);
+  photo.posterFocusY = normalizePosterFocus(photo.posterFocusY);
+
+  const crop = document.createElement('div');
+  crop.className = 'poster-crop';
+
+  const label = document.createElement('div');
+  label.className = 'poster-crop-label';
+  label.textContent = 'thumbnail crop — drag to frame';
+  crop.appendChild(label);
+
+  const frame = document.createElement('div');
+  frame.className = 'poster-crop-frame';
+  frame.title = 'drag to choose which part shows in the 16:9 thumbnail';
+
+  let media = createPosterCropMedia(photo, videoEl);
+  frame.appendChild(media);
+  crop.appendChild(frame);
+
+  const sliderRow = document.createElement('label');
+  sliderRow.className = 'poster-crop-slider';
+  sliderRow.append('up / down ');
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = '0';
+  slider.max = '100';
+  slider.step = '1';
+  slider.value = String(photo.posterFocusY);
+  sliderRow.appendChild(slider);
+  crop.appendChild(sliderRow);
+
+  function refreshMedia() {
+    const next = createPosterCropMedia(photo, videoEl);
+    media.replaceWith(next);
+    media = next;
+  }
+
+  function applyAll() {
+    applyPosterFocus(media, photo);
+    if (videoEl) applyPosterFocus(videoEl, photo);
+    parent.querySelectorAll('.poster-preview').forEach(el => applyPosterFocus(el, photo));
+    slider.value = String(photo.posterFocusY);
+  }
+
+  let sliderUndo = false;
+  slider.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+    sliderUndo = false;
+  });
+  slider.addEventListener('input', () => {
+    if (!sliderUndo) {
+      sliderUndo = true;
+      pushUndoSnapshot();
+    }
+    photo.posterFocusY = normalizePosterFocus(slider.value);
+    applyAll();
+  });
+  slider.addEventListener('change', async () => {
+    photo.posterFocusY = normalizePosterFocus(slider.value);
+    await saveBoardData();
+    setStatus('saved \u2713');
+  });
+
+  frame.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startFocusX = photo.posterFocusX;
+    const startFocusY = photo.posterFocusY;
+    let moved = false;
+    let undoPushed = false;
+    frame.classList.add('is-panning');
+
+    function onMove(ev) {
+      const rect = frame.getBoundingClientRect();
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        if (!undoPushed) {
+          undoPushed = true;
+          pushUndoSnapshot();
+        }
+        moved = true;
+      }
+      photo.posterFocusX = normalizePosterFocus(startFocusX - (dx / rect.width) * 100);
+      photo.posterFocusY = normalizePosterFocus(startFocusY - (dy / rect.height) * 100);
+      applyAll();
+    }
+
+    async function onUp() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      frame.classList.remove('is-panning');
+      if (!moved) return;
+      await saveBoardData();
+      setStatus('saved \u2713');
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  parent.appendChild(crop);
+  return { refreshMedia, applyAll };
+}
+
+function appendVideoPosterControls(editBar, photo, videoEl, cropApi) {
   const row = document.createElement('div');
   row.className = 'poster-control';
 
   const preview = document.createElement('img');
   preview.className = 'poster-preview';
   if (photo.poster) preview.src = mediaSrc(photo.poster);
+  applyPosterFocus(preview, photo);
   row.appendChild(preview);
 
   const uploadBtn = document.createElement('button');
@@ -373,7 +524,12 @@ function appendVideoPosterControls(editBar, photo, videoEl) {
     photo.poster = 'assets/' + currentBoard + '/' + file.name;
     const blobUrl = URL.createObjectURL(file);
     preview.src = blobUrl;
-    if (videoEl) videoEl.poster = blobUrl;
+    applyPosterFocus(preview, photo);
+    if (videoEl) {
+      videoEl.poster = blobUrl;
+      applyPosterFocus(videoEl, photo);
+    }
+    if (cropApi?.refreshMedia) cropApi.refreshMedia();
     await saveBoardData();
     setStatus('saved \u2713 — now upload ' + file.name + ' to R2 in assets/' + currentBoard + '/');
     e.target.value = '';
@@ -824,7 +980,7 @@ async function initBoardsPanel() {
         fitBoardHeight(board, { minHeight: 520, padding: 80 });
         return;
       }
-      if (isPortraitGridPage(currentBoard)) return;
+      if (isPortraitGridPage(currentBoard) || isVideoGridPage(currentBoard)) return;
       if (!board.querySelector('.mini-polaroid')) return;
       reflowBoardTiles(board);
       fitBoardHeight(board, { minHeight: 520, padding: 80 });
@@ -840,6 +996,10 @@ function renderBoardMini() {
   }
   if (isPortraitGridPage(currentBoard)) {
     renderPortraitGridMini();
+    return;
+  }
+  if (isVideoGridPage(currentBoard)) {
+    renderVideoGridMini();
     return;
   }
   updateMusicOrganizerUI();
@@ -946,6 +1106,11 @@ function renderBoardMini() {
 
     applyTileLayout(el, board, { x, y, width, rotation });
 
+    const videoEl = mediaWrap.querySelector('video');
+    const cropApi = (photo.src && isVideoFile(photo.src))
+      ? appendPosterCropControl(el, photo, videoEl)
+      : null;
+
     /* ---- edit toolbar (organizer-only — not part of the live site) ---- */
     const editBar = document.createElement('div');
     editBar.className = 'edit-bar';
@@ -965,7 +1130,7 @@ function renderBoardMini() {
     editBar.appendChild(cap);
 
     if (photo.src && isVideoFile(photo.src)) {
-      appendVideoPosterControls(editBar, photo, mediaWrap.querySelector('video'));
+      appendVideoPosterControls(editBar, photo, videoEl, cropApi);
     }
 
     el.appendChild(editBar);
@@ -1049,7 +1214,7 @@ function makeMiniDraggable(el, board, photo) {
   }
 
   el.addEventListener('mousedown', (e) => {
-    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control') || e.target.closest('.rotate-handle') || e.target.closest('.size-control')) return;
+    if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('del') || e.target.closest('.poster-control') || e.target.closest('.poster-crop') || e.target.closest('.rotate-handle') || e.target.closest('.size-control')) return;
     e.preventDefault();
     shiftHeld = e.shiftKey;
 

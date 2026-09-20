@@ -1,4 +1,4 @@
-/* Portrait page — 2-column masonry, natural aspect ratios */
+/* Portrait page — 3-column masonry, natural aspect ratios */
 
 .portrait-page,
 .portrait-grid {
@@ -110,25 +110,45 @@
   border-radius: 0;
 }
 
+.organizer .portrait-grid-col-headers,
 .organizer .portrait-grid-board {
   display: flex;
   align-items: flex-start;
-  gap: clamp(1rem, 2.5vw, 1.75rem);
+  gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
-  max-width: 520px;
+  max-width: none;
   margin: 0 auto;
+}
+
+.organizer .portrait-grid-col-headers {
+  margin-top: 0.15rem;
+}
+
+.organizer .portrait-grid-col-headers div {
+  flex: 1 1 0;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  text-align: center;
+}
+
+.organizer .portrait-grid-board {
   min-height: 0;
   height: auto;
-  padding: 0.75rem 0 1.25rem;
+  padding: 0.55rem 0 1.25rem;
   background: transparent;
 }
 
 .organizer .portrait-grid-board .portrait-grid-col {
   flex: 1 1 0;
   min-width: 0;
+  min-height: 8rem;
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 2.5vw, 1.75rem);
+  gap: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .organizer .portrait-grid-preview-label {
@@ -150,22 +170,32 @@
   -webkit-user-drag: none;
 }
 
-.organizer .portrait-grid-item.dragging {
-  opacity: 0.45;
+.organizer .portrait-grid-item.dragging,
+.organizer .portrait-grid-item.is-lifted {
   cursor: grabbing;
-  z-index: 5;
+}
+
+.organizer .portrait-grid-item.is-lifted {
+  position: fixed;
+  z-index: 4000;
+  margin: 0;
   pointer-events: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  transform: scale(1.03);
+}
+
+.organizer .portrait-grid-item.is-lifted .del {
+  display: none;
+}
+
+.organizer .portrait-grid-placeholder {
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .organizer .portrait-grid-board.portrait-grid-dragging {
   cursor: grabbing;
-}
-
-.organizer .portrait-grid-col.portrait-col-drop-target {
-  outline: 1px dashed rgba(232, 143, 178, 0.65);
-  outline-offset: 2px;
-  border-radius: 2px;
 }
 
 .organizer .portrait-grid-item img,
@@ -200,4 +230,10 @@
   padding: 0.25rem 0.35rem 0.35rem;
   opacity: 0.7;
   outline: none;
+}
+
+@media (max-width: 700px) {
+  .portrait-grid {
+    flex-direction: column;
+  }
 }

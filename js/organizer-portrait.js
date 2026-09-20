@@ -43,7 +43,8 @@ function normalizePortraitEntry(item, index) {
   return {
     id: item?.id || ('p' + Date.now() + Math.floor(Math.random() * 1000) + index),
     src,
-    caption: item?.caption || (src ? captionFromFilename(filenameFromSrc(src)) : '')
+    caption: item?.caption || (src ? captionFromFilename(filenameFromSrc(src)) : ''),
+    col: normalizePortraitColumn(item?.col, index)
   };
 }
 
@@ -53,8 +54,8 @@ function updatePortraitOrganizerUI() {
 
   if (isPortraitGridPage(currentBoard)) {
     generalHint.innerHTML =
-      '<strong>portrait grid:</strong> drag any photo to reorder — drop it above or below another photo in either column. ' +
-      'preview matches the live page.<br>' +
+      '<strong>portrait grid:</strong> 3 independent columns. drag a photo and the others slide out of the way; drop it in another column to move it there. ' +
+      'each column keeps its own order.<br>' +
       '<em>undo</em> or ⌘Z reverses your last change.';
   } else {
     resetGeneralBoardHint();
@@ -70,21 +71,63 @@ function resetGeneralBoardHint() {
     '<em>sync from folder</em> only runs when you click it — removing a photo (×) keeps it off the page even if the file is still on disk or R2.<br>' +
     'drag to arrange, size slider on top of each photo, pink rotation dot above photo to spin. click a caption to edit — it shows centered under the video on the live site.<br>' +
     '<em>undo</em> button or ⌘Z (ctrl+Z on windows) reverses your last change on this page.<br>' +
-    'video thumbnails: click <em>upload thumb</em>, pick an image, then upload that same file to R2 in <code>assets/&lt;page&gt;/</code> — one upload, R2 only.';
+    'video thumbnails: click <em>upload thumb</em>, pick an image, then upload that same file to R2 in <code>assets/&lt;page&gt;/</code> — one upload, R2 only. ' +
+    'for portrait clips, drag the 16:9 crop box (or use <em>up / down</em>) to choose which part shows on the live video page.';
 }
 
 function syncPortraitGridOrderFromDOM(board) {
-  const ids = readPortraitMasonryOrder(board, '.portrait-grid-item');
+  const { ids, colById } = readPortraitMasonryOrder(board, '.portrait-grid-item');
   const byId = Object.fromEntries(boardData.map(item => [item.id, item]));
-  boardData = ids.map(id => byId[id]).filter(Boolean);
+  boardData = ids.map(id => {
+    const item = byId[id];
+    if (!item) return null;
+    item.col = colById[id];
+    return item;
+  }).filter(Boolean);
 }
 
 function makePortraitGridSortable(el, board) {
   let startX = 0;
   let startY = 0;
+  let grabOffsetX = 0;
+  let grabOffsetY = 0;
   let moved = 0;
   let undoGate = { recorded: false };
   let lastDropKey = '';
+  let placeholder = null;
+
+  function clearDragChrome() {
+    if (placeholder?.parentNode) {
+      placeholder.replaceWith(el);
+    } else {
+      placeholder?.remove();
+    }
+    placeholder = null;
+    el.classList.remove('dragging', 'is-lifted');
+    el.style.width = '';
+    el.style.left = '';
+    el.style.top = '';
+    board.classList.remove('portrait-grid-dragging');
+  }
+
+  function liftPhoto() {
+    if (placeholder) return;
+    const rect = el.getBoundingClientRect();
+    placeholder = document.createElement('div');
+    placeholder.className = 'portrait-grid-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    el.after(placeholder);
+
+    el.style.width = rect.width + 'px';
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    el.classList.add('is-lifted');
+  }
+
+  function moveLifted(x, y) {
+    el.style.left = (x - grabOffsetX) + 'px';
+    el.style.top = (y - grabOffsetY) + 'px';
+  }
 
   function onPointerDown(e) {
     if (e.button !== undefined && e.button !== 0) return;
@@ -92,8 +135,11 @@ function makePortraitGridSortable(el, board) {
     e.preventDefault();
 
     const point = e.touches ? e.touches[0] : e;
+    const rect = el.getBoundingClientRect();
     startX = point.clientX;
     startY = point.clientY;
+    grabOffsetX = point.clientX - rect.left;
+    grabOffsetY = point.clientY - rect.top;
     moved = 0;
     undoGate = { recorded: false };
     lastDropKey = '';
@@ -110,6 +156,8 @@ function makePortraitGridSortable(el, board) {
       maybeRecordDragUndo(undoGate);
       el.classList.add('dragging');
       board.classList.add('portrait-grid-dragging');
+      liftPhoto();
+      moveLifted(p.clientX, p.clientY);
 
       const target = findPortraitMasonryDropTarget(board, p.clientX, p.clientY, el);
       if (!target) return;
@@ -118,11 +166,7 @@ function makePortraitGridSortable(el, board) {
       if (key === lastDropKey) return;
       lastDropKey = key;
 
-      if (applyPortraitMasonryDropTarget(el, target)) {
-        board.querySelectorAll('.portrait-grid-col').forEach(col => {
-          col.classList.toggle('portrait-col-drop-target', col === target.col);
-        });
-      }
+      applyPortraitMasonryPlaceholder(placeholder, target);
     }
 
     async function onUp() {
@@ -132,17 +176,13 @@ function makePortraitGridSortable(el, board) {
       document.removeEventListener('touchend', onUp);
       document.removeEventListener('touchcancel', onUp);
 
-      el.classList.remove('dragging');
-      board.classList.remove('portrait-grid-dragging');
-      board.querySelectorAll('.portrait-grid-col').forEach(col => {
-        col.classList.remove('portrait-col-drop-target');
-      });
+      const didMove = moved > PORTRAIT_DRAG_THRESHOLD;
+      clearDragChrome();
 
-      if (moved <= PORTRAIT_DRAG_THRESHOLD) return;
+      if (!didMove) return;
 
       syncPortraitGridOrderFromDOM(board);
       await saveBoardData();
-      renderPortraitGridMini();
       setStatus('order saved \u2713');
     }
 
@@ -171,8 +211,17 @@ function renderPortraitGridMini() {
 
   const label = document.createElement('p');
   label.className = 'portrait-grid-preview-label';
-  label.textContent = 'live page preview (scaled down)';
+  label.textContent = 'live page preview — drag within a column or into another';
   boardHost.appendChild(label);
+
+  const headers = document.createElement('div');
+  headers.className = 'portrait-grid-col-headers';
+  ['column 1', 'column 2', 'column 3'].forEach(text => {
+    const head = document.createElement('div');
+    head.textContent = text;
+    headers.appendChild(head);
+  });
+  boardHost.appendChild(headers);
 
   const board = document.createElement('div');
   board.className = 'portrait-grid-board';
@@ -237,7 +286,7 @@ function renderPortraitGridMini() {
     el.appendChild(del);
 
     makePortraitGridSortable(el, board);
-    cols[portraitMasonryColumnIndex(index)].appendChild(el);
+    cols[portraitMasonryColumnIndex(index, photo.col)].appendChild(el);
     index++;
   });
 }

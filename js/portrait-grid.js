@@ -1,4 +1,4 @@
-/* Portrait page — 2-column masonry, natural aspect ratios */
+/* Portrait page — 3-column masonry, natural aspect ratios */
 
 function buildPortraitLightbox() {
   const overlay = document.createElement('div');
@@ -82,7 +82,7 @@ function buildPortraitLightbox() {
     const figure = document.createElement('figure');
     figure.dataset.id = item.id || '';
     const isVideo = /\.(mp4|webm|mov)$/i.test(item.src);
-    const aboveFold = index < 4;
+    const aboveFold = index < 6;
 
     if (isVideo) {
       const video = document.createElement('video');
@@ -114,6 +114,6 @@ function buildPortraitLightbox() {
 
     figure.addEventListener('click', () => lightbox.open(item));
 
-    cols[portraitMasonryColumnIndex(index)].appendChild(figure);
+    cols[portraitMasonryColumnIndex(index, item.col)].appendChild(figure);
   });
 })();

@@ -19,7 +19,9 @@ main,
 .empty-note,
 .about-wrap,
 .portrait-page,
-.portrait-grid{
+.portrait-grid,
+.video-page,
+.video-grid{
   position:relative;
   z-index:1;
 }

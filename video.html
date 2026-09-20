@@ -9,7 +9,7 @@
 <link rel="icon" href="assets/favicon.png?v=20260813j" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260813j">
 <link rel="stylesheet" href="css/style.css?v=20260813g">
-<link rel="stylesheet" href="css/board.css?v=20260817a">
+<link rel="stylesheet" href="css/video-grid.css?v=20260919e">
 </head>
 <body>
 
@@ -23,7 +23,10 @@
   </div>
 </nav>
 
-<main id="board" class="board" data-source="data/video.json" data-show-captions="false"></main>
+<main class="video-page">
+  <div id="video-grid" class="video-grid" data-source="data/video.json"></div>
+  <p id="video-empty" class="empty-note" hidden>no videos yet — add some in the organizer</p>
+</main>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy MyAn</span>
@@ -38,7 +41,7 @@
 
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260720zn"></script>
-<script src="js/board.js?v=20260817a"></script>
+<script src="js/video-grid.js?v=20260919d"></script>
 <script src="js/cursor-glow.js" defer></script>
 <script src="js/galaxy.js?v=20260812v" defer></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
