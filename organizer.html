@@ -463,6 +463,37 @@
   }
 
   .add-row{ margin:1.2rem 0; }
+
+  .about-edit{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+    max-width:40rem;
+    margin:0 0 2.5rem;
+  }
+  .about-edit label{
+    display:flex;
+    flex-direction:column;
+    gap:0.35rem;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.03em;
+  }
+  .about-edit label span{ opacity:0.55; font-weight:400; }
+  .about-edit textarea,
+  .about-edit input{
+    width:100%;
+    box-sizing:border-box;
+    padding:0.65rem 0.75rem;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:0.95rem;
+    line-height:1.55;
+  }
+  .about-edit textarea{ resize:vertical; min-height:6rem; }
 </style>
 </head>
 <body class="organizer">
@@ -493,6 +524,7 @@
       <option value="music">music</option>
       <option value="portrait">portrait</option>
       <option value="video">video</option>
+      <option value="about">about</option>
     </select>
   </div>
 
@@ -550,18 +582,47 @@
     <div id="boards-mini-board" class="mini-board"></div>
   </section>
 
+  <section id="panel-about" class="panel is-hidden">
+    <h2 style="font-family:var(--display);font-weight:400;font-size:1.45rem;margin:0 0 0.35rem;">about page</h2>
+    <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin:0 0 1.25rem;">
+      edit the live about page copy. changes save when you leave a field.
+    </p>
+    <div class="about-edit">
+      <label>bio
+        <textarea id="about-edit-bio" rows="7"></textarea>
+      </label>
+      <label>available for heading
+        <input id="about-edit-available-heading" type="text">
+      </label>
+      <label>available for list <span>(one item per line)</span>
+        <textarea id="about-edit-available" rows="5"></textarea>
+      </label>
+      <label>location
+        <input id="about-edit-location" type="text">
+      </label>
+      <label>contact line
+        <input id="about-edit-contact-intro" type="text">
+      </label>
+      <label>email
+        <input id="about-edit-email" type="email">
+      </label>
+    </div>
+  </section>
+
 </div>
 </div>
 
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260821c"></script>
 <script src="js/contact-sheet.js?v=20260821c"></script>
-<script src="js/organizer.js?v=20260919f"></script>
+<script src="js/organizer.js?v=20260919h"></script>
 <script src="js/organizer-preview.js?v=20260821b"></script>
 <script src="js/organizer-contact.js?v=20260821b"></script>
 <script src="js/portrait-masonry.js?v=20260919g"></script>
 <script src="js/organizer-portrait.js?v=20260919g"></script>
 <script src="js/organizer-video.js?v=20260919f"></script>
+<script src="js/about.js?v=20260919g"></script>
+<script src="js/organizer-about.js?v=20260919h"></script>
 <script src="js/home-data.js?v=20260810f"></script>
 <script src="js/organizer-home.js?v=20260810f"></script>
 <script src="js/cursor-glow.js" defer></script>

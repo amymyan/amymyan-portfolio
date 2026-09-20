@@ -707,18 +707,14 @@ function showOrganizerSection(section) {
   currentOrganizerSection = section;
   const homePanel = document.getElementById('panel-home');
   const boardsPanel = document.getElementById('panel-boards');
+  const aboutPanel = document.getElementById('panel-about');
   const select = document.getElementById('organizer-section-select');
 
   if (select && select.value !== section) select.value = section;
 
-  if (section === 'home') {
-    homePanel?.classList.remove('is-hidden');
-    boardsPanel?.classList.add('is-hidden');
-    return;
-  }
-
-  homePanel?.classList.add('is-hidden');
-  boardsPanel?.classList.remove('is-hidden');
+  homePanel?.classList.toggle('is-hidden', section !== 'home');
+  boardsPanel?.classList.toggle('is-hidden', section !== 'music' && section !== 'portrait' && section !== 'video');
+  aboutPanel?.classList.toggle('is-hidden', section !== 'about');
 }
 
 async function switchBoardPage(pageName) {
@@ -771,6 +767,8 @@ async function switchOrganizerSection(section) {
   showOrganizerSection(section);
   if (section === 'home') {
     await loadHomeCoverPanel();
+  } else if (section === 'about') {
+    await loadAboutOrganizer();
   } else if (isBoardSection(section)) {
     await switchBoardPage(section);
   }
@@ -785,6 +783,7 @@ function initOrganizerSections() {
   select.addEventListener('change', async () => {
     await switchOrganizerSection(select.value);
   });
+  if (typeof initAboutOrganizer === 'function') initAboutOrganizer();
 }
 const undoStacks = {};
 const MAX_UNDO = 50;
