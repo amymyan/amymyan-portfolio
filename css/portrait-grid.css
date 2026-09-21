@@ -234,6 +234,7 @@
 
 @media (max-width: 700px) {
   .portrait-grid {
-    flex-direction: column;
+    --portrait-gutter: 0.45rem;
+    padding: 0.45rem;
   }
 }
