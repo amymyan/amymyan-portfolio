@@ -452,7 +452,7 @@ function enableBoardMarquee(board, selection, tileClass, { threshold = 6, skipIf
   });
 }
 
-function probeMediaSrc(path, { timeoutMs = 10000 } = {}) {
+function probeMediaSrc(path, { timeoutMs = 8000 } = {}) {
   if (!path?.trim()) return Promise.resolve(false);
   /* Video files can't be probed with Image — never treat them as broken here. */
   if (isVideoPath(path)) return Promise.resolve(true);
@@ -465,11 +465,13 @@ function probeMediaSrc(path, { timeoutMs = 10000 } = {}) {
       clearTimeout(timer);
       resolve(ok);
     };
-    const timer = setTimeout(() => finish(false), timeoutMs);
+    /* Timeout means "unknown", not broken — huge originals often take >10s. */
+    const timer = setTimeout(() => finish(true), timeoutMs);
     const img = new Image();
     img.onload = () => finish(img.naturalWidth > 0);
     img.onerror = () => finish(false);
-    img.src = mediaSrc(path);
+    const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(path) : null;
+    img.src = preview || mediaSrc(path);
   });
 }
 

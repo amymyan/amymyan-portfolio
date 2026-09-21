@@ -100,9 +100,14 @@ function renderHomeRollPanel(container, roll, config, rolls) {
       btn.title = pool.includes(src) ? 'remove from random pool' : 'add to random pool';
 
       const img = document.createElement('img');
-      img.src = mediaSrc(src);
       img.alt = '';
-      img.loading = 'lazy';
+      setOrganizerLazyImg(img, src, {
+        onBroken: () => {
+          btn.disabled = true;
+          btn.style.opacity = '0.35';
+          btn.title = 'missing on R2';
+        }
+      });
       btn.appendChild(img);
 
       btn.addEventListener('click', async () => {
@@ -123,12 +128,6 @@ function renderHomeRollPanel(container, roll, config, rolls) {
         refreshHomeCoverGridPanel(config, rolls);
         setStatus('random pool saved \u2713 — ' + roll.title);
       });
-
-      img.addEventListener('error', () => {
-        btn.disabled = true;
-        btn.style.opacity = '0.35';
-        btn.title = 'missing on R2';
-      }, { once: true });
 
       grid.appendChild(btn);
     });
@@ -197,9 +196,8 @@ function renderHomeCoverGridPanel(container, config, rolls) {
     if (index >= shown) item.classList.add('is-trimmed');
 
     const img = document.createElement('img');
-    img.src = mediaSrc(src);
     img.alt = '';
-    img.loading = 'lazy';
+    setOrganizerLazyImg(img, src);
     item.appendChild(img);
 
     item.addEventListener('dragstart', e => {
@@ -264,7 +262,7 @@ async function purgeBrokenHomeRollSrc(rollId, src, { refresh = true } = {}) {
 }
 
 async function pruneBrokenHomeRollSources() {
-  if (!rootHandle || typeof filterLoadableSrcs !== 'function') return;
+  if (!rootHandle || typeof filterLoadableSrcs !== 'function') return 0;
 
   const [music, portrait, video] = await Promise.all([
     readJSON('data', 'music.json'),
@@ -274,11 +272,11 @@ async function pruneBrokenHomeRollSources() {
 
   const rolls = buildHomeRolls(homeConfigData || {}, { music, portrait, video });
   const allSrcs = rolls.flatMap(r => uniqueSrcs([...(r.coverPoolSrcs || []), r.coverSrc, ...r.photos]));
-  if (!allSrcs.length) return;
+  if (!allSrcs.length) return 0;
 
   const loadable = await filterLoadableSrcs(allSrcs);
   const broken = allSrcs.filter(src => !loadable.has(src));
-  if (!broken.length) return;
+  if (!broken.length) return 0;
 
   for (const src of broken) {
     const roll = rolls.find(r => uniqueSrcs([...(r.coverPoolSrcs || []), r.coverSrc, ...r.photos]).includes(src));
@@ -287,6 +285,7 @@ async function pruneBrokenHomeRollSources() {
 
   homeConfigData = await loadHomeConfigFromDisk();
   setStatus('removed ' + broken.length + ' broken image(s) from homepage rolls \u2713');
+  return broken.length;
 }
 
 let homePanelLoading = false;
@@ -315,7 +314,6 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     ]);
 
     homeConfigData = await loadHomeConfigFromDisk();
-    if (pruneBroken) await pruneBrokenHomeRollSources();
 
     const rolls = buildHomeRolls(homeConfigData, { music, portrait, video });
     const gridBefore = JSON.stringify(homeConfigData.coverGridSrcs || []);
@@ -337,6 +335,12 @@ async function initHomePanel({ pruneBroken = false } = {}) {
 
     if (gridContainer) {
       renderHomeCoverGridPanel(gridContainer, homeConfigData, rolls);
+    }
+
+    if (pruneBroken) {
+      pruneBrokenHomeRollSources().then((removed) => {
+        if (removed) initHomePanel({ pruneBroken: false });
+      }).catch(() => {});
     }
   } catch (err) {
     console.error(err);

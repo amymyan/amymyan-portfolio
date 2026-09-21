@@ -334,8 +334,8 @@
       "title": "wasia project - isotope tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 3,
-      "x": 23.552314814814814,
-      "y": 504.37152777777777,
+      "x": 2.856889204545454,
+      "y": 556.1897727272727,
       "width": 74,
       "rotation": 0,
       "frames": [
@@ -367,8 +367,8 @@
       "title": "sophie cates",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 2.5851041666666665,
-      "y": 527.1851851851852,
+      "x": 8.425829545454546,
+      "y": 579.5715909090908,
       "width": 90,
       "rotation": 0,
       "frames": [
@@ -407,8 +407,8 @@
       "title": "chase atlantic - lost in heaven tour",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 3,
-      "x": 27.43773148148148,
-      "y": 447.30671296296293,
+      "x": 3.0157982954545455,
+      "y": 500.14772727272725,
       "width": 71,
       "rotation": 0,
       "frames": [
@@ -440,8 +440,8 @@
       "title": "djo",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 2.5716435185185187,
-      "y": 427.511574074074,
+      "x": 14.255116477272725,
+      "y": 479.32954545454544,
       "width": 83,
       "rotation": 0,
       "frames": [
@@ -604,8 +604,8 @@
       "title": "ella boh",
       "filmStock": "KODAK PORTRA 400",
       "colsPerRow": 4,
-      "x": 2.5851041666666665,
-      "y": 469.43055555555554,
+      "x": 19.869434659090906,
+      "y": 522.8397727272727,
       "width": 78,
       "rotation": 0,
       "frames": [
@@ -977,6 +977,102 @@
         {
           "id": "f178694724242711",
           "src": "assets/music/AmyMyan7.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        }
+      ]
+    },
+    {
+      "id": "sheet-1790025274454",
+      "title": "lucy dacus: with the hollywood bowl orcheestra",
+      "filmStock": "KODAK PORTRA 400",
+      "colsPerRow": 4,
+      "x": 2.7432528409090873,
+      "y": 428.88636363636357,
+      "width": 78,
+      "rotation": 0,
+      "frames": [
+        {
+          "id": "f179002527445411",
+          "src": "assets/music/LW - LD 9.13-7.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744547",
+          "src": "assets/music/LW - LD 9.13-3.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744543",
+          "src": "assets/music/LW - LD 9.13-19.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744544",
+          "src": "assets/music/LW - LD 9.13-2.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744545",
+          "src": "assets/music/LW - LD 9.13-25.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744548",
+          "src": "assets/music/LW - LD 9.13-4.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744541",
+          "src": "assets/music/LW - LD 9.13-11.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744542",
+          "src": "assets/music/LW - LD 9.13-17.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744546",
+          "src": "assets/music/LW - LD 9.13-26.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744540",
+          "src": "assets/music/LW - LD 9.13-10.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f17900252744549",
+          "src": "assets/music/LW - LD 9.13-5.jpg",
+          "rotation": 0,
+          "focusX": 50,
+          "focusY": 50
+        },
+        {
+          "id": "f179002527445410",
+          "src": "assets/music/LW - LD 9.13-6.jpg",
           "rotation": 0,
           "focusX": 50,
           "focusY": 50

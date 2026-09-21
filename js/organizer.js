@@ -726,7 +726,6 @@ async function switchBoardPage(pageName) {
     boardData = result.data;
     added = result.added;
     unsupported = result.unsupported;
-    await pruneBrokenPageSources(pageName);
     reportSyncStatus(added, unsupported);
   } catch (err) {
     console.error(err);
@@ -737,6 +736,11 @@ async function switchBoardPage(pageName) {
   }
   renderBoardMini();
   updateUndoButton();
+  /* Music has 100+ full-res photos — probing them on open freezes the page.
+     Portrait/video stay cheap enough to check in the background. */
+  if (!isContactSheetPage(pageName)) {
+    pruneBrokenPageSources(pageName).catch(() => {});
+  }
 }
 
 async function pruneBrokenPageSources(pageName) {

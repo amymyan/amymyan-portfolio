@@ -115,8 +115,9 @@ async function refreshMusicLibrary() {
   const onSheets = [...getSheetFrameFilenames()];
   if (onSheets.length) await addToMusicLibraryRegistry(onSheets);
 
+  const prevKey = musicLibraryFiles.join('\n');
   musicLibraryFiles = await collectMusicLibraryFilenames();
-  renderMusicLibrary(true);
+  renderMusicLibrary(prevKey !== musicLibraryFiles.join('\n'));
   return musicLibraryFiles.length;
 }
 
@@ -203,7 +204,7 @@ async function addPhotosToSheet(sheet, srcs, { startSlot = null, mediaWrap = nul
 
   pending.forEach(src => selectedLibrarySrcs.delete(src));
   if (typeof ensureSitePreviews === 'function') {
-    await ensureSitePreviews(pending);
+    ensureSitePreviews(pending).catch(() => {});
   }
   await saveBoardData();
 
@@ -251,6 +252,42 @@ function updateLibrarySelection() {
   updateLibraryCreateButton();
 }
 
+let musicLibraryObserver = null;
+
+function musicLibraryImgSrc(src) {
+  if (typeof organizerFastSrc === 'function') return organizerFastSrc(src);
+  const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
+  return preview || mediaSrc(src);
+}
+
+function observeMusicLibraryImg(img) {
+  if (!('IntersectionObserver' in window)) {
+    const url = img.dataset.lazySrc;
+    if (url) {
+      img.src = url;
+      delete img.dataset.lazySrc;
+    }
+    return;
+  }
+
+  const grid = document.getElementById('music-library-grid');
+  if (!musicLibraryObserver) {
+    musicLibraryObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const url = el.dataset.lazySrc;
+        if (url) {
+          el.src = url;
+          delete el.dataset.lazySrc;
+        }
+        musicLibraryObserver.unobserve(el);
+      });
+    }, { root: grid, rootMargin: '180px', threshold: 0.01 });
+  }
+  musicLibraryObserver.observe(img);
+}
+
 function renderMusicLibrary(forceRebuild = false) {
   const grid = document.getElementById('music-library-grid');
   if (!grid) return;
@@ -260,6 +297,7 @@ function renderMusicLibrary(forceRebuild = false) {
     return;
   }
 
+  if (musicLibraryObserver) musicLibraryObserver.disconnect();
   grid.innerHTML = '';
   const usedSrcs = getUsedLibrarySrcs();
 
@@ -280,11 +318,11 @@ function renderMusicLibrary(forceRebuild = false) {
     if (usedSrcs.has(src)) item.classList.add('on-sheet');
 
     const img = document.createElement('img');
-    img.src = mediaSrc(src);
     img.alt = filename;
-    img.loading = 'lazy';
     img.decoding = 'async';
+    img.dataset.lazySrc = musicLibraryImgSrc(src);
     item.appendChild(img);
+    observeMusicLibraryImg(img);
 
     const label = document.createElement('span');
     label.className = 'library-label';
@@ -338,7 +376,7 @@ async function createSheetFromSelection() {
 
   selectedLibrarySrcs.clear();
   if (typeof ensureSitePreviews === 'function') {
-    await ensureSitePreviews(frames.map(f => f.src));
+    ensureSitePreviews(frames.map(f => f.src)).catch(() => {});
   }
   await saveBoardData();
   renderBoardMini();
@@ -554,7 +592,8 @@ function renderContactSheetsMini() {
   };
   const sheets = getMusicSheetsArray();
 
-  refreshMusicLibrary();
+  if (musicLibraryFiles.length) renderMusicLibrary(false);
+  else refreshMusicLibrary();
 
   sheets.forEach(sheet => {
     const width = normalizeWidthPercent(sheet.width);

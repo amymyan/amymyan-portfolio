@@ -325,7 +325,9 @@ function buildContactFrameElement(frameData, slot, options = {}) {
     img.alt = '';
     img.decoding = 'async';
     applyFrameFocus(img, frameData);
-    if (mode === 'organizer' && typeof setOrganizerPreviewImg === 'function') {
+    if (mode === 'organizer' && typeof setOrganizerLazyImg === 'function') {
+      setOrganizerLazyImg(img, frameData.src);
+    } else if (mode === 'organizer' && typeof setOrganizerPreviewImg === 'function') {
       setOrganizerPreviewImg(img, frameData.src, ORGANIZER_THUMB_FRAME);
     } else {
       setLiveContactFrameImg(img, frameData.src, () => {

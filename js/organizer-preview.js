@@ -109,7 +109,10 @@ async function ensureSitePreview(src) {
 
 async function ensureSitePreviews(srcs) {
   const list = [...new Set((srcs || []).filter(Boolean))];
-  await Promise.all(list.map(src => ensureSitePreview(src).catch(() => false)));
+  const limit = 2;
+  for (let i = 0; i < list.length; i += limit) {
+    await Promise.all(list.slice(i, i + limit).map(src => ensureSitePreview(src).catch(() => false)));
+  }
 }
 
 async function createOrganizerThumbUrl(src, maxPx) {
@@ -140,18 +143,95 @@ async function createOrganizerThumbUrl(src, maxPx) {
   return task;
 }
 
+function organizerFastSrc(src) {
+  const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
+  return preview || mediaSrc(src);
+}
+
+const organizerLazyObservers = new WeakMap();
+const ORGANIZER_LAZY_CONCURRENCY = 4;
+let organizerLazyInFlight = 0;
+const organizerLazyQueue = [];
+
+function pumpOrganizerLazyQueue() {
+  while (organizerLazyInFlight < ORGANIZER_LAZY_CONCURRENCY && organizerLazyQueue.length) {
+    const img = organizerLazyQueue.shift();
+    const url = img?.dataset?.lazySrc;
+    if (!img?.isConnected || !url) continue;
+    organizerLazyInFlight++;
+    const done = () => {
+      organizerLazyInFlight--;
+      pumpOrganizerLazyQueue();
+    };
+    img.addEventListener('load', done, { once: true });
+    img.addEventListener('error', done, { once: true });
+    delete img.dataset.lazySrc;
+    img.src = url;
+  }
+}
+
+function observeOrganizerLazyImg(img, root) {
+  const key = root || document.documentElement;
+  let observer = organizerLazyObservers.get(key);
+  if (!observer) {
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        organizerLazyQueue.push(entry.target);
+        pumpOrganizerLazyQueue();
+      });
+    }, { root: root || null, rootMargin: '240px', threshold: 0.01 });
+    organizerLazyObservers.set(key, observer);
+  }
+  observer.observe(img);
+}
+
+function markOrganizerImgReady(img) {
+  img.classList.add('is-ready');
+}
+
+function attachOrganizerPreviewFallback(img, src, onBroken) {
+  img.addEventListener('load', () => markOrganizerImgReady(img));
+  img.addEventListener('error', () => {
+    if (img.dataset.previewSrc !== src) return;
+    const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
+    const full = mediaSrc(src);
+    if (preview && img.dataset.previewFallback !== '1') {
+      img.dataset.previewFallback = '1';
+      img.src = full;
+      return;
+    }
+    if (typeof onBroken === 'function') onBroken();
+  });
+  if (img.complete && img.naturalWidth) markOrganizerImgReady(img);
+}
+
+function setOrganizerLazyImg(img, src, { root = null, onBroken = null } = {}) {
+  if (!src || !img) return;
+  img.dataset.previewSrc = src;
+  img.decoding = 'async';
+  attachOrganizerPreviewFallback(img, src, onBroken);
+
+  const url = organizerFastSrc(src);
+  if (!('IntersectionObserver' in window)) {
+    img.src = url;
+    return;
+  }
+  img.dataset.lazySrc = url;
+  observeOrganizerLazyImg(img, root);
+}
+
 function setOrganizerPreviewImg(img, src, maxPx) {
   if (!src || !img) return;
   img.dataset.previewSrc = src;
   img.decoding = 'async';
   img.loading = 'lazy';
-  img.src = mediaSrc(src);
 
-  createOrganizerThumbUrl(src, maxPx).then(url => {
-    if (img.dataset.previewSrc === src && url) img.src = url;
-  }).catch(() => {
-    if (img.dataset.previewSrc === src) img.src = mediaSrc(src);
-  });
+  const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
+  const full = mediaSrc(src);
+  img.src = preview || full;
+  attachOrganizerPreviewFallback(img, src);
 }
 
 function clearOrganizerPreviewCache() {
