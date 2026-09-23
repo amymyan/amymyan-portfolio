@@ -118,6 +118,9 @@ async function refreshMusicLibrary() {
   const prevKey = musicLibraryFiles.join('\n');
   musicLibraryFiles = await collectMusicLibraryFilenames();
   renderMusicLibrary(prevKey !== musicLibraryFiles.join('\n'));
+  if (typeof ensureSitePreviews === 'function') {
+    ensureSitePreviews(musicLibraryFiles.map(srcFromFilename)).catch(() => {});
+  }
   return musicLibraryFiles.length;
 }
 
@@ -130,6 +133,9 @@ async function registerMusicFilenames(filenames) {
 
   musicLibraryFiles = await collectMusicLibraryFilenames();
   renderMusicLibrary(true);
+  if (typeof ensureSitePreviews === 'function') {
+    ensureSitePreviews(incoming.map(srcFromFilename)).catch(() => {});
+  }
   return incoming.length;
 }
 

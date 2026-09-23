@@ -94,17 +94,47 @@ async function writeSitePreviewFromFile(src, file) {
   return true;
 }
 
+async function sitePreviewExists(src) {
+  const parsed = parseAssetPath(src);
+  if (!parsed || typeof getDir !== 'function' || !rootHandle) return false;
+  try {
+    const dir = await getDir('assets/previews/' + parsed.page);
+    await dir.getFileHandle(parsed.filename);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function fileFromRemoteSrc(src, filename) {
+  const res = await fetch(mediaSrc(src));
+  if (!res.ok) return null;
+  const blob = await res.blob();
+  if (!blob?.size) return null;
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+}
+
 async function ensureSitePreview(src) {
   if (!src || typeof rootHandle === 'undefined' || !rootHandle) return false;
   const parsed = parseAssetPath(src);
   if (!parsed) return false;
+  if (typeof isVideoPath === 'function' && isVideoPath(src)) return false;
+  if (!/\.(jpe?g|png|webp|gif)$/i.test(parsed.filename)) return false;
+  if (await sitePreviewExists(src)) return true;
+
+  let file = null;
   try {
     const dir = await getDir('assets/' + parsed.page);
-    const file = await (await dir.getFileHandle(parsed.filename)).getFile();
-    return await writeSitePreviewFromFile(src, file);
+    file = await (await dir.getFileHandle(parsed.filename)).getFile();
   } catch {
-    return false;
+    try {
+      file = await fileFromRemoteSrc(src, parsed.filename);
+    } catch {
+      file = null;
+    }
   }
+  if (!file) return false;
+  return writeSitePreviewFromFile(src, file);
 }
 
 async function ensureSitePreviews(srcs) {
