@@ -32,7 +32,8 @@
   cursor: var(--site-cursor);
 }
 
-.video-grid video {
+.video-grid video,
+.video-grid .video-player img {
   display: block;
   width: 100%;
   height: 100%;

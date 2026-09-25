@@ -80,11 +80,33 @@ function buildVideoLightbox() {
   };
 }
 
-function attachThumbnail(video, onPlay) {
+function setVideoThumbImg(img, posterSrc) {
+  const full = mediaSrc(posterSrc);
+  const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(posterSrc) : null;
+
+  img.decoding = 'async';
+  img.loading = 'lazy';
+  img.addEventListener('error', () => {
+    if (img.dataset.previewFallback === '1' || !preview) return;
+    img.dataset.previewFallback = '1';
+    img.src = full;
+  }, { once: true });
+  img.src = preview || full;
+}
+
+function attachThumbnail(item, onPlay) {
   const wrap = document.createElement('div');
   wrap.className = 'video-player';
+
+  const img = document.createElement('img');
+  img.alt = item.caption || '';
+  const focusX = Number.isFinite(Number(item.posterFocusX)) ? Number(item.posterFocusX) : 50;
+  const focusY = Number.isFinite(Number(item.posterFocusY)) ? Number(item.posterFocusY) : 50;
+  img.style.objectPosition = focusX + '% ' + focusY + '%';
+  if (item.poster?.trim()) setVideoThumbImg(img, item.poster);
+  wrap.appendChild(img);
+
   const playBtn = videoPlayButton();
-  wrap.appendChild(video);
   wrap.appendChild(playBtn);
 
   playBtn.addEventListener('click', (e) => {
@@ -143,20 +165,7 @@ function showVideoError(grid, messageHtml) {
     const figure = document.createElement('figure');
     figure.dataset.id = item.id || '';
 
-    const video = document.createElement('video');
-    video.src = mediaSrc(item.src);
-    video.playsInline = true;
-    video.preload = 'metadata';
-    video.muted = true;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
-    if (item.poster) video.poster = mediaSrc(item.poster);
-    const focusX = Number.isFinite(Number(item.posterFocusX)) ? Number(item.posterFocusX) : 50;
-    const focusY = Number.isFinite(Number(item.posterFocusY)) ? Number(item.posterFocusY) : 50;
-    video.style.objectPosition = focusX + '% ' + focusY + '%';
-    video.addEventListener('error', () => figure.remove());
-
-    figure.appendChild(attachThumbnail(video, () => lightbox.open(item)));
+    figure.appendChild(attachThumbnail(item, () => lightbox.open(item)));
 
     if (item.caption) {
       const cap = document.createElement('figcaption');
