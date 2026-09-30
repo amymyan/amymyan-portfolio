@@ -29,10 +29,10 @@
       cell.className = 'home-cover-grid-cell';
 
       const img = document.createElement('img');
-      img.src = mediaSrc(src);
       img.alt = '';
       img.loading = 'lazy';
       img.decoding = 'async';
+      setMediaPreviewImg(img, src);
 
       cell.appendChild(img);
       grid.appendChild(cell);

@@ -30,6 +30,22 @@ function mediaPreviewSrc(path) {
   return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]) + '?v=960';
 }
 
+function setMediaPreviewImg(img, path) {
+  if (!img || !path) return;
+  const preview = mediaPreviewSrc(path);
+  const full = mediaSrc(path);
+  img.dataset.previewSrc = path;
+  img.decoding = 'async';
+  img.addEventListener('error', () => {
+    if (img.dataset.previewSrc !== path) return;
+    if (preview && img.dataset.previewFallback !== '1') {
+      img.dataset.previewFallback = '1';
+      img.src = full;
+    }
+  });
+  img.src = preview || full;
+}
+
 /* Optional CDN resize for scrub frames — set in config.js, e.g.
    window.SCRUB_IMAGE_CDN_PARAMS = 'width=480,quality=55,format=auto';
    Only works if your media host supports /cdn-cgi/image/… URLs. */

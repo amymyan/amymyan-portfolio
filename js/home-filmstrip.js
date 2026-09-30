@@ -298,7 +298,7 @@
     photo.className = 'home-film-photo';
     const img = document.createElement('img');
     img.alt = frame.title || '';
-    img.src = mediaSrc(frame.src);
+    setMediaPreviewImg(img, frame.src);
     img.loading = eager ? 'eager' : 'lazy';
     if (eager) img.fetchPriority = 'high';
     img.decoding = 'async';
@@ -327,9 +327,9 @@
     getRollFrameEls(rollId).forEach(el => {
       const img = el.querySelector('img');
       if (!img) return;
-      const next = mediaSrc(src);
-      if (img.getAttribute('src') === next) return;
-      img.src = next;
+      if (img.dataset.previewSrc === src) return;
+      delete img.dataset.previewFallback;
+      setMediaPreviewImg(img, src);
       if (img.decode) img.decode().catch(() => {});
     });
   }
@@ -339,7 +339,7 @@
   }
 
   function preloadSrc(src) {
-    const url = mediaSrc(src);
+    const url = (typeof mediaPreviewSrc === 'function' && mediaPreviewSrc(src)) || mediaSrc(src);
     if (!src || !url || preloadedUrls.has(url)) return Promise.resolve();
     preloadedUrls.add(url);
     return new Promise((resolve) => {
