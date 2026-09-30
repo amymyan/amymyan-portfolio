@@ -6,14 +6,21 @@ function isVideoPath(path) {
   return /\.(mp4|webm|mov)(\?|$)/i.test(path || '');
 }
 
+const MEDIA_URL_VERSION = '20260930';
+
+function cacheBustUrl(url) {
+  if (!url || /[?&]v=/.test(url)) return url;
+  return url + (url.includes('?') ? '&' : '?') + 'v=' + MEDIA_URL_VERSION;
+}
+
 function mediaSrc(path) {
   if (!path) return path;
-  if (/^https?:\/\//i.test(path)) return path;
+  if (/^https?:\/\//i.test(path)) return cacheBustUrl(path);
 
   const base = (window.MEDIA_BASE_URL || '').replace(/\/$/, '');
   const encoded = path.split('/').map(part => encodeURIComponent(part)).join('/');
-
-  return base ? base + '/' + encoded.replace(/^\//, '') : encoded;
+  const url = base ? base + '/' + encoded.replace(/^\//, '') : encoded;
+  return base ? cacheBustUrl(url) : url;
 }
 
 /* Same-origin contact-sheet previews (resized JPEGs in the repo). */

@@ -81,7 +81,9 @@ function buildVideoLightbox() {
 }
 
 function setVideoThumbImg(img, posterSrc) {
-  const full = mediaSrc(posterSrc);
+  const full = typeof cacheBustUrl === 'function'
+    ? cacheBustUrl(mediaSrc(posterSrc))
+    : mediaSrc(posterSrc);
   const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(posterSrc) : null;
 
   img.decoding = 'async';
