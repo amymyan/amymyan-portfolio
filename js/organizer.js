@@ -366,7 +366,12 @@ function createPosterCropMedia(photo, videoEl) {
   if (photo.poster) {
     const img = document.createElement('img');
     img.alt = photo.caption || 'video thumbnail';
-    img.src = mediaSrc(photo.poster);
+    if (typeof setOrganizerPreviewImg === 'function') {
+      setOrganizerPreviewImg(img, photo.poster, ORGANIZER_THUMB_FRAME);
+    } else {
+      const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(photo.poster) : null;
+      img.src = preview || mediaSrc(photo.poster);
+    }
     applyPosterFocus(img, photo);
     return img;
   }
