@@ -1,7 +1,7 @@
 /* Contact sheet — film edge styling (music page + organizer) */
 
 .contact-sheet-board{
-  --sheet-stack-gap: clamp(2.25rem, 4.5vw, 3.75rem);
+  --sheet-stack-gap: clamp(1.35rem, 2.6vw, 2.1rem);
   position:relative;
   width:100%;
   min-height:75vh;
