@@ -352,6 +352,37 @@ function sortSheetsByBoardPosition(list) {
   });
 }
 
+function contactSheetStackGapPx(board) {
+  const raw = getComputedStyle(board).getPropertyValue('--sheet-stack-gap').trim() || '2.75rem';
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;height:' + raw;
+  board.appendChild(probe);
+  const px = probe.getBoundingClientRect().height;
+  probe.remove();
+  return Math.max(24, Math.round(px || boardUnit(board) * 4));
+}
+
+function spaceContactSheetsVertically(board) {
+  const u = boardUnit(board);
+  if (!u) return;
+
+  const els = [...board.querySelectorAll('.contact-sheet')].sort((a, b) => {
+    const dy = (parseFloat(a.dataset.y) || 0) - (parseFloat(b.dataset.y) || 0);
+    if (Math.abs(dy) > 0.01) return dy;
+    return (parseFloat(a.dataset.x) || 0) - (parseFloat(b.dataset.x) || 0);
+  });
+  if (!els.length) return;
+
+  const gapPx = contactSheetStackGapPx(board);
+  let topPx = Math.max(16, u * 1.25);
+
+  els.forEach(el => {
+    const coords = readTileCoords(el);
+    applyTileLayout(el, board, { ...coords, y: topPx / u });
+    topPx += el.offsetHeight + gapPx;
+  });
+}
+
 function layoutWide(board) {
   board.classList.remove('board--narrow');
 
@@ -389,6 +420,7 @@ function renderBoard() {
     layoutWide(boardEl);
     requestAnimationFrame(() => {
       reflowContactSheets(boardEl);
+      spaceContactSheetsVertically(boardEl);
       fitBoardHeight(boardEl);
     });
   }
@@ -427,6 +459,7 @@ async function initBoard() {
       renderBoard();
     } else if (!nowNarrow) {
       reflowContactSheets(boardEl);
+      spaceContactSheetsVertically(boardEl);
       fitBoardHeight(boardEl);
     }
   });
