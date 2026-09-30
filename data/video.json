@@ -36,6 +36,18 @@
     "posterFocusY": 32
   },
   {
+    "id": "p17908061541253245",
+    "src": "assets/video/Timeline 10.mov",
+    "caption": "Chitra Show Reel",
+    "x": 10,
+    "y": 5,
+    "width": 25,
+    "rotation": 0,
+    "posterFocusX": 50,
+    "posterFocusY": 52,
+    "poster": "assets/video/Chitra-88.jpg"
+  },
+  {
     "id": "p17898623366508284",
     "src": "assets/video/disneyland full.mov",
     "caption": "Disneyland, CA",
