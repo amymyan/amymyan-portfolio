@@ -65,6 +65,7 @@ function buildPortraitLightbox() {
 
   if (!items.length) {
     if (emptyNote) emptyNote.hidden = false;
+    if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
     return;
   }
 

@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/favicon.svg?v=20260813j" type="image/svg+xml">
 <link rel="icon" href="assets/favicon.png?v=20260813j" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260813j">
-<link rel="stylesheet" href="css/style.css?v=20260813g">
+<link rel="stylesheet" href="css/style.css?v=20261005g">
 <style>
   .about-wrap{
     max-width:560px;
@@ -36,9 +36,17 @@
   }
   .about-available{ margin-bottom:1.75rem; }
   .about-contact a{ text-decoration:underline; text-underline-offset:3px; }
+  .page-loader{position:fixed;inset:0;z-index:10050;background:#fff}
+  body.is-booting{overflow:hidden}
 </style>
 </head>
-<body>
+<body class="is-booting">
+<noscript><style>.page-loader{display:none!important}body.is-booting .site-nav,body.is-booting .about-wrap,body.is-booting .site-footer{opacity:1}body.is-booting{overflow:auto}</style></noscript>
+<div id="page-loader" class="page-loader" role="status" aria-live="polite" aria-label="Loading">
+  <div class="page-loader-inner">
+    <div class="page-loader-orbit" aria-hidden="true"></div>
+  </div>
+</div>
 
 <nav class="site-nav">
   <a class="wordmark" href="index.html"><span class="wordmark-deco">✮⋆˙</span> <span class="wordmark-name">Amy MyAn</span> <span class="wordmark-deco">˙⋆✮</span></a>
@@ -88,6 +96,7 @@
 </footer>
 
 <script src="js/config.js?v=20260808"></script>
+<script src="js/page-loader.js?v=20261005f"></script>
 <script src="js/about.js?v=20260919g"></script>
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();

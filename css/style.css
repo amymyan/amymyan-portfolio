@@ -253,3 +253,130 @@ body .site-nav a.wordmark:active{
   pointer-events:none;
   z-index:9999;
 }
+
+/* ---------- page loader (public pages) ---------- */
+
+body.is-booting{
+  overflow:hidden;
+}
+
+body.is-booting main,
+body.is-booting .about-wrap,
+body.is-booting .site-footer{
+  opacity:0;
+}
+
+body.is-booting .site-nav{
+  position:relative;
+  z-index:10060;
+}
+
+body.is-booting .site-nav .wordmark-deco{
+  display:inline-block;
+  animation:loaderTwinkle 1.8s ease-in-out infinite;
+}
+
+body.is-booting .site-nav .wordmark-deco:last-child{
+  animation-delay:0.9s;
+}
+
+body.is-ready main,
+body.is-ready .about-wrap,
+body.is-ready .site-footer{
+  opacity:1;
+  transition:opacity 0.9s ease;
+}
+
+.page-loader{
+  position:fixed;
+  inset:0;
+  z-index:10050;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--paper);
+  color:var(--ink);
+  overflow:hidden;
+}
+
+.page-loader.is-done{
+  opacity:0;
+  pointer-events:none;
+  transform:scale(1.02);
+  filter:blur(10px);
+  transition:opacity 0.85s ease, transform 1s ease, filter 0.85s ease;
+}
+
+.page-loader-inner{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:1.5rem;
+}
+
+.page-loader-orbit{
+  position:relative;
+  width:min(12.5rem, 58vw);
+  height:min(12.5rem, 58vw);
+  animation:loaderStarSpin 10s linear infinite;
+}
+
+.page-loader-orbit-dot{
+  position:absolute;
+  left:var(--x);
+  top:var(--y);
+  transform:translate(-50%, -50%);
+  font-size:0.58rem;
+  line-height:1;
+  color:var(--flash);
+}
+
+.page-loader-orbit-dot:nth-child(5n+2){ color:#ff5aad; }
+.page-loader-orbit-dot:nth-child(5n+3){ color:#ff8fc4; }
+.page-loader-orbit-dot:nth-child(5n+4){ color:#ff3da5; }
+.page-loader-orbit-dot:nth-child(5n){ color:#ffb3d9; }
+
+.page-loader-orbit-dot.is-tip{
+  font-size:0.92rem;
+  color:var(--flash);
+}
+
+.page-loader-orbit-dot span{
+  display:block;
+  animation:loaderTwinkle 1.7s ease-in-out infinite;
+  animation-delay:var(--d, 0s);
+}
+
+body.is-booting .home-film-loading{
+  display:none;
+}
+
+@keyframes loaderTwinkle{
+  0%, 100%{ opacity:1; transform:scale(1) rotate(0deg); }
+  50%{ opacity:0.28; transform:scale(0.82) rotate(-12deg); }
+}
+
+@keyframes loaderStarSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.is-booting .site-nav .wordmark-deco,
+  .page-loader-orbit,
+  .page-loader-orbit-dot span{
+    animation:none;
+  }
+  .page-loader.is-done{
+    transform:none;
+    filter:none;
+    transition:opacity 0.25s ease;
+  }
+  body.is-ready .site-nav,
+  body.is-ready main,
+  body.is-ready .about-wrap,
+  body.is-ready .site-footer{
+    transition:opacity 0.25s ease;
+  }
+}

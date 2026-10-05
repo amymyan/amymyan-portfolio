@@ -554,6 +554,7 @@
 
       if (!frames.length) {
         loadingEl.textContent = 'no photos yet — add some in the organizer';
+        if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
         return;
       }
 
@@ -635,6 +636,7 @@
       console.error(err);
       loadingEl.textContent = 'could not load filmstrip';
       transportButtons.forEach(btn => { btn.disabled = frames.length === 0; });
+      if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
     }
   }
 

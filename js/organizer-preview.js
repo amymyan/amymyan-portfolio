@@ -4,8 +4,8 @@ const ORGANIZER_THUMB_LIBRARY = 160;
 const ORGANIZER_THUMB_FRAME = 320;
 const ORGANIZER_THUMB_POLAROID = 420;
 const ORGANIZER_THUMB_PORTRAIT = 280;
-const SITE_PREVIEW_MAX_PX = 960;
-const SITE_PREVIEW_QUALITY = 0.8;
+const SITE_PREVIEW_MAX_PX = 1400;
+const SITE_PREVIEW_QUALITY = 0.88;
 
 const organizerThumbCache = new Map();
 const organizerLocalUrlCache = new Map();

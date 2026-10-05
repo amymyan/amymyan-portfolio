@@ -27,7 +27,7 @@ function mediaSrc(path) {
 function mediaPreviewSrc(path) {
   const match = (path || '').match(/^assets\/([^/]+)\/([^/]+)$/);
   if (!match) return null;
-  return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]) + '?v=960';
+  return 'assets/previews/' + match[1] + '/' + encodeURIComponent(match[2]) + '?v=1400';
 }
 
 function setMediaPreviewImg(img, path) {

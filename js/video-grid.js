@@ -138,6 +138,7 @@ function showVideoError(grid, messageHtml) {
       grid,
       'videos can\u2019t load when you double-click an html file. start a local server, then open the site in your browser.'
     );
+    if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
     return;
   }
 
@@ -150,6 +151,7 @@ function showVideoError(grid, messageHtml) {
   } catch (err) {
     console.error('Could not load', source, err);
     showVideoError(grid, 'couldn\u2019t load videos from <code>' + source + '</code>.');
+    if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
     return;
   }
 
@@ -158,6 +160,7 @@ function showVideoError(grid, messageHtml) {
 
   if (!items.length) {
     if (emptyNote) emptyNote.hidden = false;
+    if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
     return;
   }
 

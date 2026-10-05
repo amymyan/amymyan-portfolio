@@ -17,6 +17,7 @@ async function loadSheets() {
 
 function showBoardError(messageHtml) {
   boardEl.innerHTML = '<p class="board-error">' + messageHtml + '</p>';
+  if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
 }
 
 function localServerHelpHtml() {
@@ -444,6 +445,9 @@ async function initBoard() {
   try {
     sheets = await loadSheets();
     renderBoard();
+    if (!sheets.length && typeof window.amyMarkPageReady === 'function') {
+      window.amyMarkPageReady({ empty: true });
+    }
   } catch (err) {
     console.error('Contact sheet load failed:', err);
     showBoardError(describeSheetLoadError(err));
