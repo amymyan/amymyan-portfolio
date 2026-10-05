@@ -108,7 +108,7 @@ function buildPortraitLightbox() {
         if (img.decode) img.decode().then(show).catch(show);
         else show();
       });
-      img.src = mediaSrc(item.src);
+      setMediaPreviewImg(img, item.src);
       if (img.complete && img.naturalWidth) revealFigure(figure, img);
       figure.appendChild(img);
     }
