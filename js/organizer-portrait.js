@@ -1,25 +1,27 @@
-/* Organizer — portrait 2-column grid with drag reorder */
+/* Organizer — 3-column masonry used by the portrait and music pages */
 
 const PORTRAIT_DRAG_THRESHOLD = 6;
 
 function isPortraitGridPage(pageName) {
-  return pageName === 'portrait';
+  return pageName === 'portrait' || pageName === 'music';
 }
 
-function normalizePortraitBoardData(raw) {
+function normalizePortraitBoardData(raw, pageName) {
   if (Array.isArray(raw)) {
     return raw
       .filter(item => item?.src?.trim())
       .map((item, i) => normalizePortraitEntry(item, i));
   }
 
-  /* Recover if portrait.json was mistakenly saved as contact-sheets (music format). */
+  /* Recover contact-sheet data (the old music format) into a flat grid. */
   if (typeof isContactSheetFormat === 'function' && isContactSheetFormat(raw)) {
+    const folder = pageName ? '/' + pageName + '/' : '';
     const items = [];
     for (const sheet of raw.sheets || []) {
       for (const frame of sheet.frames || []) {
         const src = (frame?.src || '').trim();
-        if (!src || !src.includes('/portrait/')) continue;
+        if (!src) continue;
+        if (folder && !src.includes(folder)) continue;
         items.push(normalizePortraitEntry(frame, items.length));
       }
     }
@@ -31,7 +33,7 @@ function normalizePortraitBoardData(raw) {
 
 async function loadPortraitBoard(pageName) {
   const raw = await readJSON('data', pageName + '.json');
-  const normalized = normalizePortraitBoardData(raw);
+  const normalized = normalizePortraitBoardData(raw, pageName);
   if (JSON.stringify(raw) !== JSON.stringify(normalized)) {
     await writeJSON('data', pageName + '.json', normalized);
   }
@@ -50,11 +52,14 @@ function normalizePortraitEntry(item, index) {
 
 function updatePortraitOrganizerUI() {
   const generalHint = document.getElementById('boards-general-hint');
+  const addBtn = document.getElementById('boards-add-btn');
+  if (addBtn && isPortraitGridPage(currentBoard)) addBtn.textContent = '+ add photos';
   if (!generalHint) return;
 
   if (isPortraitGridPage(currentBoard)) {
+    const label = currentBoard === 'music' ? 'music grid' : 'portrait grid';
     generalHint.innerHTML =
-      '<strong>portrait grid:</strong> 3 independent columns. drag a photo and the others slide out of the way; drop it in another column to move it there. ' +
+      '<strong>' + label + ':</strong> same layout as the live page — 3 independent columns. drag a photo and the others slide out of the way; drop it in another column to move it there. ' +
       'each column keeps its own order.<br>' +
       '<em>undo</em> or ⌘Z reverses your last change.';
   } else {

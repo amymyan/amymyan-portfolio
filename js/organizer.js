@@ -743,7 +743,7 @@ async function switchBoardPage(pageName) {
   updateUndoButton();
   /* Music has 100+ full-res photos — probing them on open freezes the page.
      Portrait/video stay cheap enough to check in the background. */
-  if (!isContactSheetPage(pageName)) {
+  if (pageName !== 'music') {
     pruneBrokenPageSources(pageName).catch(() => {});
   }
 }

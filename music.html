@@ -9,8 +9,7 @@
 <link rel="icon" href="assets/favicon.png?v=20260813j" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260813j">
 <link rel="stylesheet" href="css/style.css?v=20261005g">
-<link rel="stylesheet" href="css/board.css?v=20260812z">
-<link rel="stylesheet" href="css/contact-sheet.css?v=20260930c">
+<link rel="stylesheet" href="css/portrait-grid.css?v=20260919h">
 <style>.page-loader{position:fixed;inset:0;z-index:10050;background:#fff}body.is-booting{overflow:hidden}</style>
 </head>
 <body class="is-booting">
@@ -31,7 +30,10 @@
   </div>
 </nav>
 
-<main id="board" class="board" data-source="data/music.json" data-show-captions="false"></main>
+<main class="portrait-page">
+  <div id="portrait-grid" class="portrait-grid" data-source="data/music.json"></div>
+  <p id="portrait-empty" class="empty-note" hidden>no photos yet — add some in the organizer</p>
+</main>
 
 <footer class="site-footer">
   <span>&copy; <span id="year"></span> Amy MyAn</span>
@@ -47,8 +49,8 @@
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260930c"></script>
 <script src="js/page-loader.js?v=20261005f"></script>
-<script src="js/contact-sheet.js?v=20260821c"></script>
-<script src="js/contact-sheet-board.js?v=20261005e"></script>
+<script src="js/portrait-masonry.js?v=20260919g"></script>
+<script src="js/portrait-grid.js?v=20261007a"></script>
 <script src="js/cursor-glow.js" defer></script>
 <script src="js/galaxy.js?v=20260812v" defer></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>

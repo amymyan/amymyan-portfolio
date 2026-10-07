@@ -60,6 +60,16 @@ function buildPortraitLightbox() {
     console.error('Could not load', source, err);
   }
 
+  if (!Array.isArray(items) && items && Array.isArray(items.sheets)) {
+    const flat = [];
+    for (const sheet of items.sheets) {
+      for (const frame of sheet.frames || []) {
+        if (frame?.src?.trim()) flat.push(frame);
+      }
+    }
+    items = flat;
+  }
+
   if (!Array.isArray(items)) items = [];
   items = items.filter(item => item?.src?.trim());
 

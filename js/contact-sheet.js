@@ -4,8 +4,8 @@ const DEFAULT_FILM_STOCK = 'KODAK PORTRA 400';
 const DEFAULT_SHEET_WIDTH = 38;
 const DEFAULT_COLS_PER_ROW = 3;
 
-function isContactSheetPage(pageName) {
-  return pageName === 'music';
+function isContactSheetPage() {
+  return false;
 }
 
 function isContactSheetFormat(data) {
