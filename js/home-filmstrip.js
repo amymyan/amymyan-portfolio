@@ -185,6 +185,23 @@
     root.style.setProperty('--home-nav-h', navH + 'px');
   }
 
+  function filmChromeHeight() {
+    let chrome = 8;
+    rollEl.querySelectorAll('.home-film-sprocket').forEach(el => {
+      chrome += el.offsetHeight;
+    });
+    rollEl.querySelectorAll('.home-film-edge').forEach(el => {
+      const style = getComputedStyle(el);
+      chrome += parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    });
+    const viewport = root.querySelector('.home-film-viewport');
+    if (viewport) {
+      const style = getComputedStyle(viewport);
+      chrome += parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    }
+    return chrome;
+  }
+
   function getHeroFilmBudget() {
     const hero = root.querySelector('.home-film-hero');
     const stage = root.querySelector('.home-film-stage');
@@ -223,16 +240,18 @@
     const visible = framesVisibleTarget();
     let fw = Math.max(120, (rollW - gap) / visible);
 
-    const budget = getHeroFilmBudget();
-    if (budget && budget > 0) {
-      const maxFw = budget / 0.92;
-      fw = Math.min(fw, maxFw);
-    }
-
     // Never show more than two frames — keep one partially off-screen for cover swaps.
     const maxVisible = rollCount > 1 ? Math.min(1.92, rollCount - 0.08) : 1;
     const minFw = (rollW + gap) / maxVisible - gap;
     fw = Math.max(fw, minFw);
+
+    /* 5:4 frames — shrink width so the whole frame still fits the screen. */
+    const budget = getHeroFilmBudget();
+    if (budget && budget > 0) {
+      const chrome = filmChromeHeight();
+      const maxFw = (budget - chrome) / (4 / 5);
+      fw = Math.min(fw, Math.max(120, maxFw));
+    }
 
     root.style.setProperty('--frames-visible', String(visible));
     root.style.setProperty('--frame-w', fw + 'px');

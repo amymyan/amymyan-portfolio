@@ -1,4 +1,4 @@
-/* Homepage — 35mm filmstrip, wide short frames (~2 visible) */
+/* Homepage — 35mm filmstrip, 5:4 frames */
 
 .home-film {
   --frames-visible: 1.65;
@@ -273,7 +273,7 @@
 
 .home-film-photo {
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 5 / 4;
   background: var(--film-ink);
   overflow: hidden;
   position: relative;
