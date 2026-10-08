@@ -38,9 +38,11 @@ function filenameFromMusicSrc(src) {
 
 function parseFilenameList(input) {
   return [...new Set(
-    (input || '')
-      .split(/[\n,]+/)
-      .map(s => s.trim().replace(/^.*\//, ''))
+    String(input || '')
+      .split(/[\r\n,]+/)
+      .map(s => s.trim().replace(/^["']|["']$/g, ''))
+      .map(s => s.replace(/\\/g, '/').replace(/\?.*$/, ''))
+      .map(s => s.replace(/^.*\//, '').trim())
       .filter(Boolean)
   )];
 }
@@ -326,17 +328,23 @@ function renderMusicLibrary(forceRebuild = false) {
     const img = document.createElement('img');
     img.alt = filename;
     img.decoding = 'async';
-    img.dataset.lazySrc = musicLibraryImgSrc(src);
     item.appendChild(img);
-    observeMusicLibraryImg(img);
+    if (typeof setOrganizerLazyImg === 'function') {
+      setOrganizerLazyImg(img, src, {
+        root: grid,
+        onBroken: () => item.classList.add('library-item--broken')
+      });
+    } else {
+      img.dataset.lazySrc = musicLibraryImgSrc(src);
+      observeMusicLibraryImg(img);
+      attachBrokenImageHandler(img, () => {
+        item.classList.add('library-item--broken');
+      });
+    }
 
     const label = document.createElement('span');
     label.className = 'library-label';
     label.textContent = filename;
-
-    attachBrokenImageHandler(img, () => {
-      item.classList.add('library-item--broken');
-    });
 
     item.appendChild(label);
 

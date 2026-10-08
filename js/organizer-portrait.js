@@ -250,8 +250,7 @@ function renderPortraitGridMini() {
       el.appendChild(video);
     } else {
       const img = document.createElement('img');
-      setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_PORTRAIT);
-      attachBrokenImageHandler(img, async () => {
+      setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_PORTRAIT, async () => {
         el.remove();
         await purgeBrokenBoardSrc(photo.src);
       });

@@ -12,15 +12,15 @@
     "col": 0
   },
   {
-    "id": "p17845939138621951",
-    "src": "assets/portrait/DSC03220.jpg",
-    "caption": "DSC03220",
-    "col": 0
-  },
-  {
     "id": "p17898625976698869",
     "src": "assets/portrait/BTS of LW x AB-35.jpg",
     "caption": "BTS of LW x AB-35",
+    "col": 0
+  },
+  {
+    "id": "p17845939138621951",
+    "src": "assets/portrait/DSC03220.jpg",
+    "caption": "DSC03220",
     "col": 0
   },
   {
@@ -303,6 +303,12 @@
     "id": "p17845941242103679",
     "src": "assets/portrait/DSC02311.jpg",
     "caption": "DSC02311",
+    "col": 2
+  },
+  {
+    "id": "p17914171988117470",
+    "src": "assets/portrait/DSC07498.jpg",
+    "caption": "DSC07498",
     "col": 2
   },
   {

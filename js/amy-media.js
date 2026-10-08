@@ -491,10 +491,20 @@ function probeMediaSrc(path, { timeoutMs = 8000 } = {}) {
     /* Timeout means "unknown", not broken — huge originals often take >10s. */
     const timer = setTimeout(() => finish(true), timeoutMs);
     const img = new Image();
-    img.onload = () => finish(img.naturalWidth > 0);
-    img.onerror = () => finish(false);
     const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(path) : null;
-    img.src = preview || mediaSrc(path);
+    const full = mediaSrc(path);
+    let triedFull = !preview || preview === full;
+    img.onload = () => finish(img.naturalWidth > 0);
+    img.onerror = () => {
+      /* A missing local preview is not a missing R2 file. */
+      if (!triedFull) {
+        triedFull = true;
+        img.src = full;
+        return;
+      }
+      finish(false);
+    };
+    img.src = preview || full;
   });
 }
 

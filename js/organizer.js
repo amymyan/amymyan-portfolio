@@ -275,27 +275,34 @@ async function registerBoardR2Filenames(input) {
     return 0;
   }
 
-  pushUndoSnapshot();
-  let added = 0;
+  const fresh = [];
 
   for (const filename of names) {
     const src = 'assets/' + currentBoard + '/' + filename;
-    if (boardData.some(i => i.src === src)) continue;
-    boardData.push(newEntryAtTop({
+    if (boardData.some(i => i.src === src) || fresh.some(i => i.src === src)) continue;
+    fresh.push(newEntryAtTop({
       src,
       caption: captionFromFilename(filename)
-    }, currentBoard, boardData.length));
+    }, currentBoard, boardData.length + fresh.length));
     await removeFromIgnoreList(currentBoard, filename);
-    added++;
   }
 
-  if (!added) {
+  if (!fresh.length) {
     setStatus('already registered — check the grid below');
     return 0;
   }
 
+  pushUndoSnapshot();
+  boardData = boardData.concat(fresh);
+  const added = fresh.length;
+
   await saveBoardData();
   renderBoardMini();
+  const lastAdded = fresh[fresh.length - 1];
+  if (lastAdded?.id) {
+    document.querySelector('#boards-mini-board [data-id="' + CSS.escape(lastAdded.id) + '"]')
+      ?.scrollIntoView({ block: 'nearest' });
+  }
   setStatus('registered ' + added + ' file(s) \u2713 — commit & push data/' + currentBoard + '.json');
   return added;
 }
@@ -901,28 +908,47 @@ async function initBoardsPanel() {
     undoBoardChange();
   });
 
-  document.getElementById('boards-register-btn').onclick = async () => {
+  const registerPanel = document.getElementById('r2-register-panel');
+  const registerInput = document.getElementById('r2-register-input');
+  const registerFolder = document.getElementById('r2-register-folder');
+
+  function openR2RegisterPanel() {
+    if (registerFolder) registerFolder.textContent = 'assets/' + currentBoard + '/';
+    if (registerPanel) registerPanel.hidden = false;
+    registerInput?.focus();
+  }
+
+  document.getElementById('boards-register-btn').onclick = () => openR2RegisterPanel();
+
+  const registerCancel = document.getElementById('r2-register-cancel');
+  if (registerCancel) {
+    registerCancel.onclick = () => {
+      if (registerPanel) registerPanel.hidden = true;
+    };
+  }
+
+  const registerSubmit = document.getElementById('r2-register-submit');
+  if (registerSubmit) registerSubmit.onclick = async () => {
+    const name = registerInput?.value || '';
+    if (!name.trim()) {
+      setStatus('enter a filename like DSC00205.jpg');
+      return;
+    }
     try {
       if (isContactSheetPage(currentBoard)) {
-        const name = prompt(
-          'Enter the exact filename(s) on R2 in assets/' + currentBoard + '/\n' +
-          '(one per line or comma-separated — e.g. DSC00205.jpg):'
-        );
-        if (!name || !name.trim()) return;
         const count = await registerMusicFilenames(name);
         if (!count) return;
         parseFilenameList(name).forEach(fn => selectedLibrarySrcs.add(srcFromFilename(fn)));
         updateLibrarySelection();
+        if (registerInput) registerInput.value = '';
+        if (registerPanel) registerPanel.hidden = true;
         setStatus(`registered ${count} file(s) \u2713 — now in library, select and add to a contact sheet`);
         return;
       }
 
-      const name = prompt(
-        'Enter filename(s) on R2 in assets/' + currentBoard + '/\n' +
-        '(one per line or comma-separated — e.g. DSC00205.jpg):'
-      );
-      if (!name || !name.trim()) return;
-      await registerBoardR2Filenames(name);
+      const added = await registerBoardR2Filenames(name);
+      if (added && registerInput) registerInput.value = '';
+      if (added && registerPanel) registerPanel.hidden = true;
     } catch (err) {
       console.error(err);
       setStatus('register failed: ' + (err.message || err));
@@ -1055,12 +1081,11 @@ function renderBoardMini() {
         mediaWrap.appendChild(v);
       } else {
         const img = document.createElement('img');
-        setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_POLAROID);
-        img.addEventListener('load', () => requestAnimationFrame(refit));
-        attachBrokenImageHandler(img, async () => {
+        setOrganizerPreviewImg(img, photo.src, ORGANIZER_THUMB_POLAROID, async () => {
           el.remove();
           await purgeBrokenBoardSrc(photo.src);
         });
+        img.addEventListener('load', () => requestAnimationFrame(refit));
         mediaWrap.appendChild(img);
       }
     } else {

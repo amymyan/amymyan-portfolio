@@ -222,6 +222,7 @@ function markOrganizerImgReady(img) {
 }
 
 function attachOrganizerPreviewFallback(img, src, onBroken) {
+  let reported = false;
   img.addEventListener('load', () => markOrganizerImgReady(img));
   img.addEventListener('error', () => {
     if (img.dataset.previewSrc !== src) return;
@@ -232,7 +233,9 @@ function attachOrganizerPreviewFallback(img, src, onBroken) {
       img.src = full;
       return;
     }
-    if (typeof onBroken === 'function') onBroken();
+    if (reported || typeof onBroken !== 'function') return;
+    reported = true;
+    onBroken();
   });
   if (img.complete && img.naturalWidth) markOrganizerImgReady(img);
 }
@@ -252,16 +255,17 @@ function setOrganizerLazyImg(img, src, { root = null, onBroken = null } = {}) {
   observeOrganizerLazyImg(img, root);
 }
 
-function setOrganizerPreviewImg(img, src, maxPx) {
+function setOrganizerPreviewImg(img, src, maxPx, onBroken) {
   if (!src || !img) return;
   img.dataset.previewSrc = src;
   img.decoding = 'async';
   img.loading = 'lazy';
+  /* Attach before src so a cached preview 404 still falls through to R2. */
+  attachOrganizerPreviewFallback(img, src, onBroken);
 
   const preview = typeof mediaPreviewSrc === 'function' ? mediaPreviewSrc(src) : null;
   const full = mediaSrc(src);
   img.src = preview || full;
-  attachOrganizerPreviewFallback(img, src);
 }
 
 function clearOrganizerPreviewCache() {

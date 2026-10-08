@@ -30,6 +30,40 @@
   button:disabled{ opacity:0.35; cursor:not-allowed; }
   #status{ font-family:var(--mono); font-size:0.75rem; opacity:0.65; }
 
+  .r2-register-panel{
+    margin:0.85rem 0 0;
+    padding:0.85rem 1rem;
+    border:1px solid var(--line);
+    border-radius:10px;
+    max-width:36rem;
+  }
+  .r2-register-panel[hidden]{ display:none; }
+  .r2-register-panel label{
+    display:block;
+    font-family:var(--mono);
+    font-size:0.75rem;
+    line-height:1.5;
+    margin-bottom:0.55rem;
+  }
+  .r2-register-panel textarea{
+    width:100%;
+    box-sizing:border-box;
+    font-family:var(--mono);
+    font-size:0.8rem;
+    line-height:1.45;
+    padding:0.55rem 0.7rem;
+    border:1px solid var(--ink);
+    border-radius:8px;
+    background:var(--paper);
+    color:var(--ink);
+    resize:vertical;
+  }
+  .r2-register-actions{
+    display:flex;
+    gap:0.5rem;
+    margin-top:0.65rem;
+  }
+
   .tabs{ display:flex; gap:0.5rem; margin:1.5rem 0 1rem; flex-wrap:wrap; }
   .tabs button{ background:transparent; color:var(--ink); border:1px solid var(--line); opacity:0.6; }
   .tabs button.active{ opacity:1; border-color:var(--ink); }
@@ -576,6 +610,14 @@
       <button id="boards-register-btn" class="ghost">register R2 file</button>
       <button id="boards-undo-btn" class="ghost" disabled>undo</button>
     </div>
+    <div id="r2-register-panel" class="r2-register-panel" hidden>
+      <label for="r2-register-input">filenames already on R2 in <code id="r2-register-folder">assets/portrait/</code> — one per line, or comma-separated</label>
+      <textarea id="r2-register-input" rows="5" placeholder="DSC00205.jpg" spellcheck="false"></textarea>
+      <div class="r2-register-actions">
+        <button type="button" id="r2-register-submit">add to page</button>
+        <button type="button" id="r2-register-cancel" class="ghost">cancel</button>
+      </div>
+    </div>
     <div id="boards-mini-board" class="mini-board"></div>
   </section>
 
@@ -610,13 +652,13 @@
 </div>
 
 <script src="js/config.js?v=20260808"></script>
-<script src="js/amy-media.js?v=20260930c"></script>
+<script src="js/amy-media.js?v=20261007b"></script>
 <script src="js/contact-sheet.js?v=20261007a"></script>
-<script src="js/organizer.js?v=20261007a"></script>
-<script src="js/organizer-preview.js?v=20260930e"></script>
-<script src="js/organizer-contact.js?v=20260921d"></script>
+<script src="js/organizer.js?v=20261007c"></script>
+<script src="js/organizer-preview.js?v=20261007b"></script>
+<script src="js/organizer-contact.js?v=20261007b"></script>
 <script src="js/portrait-masonry.js?v=20260919g"></script>
-<script src="js/organizer-portrait.js?v=20261007a"></script>
+<script src="js/organizer-portrait.js?v=20261007b"></script>
 <script src="js/organizer-video.js?v=20260919f"></script>
 <script src="js/about.js?v=20260919g"></script>
 <script src="js/organizer-about.js?v=20260919h"></script>
