@@ -14,7 +14,7 @@
   gap: calc(var(--video-gutter) * 1.35) var(--video-gutter);
   width: 100%;
   margin: 0;
-  padding: var(--video-gutter);
+  padding: 0.4rem var(--video-gutter) var(--video-gutter);
   box-sizing: border-box;
 }
 
