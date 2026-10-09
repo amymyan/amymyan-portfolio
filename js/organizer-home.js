@@ -9,6 +9,10 @@ async function loadHomeConfigFromDisk() {
 }
 
 async function saveHomeConfig(config) {
+  const artists = Array.isArray(config.artists)
+    ? normalizeArtistNames(config.artists)
+    : [...HOME_ARTIST_DEFAULTS];
+  config.artists = artists;
   await writeJSON('data', 'home.json', {
     rolls: config.rolls
       .filter(r => HOME_ROLL_DEFAULTS.some(def => def.id === r.id))
@@ -22,7 +26,8 @@ async function saveHomeConfig(config) {
           coverPoolSrcs: pool
         };
       }),
-    coverGridSrcs: uniqueSrcs((config.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean))
+    coverGridSrcs: uniqueSrcs((config.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)),
+    artists
   });
   homeConfigData = config;
 }
@@ -234,6 +239,161 @@ function renderHomeCoverGridPanel(container, config, rolls) {
   container.appendChild(grid);
 }
 
+function renderHomeArtistsPanel(config) {
+  const container = document.getElementById('home-artists-organizer');
+  if (!container) return;
+
+  if (!Array.isArray(config.artists)) {
+    config.artists = [...HOME_ARTIST_DEFAULTS];
+  }
+
+  container.innerHTML = '';
+
+  const section = document.createElement('section');
+  section.className = 'home-artists-panel';
+
+  const head = document.createElement('div');
+  head.className = 'home-roll-head';
+  head.innerHTML =
+    '<h3>artists</h3>' +
+    '<p class="home-roll-meta">names you’ve worked with. they scroll along the wavy line under the filmstrip.</p>';
+  section.appendChild(head);
+
+  const artists = config.artists;
+
+  if (!artists.length) {
+    const empty = document.createElement('p');
+    empty.className = 'home-roll-empty';
+    empty.textContent = 'no artists yet — add a name below';
+    section.appendChild(empty);
+  } else {
+    const list = document.createElement('ul');
+    list.className = 'home-artists-list';
+
+    artists.forEach((name, index) => {
+      const item = document.createElement('li');
+      item.className = 'home-artists-item';
+
+      const label = document.createElement('span');
+      label.textContent = name;
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.textContent = '\u2191';
+      up.title = 'move earlier';
+      up.setAttribute('aria-label', 'move ' + name + ' earlier');
+      up.disabled = index === 0;
+
+      const down = document.createElement('button');
+      down.type = 'button';
+      down.textContent = '\u2193';
+      down.title = 'move later';
+      down.setAttribute('aria-label', 'move ' + name + ' later');
+      down.disabled = index === artists.length - 1;
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '\u00d7';
+      remove.title = 'remove';
+      remove.setAttribute('aria-label', 'remove ' + name);
+
+      up.addEventListener('click', () => moveArtist(index, -1));
+      down.addEventListener('click', () => moveArtist(index, 1));
+      remove.addEventListener('click', () => removeArtist(index));
+
+      controls.append(up, down, remove);
+      item.append(label, controls);
+      list.appendChild(item);
+    });
+
+    section.appendChild(list);
+  }
+
+  const form = document.createElement('form');
+  form.className = 'home-artists-add';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.name = 'artist';
+  input.placeholder = 'artist name';
+  input.setAttribute('aria-label', 'artist name');
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.maxLength = 80;
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'submit';
+  addBtn.textContent = 'add artist';
+
+  form.append(input, addBtn);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = input.value.replace(/\s+/g, ' ').trim();
+    if (!name) {
+      input.focus();
+      return;
+    }
+    const exists = config.artists.some(entry => entry.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      setStatus('that artist is already on the list');
+      input.focus();
+      input.select();
+      return;
+    }
+    config.artists = [...config.artists, name];
+    try {
+      await saveHomeConfig(config);
+      setStatus('artist added \u2713 — ' + name);
+      renderHomeArtistsPanel(config);
+      container.querySelector('.home-artists-add input')?.focus();
+    } catch (err) {
+      config.artists = config.artists.filter(entry => entry !== name);
+      console.error(err);
+      setStatus('couldn\u2019t save artists');
+    }
+  });
+
+  section.appendChild(form);
+  container.appendChild(section);
+
+  async function moveArtist(index, delta) {
+    const next = [...config.artists];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    const previous = config.artists;
+    const [moved] = next.splice(index, 1);
+    next.splice(target, 0, moved);
+    config.artists = next;
+    try {
+      await saveHomeConfig(config);
+      setStatus('artist order saved \u2713');
+      renderHomeArtistsPanel(config);
+    } catch (err) {
+      config.artists = previous;
+      console.error(err);
+      setStatus('couldn\u2019t save artists');
+    }
+  }
+
+  async function removeArtist(index) {
+    const previous = config.artists;
+    const removed = previous[index];
+    config.artists = previous.filter((_, i) => i !== index);
+    try {
+      await saveHomeConfig(config);
+      setStatus('removed ' + removed + ' \u2713');
+      renderHomeArtistsPanel(config);
+    } catch (err) {
+      config.artists = previous;
+      console.error(err);
+      setStatus('couldn\u2019t save artists');
+    }
+  }
+}
+
 function refreshHomeCoverGridPanel(config, rolls) {
   const gridContainer = document.getElementById('home-cover-grid-organizer');
   if (gridContainer) renderHomeCoverGridPanel(gridContainer, config, rolls);
@@ -293,11 +453,15 @@ let homePanelLoading = false;
 async function initHomePanel({ pruneBroken = false } = {}) {
   const container = document.getElementById('home-roll-panels');
   const gridContainer = document.getElementById('home-cover-grid-organizer');
+  const artistsContainer = document.getElementById('home-artists-organizer');
   if (!container) return;
 
   if (!rootHandle) {
     container.innerHTML = '<p class="home-roll-loading">connect your project folder above to load cover options…</p>';
     if (gridContainer) gridContainer.innerHTML = '';
+    if (artistsContainer) {
+      artistsContainer.innerHTML = '<p class="home-roll-loading">connect your project folder above to edit artists…</p>';
+    }
     return;
   }
 
@@ -305,6 +469,9 @@ async function initHomePanel({ pruneBroken = false } = {}) {
   homePanelLoading = true;
   container.innerHTML = '<p class="home-roll-loading">loading rolls…</p>';
   if (gridContainer) gridContainer.innerHTML = '';
+  if (artistsContainer) {
+    artistsContainer.innerHTML = '<p class="home-roll-loading">loading artists…</p>';
+  }
 
   try {
     const [music, portrait, video] = await Promise.all([
@@ -314,6 +481,7 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     ]);
 
     homeConfigData = await loadHomeConfigFromDisk();
+    renderHomeArtistsPanel(homeConfigData);
 
     const rolls = buildHomeRolls(homeConfigData, { music, portrait, video });
     const gridBefore = JSON.stringify(homeConfigData.coverGridSrcs || []);
@@ -346,6 +514,9 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     console.error(err);
     container.innerHTML = '<p class="home-roll-empty">error: ' + (err.message || err) + '</p>';
     if (gridContainer) gridContainer.innerHTML = '';
+    if (artistsContainer && !artistsContainer.querySelector('.home-artists-panel')) {
+      artistsContainer.innerHTML = '<p class="home-roll-empty">couldn\u2019t load artists</p>';
+    }
   } finally {
     homePanelLoading = false;
   }

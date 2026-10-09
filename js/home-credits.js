@@ -2,25 +2,36 @@
   const textPath = document.getElementById('home-credits-textpath');
   if (!textPath) return;
 
-  const artists = [
-    'josh conway',
-    'djo',
-    'kristiane',
-    'claire rosinkranz',
-    'landon contrath',
-    'abby holliday',
-    'artemas',
-    'ella boh',
-    'henry morris',
-    'riff wood',
-    'the cherry bombs',
-    'mr. fantasy',
-    'gianna yaccino',
-    'naomi sato',
-    'maddie park',
-    'alexandra davis',
-    'anna elyse'
-  ];
+  const creditsEl = textPath.closest('.home-film-credits');
+
+  function fallbackArtists() {
+    return (typeof HOME_ARTIST_DEFAULTS !== 'undefined') ? [...HOME_ARTIST_DEFAULTS] : [];
+  }
+
+  async function loadArtists() {
+    try {
+      const res = await fetch('data/home.json?v=20261008a');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.artists)) {
+          return data.artists
+            .map(name => String(name || '').replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    return fallbackArtists();
+  }
+
+  loadArtists().then(startCredits);
+
+  function startCredits(artists) {
+  if (!artists.length) {
+    if (creditsEl) creditsEl.hidden = true;
+    return;
+  }
 
   const separator = '        ✮        ';
   const run = artists.join(separator) + separator;
@@ -165,5 +176,6 @@
   window.addEventListener('resize', onViewportChange, { passive: true });
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', onViewportChange, { passive: true });
+  }
   }
 })();

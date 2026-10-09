@@ -122,6 +122,69 @@
     z-index:500;
   }
 
+  .home-artists-panel{
+    margin-bottom:2rem;
+    padding-bottom:1.5rem;
+    border-bottom:1px solid var(--line);
+  }
+  .home-artists-list{
+    list-style:none;
+    margin:0 0 0.9rem;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:0.4rem;
+    max-width:36rem;
+  }
+  .home-artists-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:0.75rem;
+    padding:0.45rem 0.7rem;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:var(--body);
+    font-size:0.95rem;
+  }
+  .home-artists-item span{
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .home-artists-item .controls{
+    display:flex;
+    gap:0.35rem;
+    flex-shrink:0;
+  }
+  .home-artists-item .controls button{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+    width:28px;
+    height:28px;
+    padding:0;
+    border-radius:6px;
+    font-size:0.8rem;
+    line-height:1;
+  }
+  .home-artists-add{
+    display:flex;
+    gap:0.5rem;
+    flex-wrap:wrap;
+    align-items:center;
+    max-width:36rem;
+  }
+  .home-artists-add input{
+    flex:1;
+    min-width:12rem;
+    font-family:var(--body);
+    font-size:0.95rem;
+    padding:0.55rem 0.75rem;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--paper);
+    color:var(--ink);
+  }
   .home-roll-panel{
     margin-bottom:2rem;
     padding-bottom:1.5rem;
@@ -574,6 +637,9 @@
       select which photos can appear as each roll’s cover. the homepage picks one at random on every visit.
       order: music → video → portrait.
     </p>
+    <div id="home-artists-organizer">
+      <p class="home-roll-loading">connect your project folder above to edit artists…</p>
+    </div>
     <div id="home-roll-panels">
       <p class="home-roll-loading">connect your project folder above to load cover options…</p>
     </div>
@@ -662,8 +728,8 @@
 <script src="js/organizer-video.js?v=20260919f"></script>
 <script src="js/about.js?v=20260919g"></script>
 <script src="js/organizer-about.js?v=20260919h"></script>
-<script src="js/home-data.js?v=20260810f"></script>
-<script src="js/organizer-home.js?v=20260921b"></script>
+<script src="js/home-data.js?v=20261008a"></script>
+<script src="js/organizer-home.js?v=20261008a"></script>
 <script src="js/cursor-glow.js" defer></script>
 <script src="js/galaxy.js?v=20260812v" defer></script>
 </body>

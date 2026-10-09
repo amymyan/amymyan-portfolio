@@ -8,6 +8,39 @@ const HOME_ROLL_DEFAULTS = [
 
 const MAX_SCRUB_PHOTOS = 5;
 
+const HOME_ARTIST_DEFAULTS = [
+  'josh conway',
+  'djo',
+  'kristiane',
+  'claire rosinkranz',
+  'landon contrath',
+  'abby holliday',
+  'artemas',
+  'ella boh',
+  'henry morris',
+  'riff wood',
+  'the cherry bombs',
+  'mr. fantasy',
+  'gianna yaccino',
+  'naomi sato',
+  'maddie park',
+  'alexandra davis',
+  'anna elyse'
+];
+
+function normalizeArtistNames(list) {
+  const seen = new Set();
+  const out = [];
+  for (const name of list || []) {
+    const trimmed = String(name || '').replace(/\s+/g, ' ').trim();
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
+}
+
 function pickRandomCover(pool, exclude) {
   if (!pool?.length) return '';
   let choices = pool;
@@ -140,7 +173,15 @@ function normalizeHomeConfig(raw) {
     };
   });
 
-  return { rolls, coverGridSrcs: uniqueSrcs((raw?.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)) };
+  const artists = Array.isArray(raw?.artists)
+    ? normalizeArtistNames(raw.artists)
+    : [...HOME_ARTIST_DEFAULTS];
+
+  return {
+    rolls,
+    coverGridSrcs: uniqueSrcs((raw?.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)),
+    artists
+  };
 }
 
 function collectCoverPoolSrcs(rolls) {
@@ -260,7 +301,7 @@ async function fetchJSON(path) {
 
 async function loadHomeFilmstripData() {
   const [homeConfig, music, portrait, video] = await Promise.all([
-    fetchJSON('data/home.json?v=20260812w'),
+    fetchJSON('data/home.json?v=20261008a'),
     fetchJSON('data/music.json'),
     fetchJSON('data/portrait.json'),
     fetchJSON('data/video.json')
