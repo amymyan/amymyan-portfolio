@@ -9,7 +9,7 @@
 
   const ctx = canvas.getContext('2d');
   const root = document.documentElement;
-  const PINK = getComputedStyle(root).getPropertyValue('--flash').trim() || '#FF1493';
+  const PINK = getComputedStyle(root).getPropertyValue('--flash').trim() || '#e4d0f2';
   const style = getComputedStyle(root);
   const offsetX = parseFloat(style.getPropertyValue('--cursor-trail-offset-x')) || 0;
   const offsetY = parseFloat(style.getPropertyValue('--cursor-trail-offset-y')) || 0;

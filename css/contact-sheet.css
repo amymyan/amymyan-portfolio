@@ -173,7 +173,7 @@
   font-weight:700;
   letter-spacing:0.14em;
   color:var(--flash);
-  text-shadow:0 0 4px rgba(255,20,147,0.55);
+  text-shadow:0 0 4px rgba(228,208,242,0.55);
   text-transform:uppercase;
   text-align:center;
   white-space:nowrap;
@@ -228,7 +228,7 @@
 
 .contact-frame.empty{
   background:#070707;
-  border:1px dashed rgba(255,20,147,0.35);
+  border:1px dashed rgba(228,208,242,0.35);
 }
 
 .organizer .contact-frame.empty{
@@ -244,7 +244,7 @@
   justify-content:center;
   font-family:var(--mono);
   font-size:0.65rem;
-  color:rgba(255,20,147,0.55);
+  color:rgba(228,208,242,0.55);
   pointer-events:none;
 }
 
@@ -518,7 +518,7 @@
   margin:0;
   -webkit-appearance:none;
   appearance:none;
-  background:rgba(255,20,147,0.4);
+  background:rgba(228,208,242,0.4);
   border-radius:999px;
   cursor:pointer;
 }

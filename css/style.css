@@ -15,7 +15,7 @@
   --paper:   #FFFFFF;   /* page background */
   --ink:     #000000;   /* text on light backgrounds */
   --line:    #E0E0E0;   /* dividers + empty placeholders */
-  --flash:   #FF1493;
+  --flash:   #e4d0f2;
 
   /* ---- FONTS ----
      All three are set to Times New Roman. If you ever want a
@@ -28,7 +28,7 @@
   --nav-wordmark-size: clamp(2.45rem, 6vw, 3.35rem);
   --nav-link-size: clamp(0.95rem, 1.7vw, 1.12rem);
   --nav-pad-y: clamp(1.85rem, 4.5vw, 2.35rem);
-  --site-cursor: url('../assets/cursor.png?v=20260813g') 12 12, auto;
+  --site-cursor: url('../assets/cursor-star.png?v=20261010a') 16 16, auto;
   --cursor-trail-offset-x: 0px;
   --cursor-trail-offset-y: 0px;
 }
@@ -108,6 +108,8 @@ body .site-nav a.wordmark:active{
 }
 
 .site-nav .wordmark-name{
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight:700;
   text-transform:uppercase;
   color:inherit;
 }
@@ -174,7 +176,7 @@ body .site-nav a.wordmark:active{
 /* ---------- footer ---------- */
 
 .site-footer{
-  padding:2.5rem clamp(1.25rem, 4vw, 3rem) 3rem;
+  padding:1.35rem clamp(1.25rem, 4vw, 3rem) 1.55rem;
   border-top:1px solid var(--line);
   margin-top:4rem;
   display:flex;
@@ -276,10 +278,6 @@ body.is-booting .site-nav .wordmark-deco{
   animation:loaderTwinkle 1.8s ease-in-out infinite;
 }
 
-body.is-booting .site-nav .wordmark-deco:last-child{
-  animation-delay:0.9s;
-}
-
 body.is-ready main,
 body.is-ready .about-wrap,
 body.is-ready .site-footer{
@@ -332,10 +330,10 @@ body.is-ready .site-footer{
   color:var(--flash);
 }
 
-.page-loader-orbit-dot:nth-child(5n+2){ color:#ff5aad; }
-.page-loader-orbit-dot:nth-child(5n+3){ color:#ff8fc4; }
-.page-loader-orbit-dot:nth-child(5n+4){ color:#ff3da5; }
-.page-loader-orbit-dot:nth-child(5n){ color:#ffb3d9; }
+.page-loader-orbit-dot:nth-child(5n+2),
+.page-loader-orbit-dot:nth-child(5n+3),
+.page-loader-orbit-dot:nth-child(5n+4),
+.page-loader-orbit-dot:nth-child(5n){ color:var(--flash); }
 
 .page-loader-orbit-dot.is-tip{
   font-size:0.92rem;

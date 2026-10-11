@@ -4,17 +4,44 @@
   const root = document.getElementById('home-film');
   if (!root) return;
 
-  const stripEl = root.querySelector('.home-film-strip');
-  const trackEl = root.querySelector('.home-film-track');
-  const rollEl = root.querySelector('.home-film-roll');
-  const viewportEl = root.querySelector('.home-film-viewport');
+  const ROW_COUNT = 3;
+  const ROW_SHIFTS = [0, 0.31, 0.58];
+
+  function createFilmRows() {
+    const viewport = root.querySelector('.home-film-viewport');
+    let rowsWrap = viewport.querySelector('.home-film-rows');
+    if (!rowsWrap) {
+      rowsWrap = document.createElement('div');
+      rowsWrap.className = 'home-film-rows';
+      const roll = viewport.querySelector('.home-film-roll');
+      viewport.insertBefore(rowsWrap, roll);
+      rowsWrap.appendChild(roll);
+    }
+    const template = rowsWrap.querySelector('.home-film-roll');
+    while (rowsWrap.querySelectorAll('.home-film-roll').length < ROW_COUNT) {
+      const clone = template.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      rowsWrap.appendChild(clone);
+    }
+    return [...rowsWrap.querySelectorAll('.home-film-roll')].map((roll, i) => ({
+      roll,
+      track: roll.querySelector('.home-film-track'),
+      strip: roll.querySelector('.home-film-strip'),
+      sprocketTop: roll.querySelector('.home-film-sprocket--top'),
+      sprocketBottom: roll.querySelector('.home-film-sprocket--bottom'),
+      shift: ROW_SHIFTS[i] || 0,
+      reverse: i === 1
+    }));
+  }
+
+  const filmRows = createFilmRows();
+  const stripEl = filmRows[0].strip;
+  const rollEl = filmRows[0].roll;
   const prevBtn = root.querySelector('.home-film-transport--prev');
   const nextBtn = root.querySelector('.home-film-transport--next');
   const playPauseBtn = root.querySelector('.home-film-transport--toggle');
   const transportButtons = [prevBtn, nextBtn, playPauseBtn].filter(Boolean);
   const loadingEl = root.querySelector('.home-film-loading');
-  const sprocketTopEl = root.querySelector('.home-film-sprocket--top');
-  const sprocketBottomEl = root.querySelector('.home-film-sprocket--bottom');
 
   let frames = [];
   let coverIndices = [];
@@ -34,7 +61,9 @@
   let lastScrubbing = false;
   let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let isPlaying = !reduceMotion;
-  const AUTO_SCROLL_INDEX_PER_SEC = 0.13;
+  const AUTO_SCROLL_INDEX_PER_SEC = 0.72;
+  const MIDDLE_SCROLL_SCALE = 0.48;
+  const rowTravel = [0, 0, 0];
   let autoScrollPaused = false;
   let autoScrollRaf = null;
   let lastAutoScrollTime = 0;
@@ -76,7 +105,8 @@
 
   function tickAutoScroll(now) {
     autoScrollRaf = requestAnimationFrame(tickAutoScroll);
-    if (animating || reduceMotion || autoScrollPaused || !frameEls.length) {
+    const anyFrames = filmRows.some(row => row.frameCount);
+    if (animating || reduceMotion || autoScrollPaused || !anyFrames) {
       lastAutoScrollTime = now;
       return;
     }
@@ -84,24 +114,16 @@
     const dt = Math.min(0.05, (now - (lastAutoScrollTime || now)) / 1000);
     lastAutoScrollTime = now;
 
-    let next = currentIndex + AUTO_SCROLL_INDEX_PER_SEC * dt;
-    const trailingCloneIndex = frameEls.length - 1;
+    filmRows.forEach((row, i) => {
+      if (!row.frameCount) return;
+      const rate = row.reverse
+        ? AUTO_SCROLL_INDEX_PER_SEC * MIDDLE_SCROLL_SCALE
+        : AUTO_SCROLL_INDEX_PER_SEC;
+      rowTravel[i] += rate * dt;
+      if (rowTravel[i] >= row.frameCount) rowTravel[i] -= row.frameCount;
+    });
 
-    if (next >= trailingCloneIndex) {
-      next = wrapScrollIndex(next);
-      trackEl.style.transition = 'none';
-      currentIndex = next;
-      syncRollIndexFromPosition(next);
-      setStripPosition(next, { scrubbing: true });
-      requestAnimationFrame(() => {
-        trackEl.style.transition = '';
-      });
-      return;
-    }
-
-    currentIndex = next;
-    syncRollIndexFromPosition(next);
-    setStripPosition(next, { scrubbing: true });
+    setStripPosition(currentIndex, { scrubbing: true });
   }
 
   function startAutoScroll() {
@@ -158,13 +180,11 @@
   function syncRollScale() {
     syncHeroViewport();
     updateFrameWidth();
-    const first = stripEl.querySelector('.home-film-frame');
-    const frameCount = stripEl.querySelectorAll('.home-film-frame').length;
-    if (first) {
-      root.style.setProperty('--roll-u', (first.offsetWidth / 38) + 'px');
-    }
-    buildHomeSprocketTrack(sprocketTopEl, 'top', 42, frameCount);
-    buildHomeSprocketTrack(sprocketBottomEl, 'bottom', 84, frameCount);
+    filmRows.forEach((row, i) => {
+      const frameCount = row.strip.querySelectorAll('.home-film-frame').length;
+      buildHomeSprocketTrack(row.sprocketTop, 'top', 42 + i * 19, frameCount);
+      buildHomeSprocketTrack(row.sprocketBottom, 'bottom', 84 + i * 19, frameCount);
+    });
   }
 
   function syncRollScaleSoon() {
@@ -185,21 +205,27 @@
     root.style.setProperty('--home-nav-h', navH + 'px');
   }
 
-  function filmChromeHeight() {
-    let chrome = 8;
+  function stackChromeHeight() {
+    let rowChrome = 0;
     rollEl.querySelectorAll('.home-film-sprocket').forEach(el => {
-      chrome += el.offsetHeight;
+      rowChrome += el.offsetHeight;
     });
     rollEl.querySelectorAll('.home-film-edge').forEach(el => {
       const style = getComputedStyle(el);
-      chrome += parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      rowChrome += parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
     });
+    let chrome = rowChrome * ROW_COUNT;
+    const rowsEl = root.querySelector('.home-film-rows');
+    if (rowsEl) {
+      const gap = parseFloat(getComputedStyle(rowsEl).rowGap) || 0;
+      chrome += gap * (ROW_COUNT - 1);
+    }
     const viewport = root.querySelector('.home-film-viewport');
     if (viewport) {
       const style = getComputedStyle(viewport);
       chrome += parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
     }
-    return chrome;
+    return chrome + 8;
   }
 
   function getHeroFilmBudget() {
@@ -221,16 +247,13 @@
   }
 
   function framesVisibleTarget() {
-    if (!rollEl?.clientWidth) return 1.65;
+    if (!rollEl?.clientWidth) return 5;
 
     const w = rollEl.clientWidth;
-    const hero = root.querySelector('.home-film-hero');
-    const heroH = hero?.clientHeight || window.innerHeight;
-
-    if (w < 520 || heroH < 460) return 1;
-    if (w < 768 || heroH < 560) return 1.12;
-    if (w < 960) return 1.35;
-    return 1.65;
+    if (w < 520) return 2.35;
+    if (w < 768) return 3.15;
+    if (w < 1100) return 4;
+    return 5;
   }
 
   function updateFrameWidth() {
@@ -238,23 +261,19 @@
     const rollW = rollEl.clientWidth;
     const gap = parseFloat(getComputedStyle(root).getPropertyValue('--film-frame-gap')) || 14;
     const visible = framesVisibleTarget();
-    let fw = Math.max(120, (rollW - gap) / visible);
-
-    // Never show more than two frames — keep one partially off-screen for cover swaps.
-    const maxVisible = rollCount > 1 ? Math.min(1.92, rollCount - 0.08) : 1;
-    const minFw = (rollW + gap) / maxVisible - gap;
-    fw = Math.max(fw, minFw);
-
-    /* 5:4 frames — shrink width so the whole frame still fits the screen. */
-    const budget = getHeroFilmBudget();
-    if (budget && budget > 0) {
-      const chrome = filmChromeHeight();
-      const maxFw = (budget - chrome) / (4 / 5);
-      fw = Math.min(fw, Math.max(120, maxFw));
-    }
+    const fw = Math.max(72, (rollW - gap) / visible);
 
     root.style.setProperty('--frames-visible', String(visible));
     root.style.setProperty('--frame-w', fw + 'px');
+    root.style.setProperty('--roll-u', (fw / 38) + 'px');
+  }
+
+  function copiesFor(count) {
+    if (!count) return 0;
+    const step = Math.max(72, frameStep || parseFloat(getComputedStyle(root).getPropertyValue('--frame-w')) || 200);
+    const wide = Math.max(rollEl?.clientWidth || 0, window.innerWidth || 0, 2800);
+    const visible = Math.ceil(wide / step) + 2;
+    return Math.min(14, Math.max(3, Math.ceil(visible / count) + 4));
   }
 
   function measureFrameStep() {
@@ -277,13 +296,23 @@
   }
 
   function setStripPosition(index, { scrubbing = false } = {}) {
-    const x = centerOffsetForIndex(index);
-    trackEl.style.transform = `translate3d(${x}px, 0, 0)`;
-
-    if (scrubbing !== lastScrubbing) {
-      trackEl.classList.toggle('is-scrubbing', scrubbing);
-      lastScrubbing = scrubbing;
-    }
+    const step = frameStep || 0;
+    filmRows.forEach((row, i) => {
+      const shift = row.shift * step;
+      if (!row.frameCount || !row.copies) {
+        row.track.style.transform = 'translate3d(0px, 0, 0)';
+        return;
+      }
+      const origin = row.frameCount * Math.floor(row.copies / 2);
+      const travel = rowTravel[i] || 0;
+      const frameIndex = row.reverse ? origin - travel : origin + travel;
+      const rowX = centerOffsetForIndex(frameIndex) - shift;
+      row.track.style.transform = `translate3d(${rowX}px, 0, 0)`;
+      if (scrubbing !== lastScrubbing) {
+        row.track.classList.toggle('is-scrubbing', scrubbing);
+      }
+    });
+    if (scrubbing !== lastScrubbing) lastScrubbing = scrubbing;
 
     if (!scrubbing) {
       const rounded = Math.round(index);
@@ -304,7 +333,7 @@
   function resetStripMotionState() {
     lastActiveIndex = -1;
     lastScrubbing = false;
-    trackEl.classList.remove('is-scrubbing');
+    filmRows.forEach(row => row.track.classList.remove('is-scrubbing'));
   }
 
   function buildFrameEl(frame, index, { eager = false } = {}) {
@@ -316,18 +345,12 @@
     const photo = document.createElement('div');
     photo.className = 'home-film-photo';
     const img = document.createElement('img');
-    img.alt = frame.title || '';
+    img.alt = '';
     setMediaPreviewImg(img, frame.src);
     img.loading = eager ? 'eager' : 'lazy';
     if (eager) img.fetchPriority = 'high';
     img.decoding = 'async';
     photo.appendChild(img);
-
-    const link = document.createElement('a');
-    link.className = 'home-film-cover-link';
-    link.href = frame.href;
-    link.innerHTML = '<span class="home-film-cover-title">' + frame.title + '</span>';
-    photo.appendChild(link);
 
     frameEl.appendChild(photo);
     return frameEl;
@@ -428,24 +451,7 @@
   }
 
   function updateCoverVisibility() {
-    if (!rollEl || !frameEls.length) return;
-
-    rollPools.forEach((_, rollId) => {
-      const isVisible = isRollInViewport(rollId);
-      const wasVisible = rollVisibility.get(rollId) ?? false;
-      if (!visibilityInitialized) {
-        rollVisibility.set(rollId, isVisible);
-        return;
-      }
-      if (wasVisible && isRollCompletelyOffScreen(rollId)) {
-        applyQueuedCover(rollId);
-        rollVisibility.set(rollId, false);
-      } else {
-        rollVisibility.set(rollId, isVisible);
-      }
-    });
-
-    visibilityInitialized = true;
+    // Every selected photo is already its own frame, so covers stay fixed.
   }
 
   function decodeCoverImages() {
@@ -477,11 +483,11 @@
     animating = false;
 
     resetStripMotionState();
-    if (snap) trackEl.style.transition = 'none';
+    if (snap) filmRows.forEach(row => { row.track.style.transition = 'none'; });
     setStripPosition(currentIndex);
     if (snap) {
       requestAnimationFrame(() => {
-        trackEl.style.transition = '';
+        filmRows.forEach(row => { row.track.style.transition = ''; });
       });
     }
     preloadAllQueuedCovers();
@@ -510,7 +516,7 @@
   }
 
   function animateStep(direction) {
-    if (animating || !direction) return;
+    if (animating || !direction || !rollCount) return;
     pauseAutoScroll();
 
     const leadingCloneIndex = 0;
@@ -560,9 +566,36 @@
     }
   }
 
+  function applyHomeHero(src) {
+    const photo = document.querySelector('.home-hero-photo');
+    if (!photo) return;
+    if (!src) {
+      photo.removeAttribute('src');
+      photo.hidden = true;
+      return;
+    }
+    photo.hidden = false;
+    photo.src = src;
+  }
+
+  function applyHomeGalleries(srcs) {
+    document.querySelectorAll('.home-gallery-photo').forEach(img => {
+      const src = srcs && srcs[img.dataset.gallery];
+      if (!src) {
+        img.removeAttribute('src');
+        img.hidden = true;
+        return;
+      }
+      img.hidden = false;
+      img.src = src;
+    });
+  }
+
   async function boot() {
     try {
       const data = await loadHomeFilmstripData();
+      applyHomeHero(data.heroSrc);
+      applyHomeGalleries(data.gallerySrcs);
       frames = data.frames;
       coverIndices = data.coverIndices;
       rollCount = coverIndices.length;
@@ -571,7 +604,7 @@
       rollVisibility = new Map();
       visibilityInitialized = false;
 
-      if (!frames.length) {
+      if (!(data.reelRows || []).some(list => list?.length)) {
         loadingEl.textContent = 'no photos yet — add some in the organizer';
         if (typeof window.amyMarkPageReady === 'function') window.amyMarkPageReady({ empty: true });
         return;
@@ -580,23 +613,35 @@
       loadingEl.textContent = 'loading film…';
       transportButtons.forEach(btn => { btn.disabled = true; });
 
-      updateFrameWidth();
-      stripEl.innerHTML = '';
+      measureFrameStep();
 
-      const leadingClone = buildFrameEl(frames[frames.length - 1], 0);
-      leadingClone.classList.add('home-film-frame--loop-clone');
-      leadingClone.setAttribute('aria-hidden', 'true');
-      stripEl.appendChild(leadingClone);
+      const fillStrip = (strip, rowFrames, copies) => {
+        strip.innerHTML = '';
+        const origin = rowFrames.length * Math.floor(copies / 2);
+        const visible = Math.ceil((rollEl.clientWidth || window.innerWidth) / (frameStep || 200)) + 3;
+        for (let copy = 0; copy < copies; copy++) {
+          rowFrames.forEach((frame, i) => {
+            const index = copy * rowFrames.length + i;
+            const eager = Math.abs(index - origin) <= visible;
+            strip.appendChild(buildFrameEl(frame, index, { eager }));
+            if (eager) preloadSrc(frame.src);
+          });
+        }
+      };
 
-      frames.forEach((frame, i) => {
-        stripEl.appendChild(buildFrameEl(frame, i + 1, { eager: true }));
-        preloadSrc(frame.src);
+      const reelRows = data.reelRows || [];
+      filmRows.forEach((row, i) => {
+        const rowFrames = reelRows[i] || [];
+        row.frames = rowFrames;
+        row.frameCount = rowFrames.length;
+        row.copies = copiesFor(rowFrames.length);
+        if (!rowFrames.length) {
+          row.strip.innerHTML = '';
+          return;
+        }
+        fillStrip(row.strip, rowFrames, row.copies);
+        if (i > 0) row.strip.removeAttribute('aria-live');
       });
-
-      const trailingClone = buildFrameEl(frames[0], frames.length + 1);
-      trailingClone.classList.add('home-film-frame--loop-clone');
-      trailingClone.setAttribute('aria-hidden', 'true');
-      stripEl.appendChild(trailingClone);
 
       coverIndices = coverIndices.map(i => i + 1);
       frameEls = [...stripEl.querySelectorAll('.home-film-frame')];
@@ -604,11 +649,14 @@
 
       measureFrameStep();
       syncRollScaleSoon();
-      snapToCover(0);
+      if (rollCount) snapToCover(0);
+      else setStripPosition(1);
       preloadAllQueuedCovers();
 
       loadingEl.hidden = true;
-      transportButtons.forEach(btn => { btn.disabled = false; });
+      if (prevBtn) prevBtn.disabled = !rollCount;
+      if (nextBtn) nextBtn.disabled = !rollCount;
+      if (playPauseBtn) playPauseBtn.disabled = false;
 
       if (reduceMotion) {
         isPlaying = false;
@@ -616,38 +664,25 @@
       }
       updatePlayPauseButton();
 
-      prevBtn?.addEventListener('click', () => animateStep(-1));
-      nextBtn?.addEventListener('click', () => animateStep(1));
-      playPauseBtn?.addEventListener('click', () => setPlaying(!isPlaying));
-
-      document.addEventListener('keydown', (e) => {
-        if (e.target.closest('input, textarea, [contenteditable="true"]')) return;
-        if (e.key === ' ') {
-          e.preventDefault();
-          setPlaying(!isPlaying);
-        } else if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          animateStep(1);
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          animateStep(-1);
-        }
-      });
-
       let resizeTimer;
       const onResize = () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
           measureFrameStep();
-          syncRollScaleSoon();
+          filmRows.forEach(row => {
+            if (!row.frames?.length) return;
+            const need = copiesFor(row.frames.length);
+            if (need !== row.copies) {
+              row.copies = need;
+              fillStrip(row.strip, row.frames, need);
+            }
+          });
+          frameEls = [...stripEl.querySelectorAll('.home-film-frame')];
+          syncRollScale();
           setStripPosition(currentIndex);
         }, 80);
       };
       window.addEventListener('resize', onResize);
-      if (window.ResizeObserver) {
-        const ro = new ResizeObserver(onResize);
-        ro.observe(rollEl);
-      }
 
       decodeCoverImages().then(() => syncRollScaleSoon());
       if (isPlaying) startAutoScroll();

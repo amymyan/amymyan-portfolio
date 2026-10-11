@@ -9,7 +9,7 @@
 
   const ctx = canvas.getContext('2d');
   const PINK = getComputedStyle(document.documentElement)
-    .getPropertyValue('--flash').trim() || '#FF1493';
+    .getPropertyValue('--flash').trim() || '#e4d0f2';
 
   let width = 0;
   let height = 0;

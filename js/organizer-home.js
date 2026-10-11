@@ -27,7 +27,10 @@ async function saveHomeConfig(config) {
         };
       }),
     coverGridSrcs: uniqueSrcs((config.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)),
-    artists
+    reelRows: [0, 1, 2].map(i => uniqueSrcs((config.reelRows?.[i] || []).map(s => (s || '').trim()).filter(Boolean))),
+    artists,
+    heroSrc: String(config.heroSrc || '').trim(),
+    gallerySrcs: normalizeGallerySrcs(config)
   });
   homeConfigData = config;
 }
@@ -167,17 +170,15 @@ function renderHomeCoverGridPanel(container, config, rolls) {
 
   resolveCoverGridSrcs(config, rolls);
   const order = config.coverGridSrcs || [];
-  const cols = 4;
-  const shown = Math.floor(order.length / cols) * cols;
 
   container.innerHTML = '';
 
   const head = document.createElement('div');
   head.className = 'home-cover-grid-organizer-head';
   head.innerHTML =
-    '<h3>cover photo grid</h3>' +
-    '<p class="home-roll-meta">drag to set the order on the homepage grid below the filmstrip. ' +
-    shown + ' of ' + order.length + ' photos show on the live site (4 per row).</p>';
+    '<h3>film reel photos</h3>' +
+    '<p class="home-roll-meta">' + order.length +
+    ' photos show in the homepage film reel, in a random order.</p>';
   container.appendChild(head);
 
   if (!order.length) {
@@ -193,12 +194,11 @@ function renderHomeCoverGridPanel(container, config, rolls) {
 
   let dragSrc = null;
 
-  order.forEach((src, index) => {
+  order.forEach((src) => {
     const item = document.createElement('div');
     item.className = 'home-cover-grid-organizer-item';
     item.dataset.src = src;
     item.draggable = true;
-    if (index >= shown) item.classList.add('is-trimmed');
 
     const img = document.createElement('img');
     img.alt = '';
@@ -414,6 +414,9 @@ async function purgeBrokenHomeRollSrc(rollId, src, { refresh = true } = {}) {
     if (Array.isArray(homeConfigData.coverGridSrcs)) {
       homeConfigData.coverGridSrcs = homeConfigData.coverGridSrcs.filter(s => s !== src);
     }
+    if (Array.isArray(homeConfigData.reelRows)) {
+      homeConfigData.reelRows = homeConfigData.reelRows.map(list => (list || []).filter(s => s !== src));
+    }
     await saveHomeConfig(homeConfigData);
   }
 
@@ -448,12 +451,355 @@ async function pruneBrokenHomeRollSources() {
   return broken.length;
 }
 
+function renderHomeReelBoard(container, config, rolls) {
+  const library = [];
+  const seen = new Set();
+  (rolls || []).forEach(roll => {
+    (roll.photos || []).forEach(src => {
+      if (!src || seen.has(src)) return;
+      seen.add(src);
+      library.push(src);
+    });
+  });
+
+  const claimed = new Set();
+  config.reelRows = [0, 1, 2].map(i => uniqueSrcs(config.reelRows?.[i] || []).filter(src => {
+    if (!seen.has(src) || claimed.has(src)) return false;
+    claimed.add(src);
+    return true;
+  }));
+
+  const rowOf = new Map();
+  config.reelRows.forEach((list, i) => list.forEach(src => rowOf.set(src, i)));
+
+  container.innerHTML = '';
+
+  const libraryHead = document.createElement('div');
+  libraryHead.className = 'home-roll-head';
+  libraryHead.innerHTML =
+    '<h3>all photos</h3>' +
+    '<p class="home-roll-meta">every photo from music, video, and portrait. drag one into a row below.</p>';
+  container.appendChild(libraryHead);
+
+  const libraryGrid = document.createElement('div');
+  libraryGrid.className = 'home-reel-library';
+  libraryGrid.dataset.drop = 'library';
+
+  function makeThumb(src, { inRow = false } = {}) {
+    const item = document.createElement('div');
+    item.className = 'home-reel-thumb';
+    item.draggable = true;
+    item.dataset.src = src;
+    if (rowOf.has(src) && !inRow) item.classList.add('is-assigned');
+
+    const img = document.createElement('img');
+    img.alt = '';
+    img.draggable = false;
+    setOrganizerLazyImg(img, src);
+    item.appendChild(img);
+
+    if (!inRow && rowOf.has(src)) {
+      const badge = document.createElement('span');
+      badge.className = 'home-reel-badge';
+      badge.textContent = 'row ' + (rowOf.get(src) + 1);
+      item.appendChild(badge);
+    }
+
+    if (inRow) {
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'home-reel-remove';
+      remove.textContent = '×';
+      remove.title = 'remove from this row';
+      remove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        placePhoto(src, null);
+      });
+      item.appendChild(remove);
+    }
+
+    item.addEventListener('dragstart', (e) => {
+      item.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', src);
+    });
+    item.addEventListener('dragend', () => item.classList.remove('is-dragging'));
+    return item;
+  }
+
+  async function placePhoto(src, rowIndex) {
+    config.reelRows = config.reelRows.map(list => list.filter(s => s !== src));
+    if (rowIndex != null) config.reelRows[rowIndex].push(src);
+    try {
+      await saveHomeConfig(config);
+      setStatus(rowIndex == null
+        ? 'removed from reel \u2713'
+        : 'added to row ' + (rowIndex + 1) + ' \u2713');
+      renderHomeReelBoard(container, config, rolls);
+    } catch (err) {
+      console.error(err);
+      setStatus('couldn\u2019t save reel photos');
+    }
+  }
+
+  function bindDrop(zone, rowIndex) {
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      zone.classList.add('is-over');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('is-over'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('is-over');
+      const src = e.dataTransfer.getData('text/plain');
+      if (!src || !seen.has(src)) return;
+      placePhoto(src, rowIndex);
+    });
+  }
+
+  if (!library.length) {
+    const empty = document.createElement('p');
+    empty.className = 'home-roll-empty';
+    empty.textContent = 'no photos yet — add some on the music, video, or portrait pages first';
+    container.appendChild(empty);
+  } else {
+    library.forEach(src => libraryGrid.appendChild(makeThumb(src)));
+    container.appendChild(libraryGrid);
+    bindDrop(libraryGrid, null);
+  }
+
+  const rowsWrap = document.createElement('div');
+  rowsWrap.className = 'home-reel-rows';
+
+  [0, 1, 2].forEach(i => {
+    const zone = document.createElement('section');
+    zone.className = 'home-reel-row';
+    zone.innerHTML =
+      '<h3>row ' + (i + 1) + '</h3>' +
+      '<p class="home-roll-meta">' + config.reelRows[i].length + ' photos</p>';
+    const grid = document.createElement('div');
+    grid.className = 'home-reel-row-grid';
+    if (!config.reelRows[i].length) {
+      const hint = document.createElement('p');
+      hint.className = 'home-reel-drop-hint';
+      hint.textContent = 'drop photos here';
+      grid.appendChild(hint);
+    } else {
+      config.reelRows[i].forEach(src => grid.appendChild(makeThumb(src, { inRow: true })));
+    }
+    zone.appendChild(grid);
+    bindDrop(zone, i);
+    rowsWrap.appendChild(zone);
+  });
+
+  container.appendChild(rowsWrap);
+}
+
+function renderHomeHeroPanel(config) {
+  const container = document.getElementById('home-hero-organizer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const section = document.createElement('section');
+  section.className = 'home-hero-organizer';
+
+  const head = document.createElement('h3');
+  head.textContent = 'hero photo';
+  section.appendChild(head);
+
+  const note = document.createElement('p');
+  note.className = 'home-hero-note';
+  note.textContent = 'this photo fills the first screen, with your name over it. leave it empty for a black screen.';
+  section.appendChild(note);
+
+  if (config.heroSrc) {
+    const preview = document.createElement('img');
+    preview.className = 'home-hero-preview';
+    preview.src = config.heroSrc;
+    preview.alt = '';
+    section.appendChild(preview);
+  }
+
+  const row = document.createElement('div');
+  row.className = 'home-hero-upload-row';
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
+  input.hidden = true;
+
+  const upload = document.createElement('button');
+  upload.type = 'button';
+  upload.textContent = config.heroSrc ? 'replace hero photo' : 'upload hero photo';
+
+  upload.addEventListener('click', () => input.click());
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (typeof BROWSER_IMAGE !== 'undefined' && !BROWSER_IMAGE.test(file.name)) {
+      setStatus('choose a jpg, png, webp, gif, or avif');
+      return;
+    }
+    upload.disabled = true;
+    try {
+      const savedName = await writeMediaFile('assets/home', file);
+      config.heroSrc = 'assets/home/' + savedName;
+      await saveHomeConfig(config);
+      setStatus('hero photo saved \u2713');
+      renderHomeHeroPanel(config);
+    } catch (err) {
+      console.error(err);
+      setStatus('error: ' + (err.message || err));
+      upload.disabled = false;
+    }
+  });
+
+  row.appendChild(upload);
+  row.appendChild(input);
+
+  if (config.heroSrc) {
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'ghost';
+    remove.textContent = 'remove';
+    remove.addEventListener('click', async () => {
+      remove.disabled = true;
+      try {
+        config.heroSrc = '';
+        await saveHomeConfig(config);
+        setStatus('hero photo removed \u2713');
+        renderHomeHeroPanel(config);
+      } catch (err) {
+        console.error(err);
+        setStatus('error: ' + (err.message || err));
+        remove.disabled = false;
+      }
+    });
+    row.appendChild(remove);
+  }
+
+  section.appendChild(row);
+  container.appendChild(section);
+}
+
+function renderHomeGalleriesPanel(config) {
+  const container = document.getElementById('home-galleries-organizer');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!config.gallerySrcs) config.gallerySrcs = normalizeGallerySrcs(config);
+
+  const section = document.createElement('section');
+  section.className = 'home-galleries-organizer';
+
+  const head = document.createElement('h3');
+  head.textContent = 'gallery photos';
+  section.appendChild(head);
+
+  const note = document.createElement('p');
+  note.className = 'home-hero-note';
+  note.textContent = 'one photo for music, video, and portrait. they sit over the word galleries and open that page.';
+  section.appendChild(note);
+
+  const grid = document.createElement('div');
+  grid.className = 'home-gallery-upload-grid';
+
+  [
+    { id: 'music', label: 'music' },
+    { id: 'portrait', label: 'portrait' },
+    { id: 'video', label: 'video' }
+  ].forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'home-gallery-upload';
+
+    const label = document.createElement('p');
+    label.className = 'home-gallery-upload-label';
+    label.textContent = item.label;
+    card.appendChild(label);
+
+    if (config.gallerySrcs[item.id]) {
+      const preview = document.createElement('img');
+      preview.className = 'home-gallery-upload-preview';
+      preview.src = config.gallerySrcs[item.id];
+      preview.alt = '';
+      card.appendChild(preview);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'home-hero-upload-row';
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp,image/gif,image/avif';
+    input.hidden = true;
+
+    const upload = document.createElement('button');
+    upload.type = 'button';
+    upload.textContent = config.gallerySrcs[item.id] ? 'replace' : 'upload';
+    upload.addEventListener('click', () => input.click());
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      if (typeof BROWSER_IMAGE !== 'undefined' && !BROWSER_IMAGE.test(file.name)) {
+        setStatus('choose a jpg, png, webp, gif, or avif');
+        return;
+      }
+      upload.disabled = true;
+      try {
+        const savedName = await writeMediaFile('assets/home', file);
+        config.gallerySrcs[item.id] = 'assets/home/' + savedName;
+        await saveHomeConfig(config);
+        setStatus(item.label + ' gallery photo saved \u2713');
+        renderHomeGalleriesPanel(config);
+      } catch (err) {
+        console.error(err);
+        setStatus('error: ' + (err.message || err));
+        upload.disabled = false;
+      }
+    });
+
+    row.appendChild(upload);
+    row.appendChild(input);
+
+    if (config.gallerySrcs[item.id]) {
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ghost';
+      remove.textContent = 'remove';
+      remove.addEventListener('click', async () => {
+        remove.disabled = true;
+        try {
+          config.gallerySrcs[item.id] = '';
+          await saveHomeConfig(config);
+          setStatus(item.label + ' gallery photo removed \u2713');
+          renderHomeGalleriesPanel(config);
+        } catch (err) {
+          console.error(err);
+          setStatus('error: ' + (err.message || err));
+          remove.disabled = false;
+        }
+      });
+      row.appendChild(remove);
+    }
+
+    card.appendChild(row);
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+  container.appendChild(section);
+}
+
 let homePanelLoading = false;
 
 async function initHomePanel({ pruneBroken = false } = {}) {
   const container = document.getElementById('home-roll-panels');
   const gridContainer = document.getElementById('home-cover-grid-organizer');
   const artistsContainer = document.getElementById('home-artists-organizer');
+  const heroContainer = document.getElementById('home-hero-organizer');
+  const galleriesContainer = document.getElementById('home-galleries-organizer');
   if (!container) return;
 
   if (!rootHandle) {
@@ -461,6 +807,12 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     if (gridContainer) gridContainer.innerHTML = '';
     if (artistsContainer) {
       artistsContainer.innerHTML = '<p class="home-roll-loading">connect your project folder above to edit artists…</p>';
+    }
+    if (heroContainer) {
+      heroContainer.innerHTML = '<p class="home-roll-loading">connect your project folder above to set the hero photo…</p>';
+    }
+    if (galleriesContainer) {
+      galleriesContainer.innerHTML = '<p class="home-roll-loading">connect your project folder above to set the gallery photos…</p>';
     }
     return;
   }
@@ -472,6 +824,12 @@ async function initHomePanel({ pruneBroken = false } = {}) {
   if (artistsContainer) {
     artistsContainer.innerHTML = '<p class="home-roll-loading">loading artists…</p>';
   }
+  if (heroContainer) {
+    heroContainer.innerHTML = '<p class="home-roll-loading">loading hero photo…</p>';
+  }
+  if (galleriesContainer) {
+    galleriesContainer.innerHTML = '<p class="home-roll-loading">loading gallery photos…</p>';
+  }
 
   try {
     const [music, portrait, video] = await Promise.all([
@@ -481,6 +839,8 @@ async function initHomePanel({ pruneBroken = false } = {}) {
     ]);
 
     homeConfigData = await loadHomeConfigFromDisk();
+    renderHomeHeroPanel(homeConfigData);
+    renderHomeGalleriesPanel(homeConfigData);
     renderHomeArtistsPanel(homeConfigData);
 
     const rolls = buildHomeRolls(homeConfigData, { music, portrait, video });
@@ -497,13 +857,8 @@ async function initHomePanel({ pruneBroken = false } = {}) {
       return;
     }
 
-    rolls.forEach(roll => {
-      renderHomeRollPanel(container, roll, homeConfigData, rolls);
-    });
-
-    if (gridContainer) {
-      renderHomeCoverGridPanel(gridContainer, homeConfigData, rolls);
-    }
+    renderHomeReelBoard(container, homeConfigData, rolls);
+    if (gridContainer) gridContainer.innerHTML = '';
 
     if (pruneBroken) {
       pruneBrokenHomeRollSources().then((removed) => {

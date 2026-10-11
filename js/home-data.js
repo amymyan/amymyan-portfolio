@@ -180,8 +180,37 @@ function normalizeHomeConfig(raw) {
   return {
     rolls,
     coverGridSrcs: uniqueSrcs((raw?.coverGridSrcs || []).map(s => (s || '').trim()).filter(Boolean)),
-    artists
+    artists,
+    reelRows: normalizeReelRows(raw, rolls),
+    heroSrc: String(raw?.heroSrc || '').trim(),
+    gallerySrcs: normalizeGallerySrcs(raw)
   };
+}
+
+function normalizeGallerySrcs(raw) {
+  const srcs = raw?.gallerySrcs || {};
+  return {
+    music: String(srcs.music || '').trim(),
+    video: String(srcs.video || '').trim(),
+    portrait: String(srcs.portrait || '').trim()
+  };
+}
+
+function normalizeReelRows(raw, rolls) {
+  if (Array.isArray(raw?.reelRows)) {
+    const claimed = new Set();
+    return [0, 1, 2].map(i => uniqueSrcs((raw.reelRows[i] || []).map(s => (s || '').trim()).filter(Boolean))
+      .filter(src => {
+        if (claimed.has(src)) return false;
+        claimed.add(src);
+        return true;
+      }));
+  }
+  const seeded = [[], [], []];
+  collectCoverPoolSrcs(rolls).forEach((src, i) => {
+    seeded[i % 3].push(src);
+  });
+  return seeded;
 }
 
 function collectCoverPoolSrcs(rolls) {
@@ -265,33 +294,45 @@ function pruneRollMedia(roll, loadable) {
   return { ...roll, coverSrc, coverPoolSrcs: pool, photos, scrub: [], scrubSrcs: [] };
 }
 
-function buildStripFrames(rolls) {
-  const frames = [];
-  const coverIndices = [];
-
-  for (const roll of rolls) {
-    const pool = roll.coverPoolSrcs?.length
-      ? roll.coverPoolSrcs
-      : [roll.coverSrc].filter(Boolean);
-    const coverSrc = pickRandomCover(pool) || roll.coverSrc || '';
-    if (!coverSrc.trim()) continue;
-    coverIndices.push(frames.length);
-    frames.push({
-      src: coverSrc,
-      rollId: roll.id,
-      coverPoolSrcs: pool,
-      isCover: true,
-      href: roll.href,
-      title: roll.title
-    });
+function shuffleList(list) {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-
-  return { frames, coverIndices };
+  return copy;
 }
 
-async function fetchJSON(path) {
+function frameForSrc(src, rolls) {
+  const roll = (rolls || []).find(item => (item.photos || []).includes(src));
+  return {
+    src,
+    rollId: roll?.id || '',
+    href: roll?.href || '',
+    title: roll?.title || '',
+    coverPoolSrcs: [src],
+    isCover: true
+  };
+}
+
+function buildReelRowFrames(config, rolls) {
+  const known = new Set((rolls || []).flatMap(roll => roll.photos || []));
+  const rows = config?.reelRows || [[], [], []];
+  return [0, 1, 2].map(i => {
+    const list = uniqueSrcs(rows[i] || []).filter(src => known.has(src));
+    return shuffleList(list).map(src => frameForSrc(src, rolls));
+  });
+}
+
+function buildStripFrames(rolls) {
+  const reelRows = buildReelRowFrames({ reelRows: null }, rolls);
+  const frames = reelRows.flat();
+  return { frames, reelRows, coverIndices: frames.map((_, index) => index) };
+}
+
+async function fetchJSON(path, options) {
   try {
-    const res = await fetch(path);
+    const res = await fetch(path, options);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -301,13 +342,24 @@ async function fetchJSON(path) {
 
 async function loadHomeFilmstripData() {
   const [homeConfig, music, portrait, video] = await Promise.all([
-    fetchJSON('data/home.json?v=20261008a'),
+    fetchJSON('data/home.json', { cache: 'no-store' }),
     fetchJSON('data/music.json'),
     fetchJSON('data/portrait.json'),
     fetchJSON('data/video.json')
   ]);
 
-  const rolls = buildHomeRolls(homeConfig || {}, { music, portrait, video });
-  const coverGridSrcs = resolveCoverGridSrcs(homeConfig || {}, rolls);
-  return { rolls, coverGridSrcs, ...buildStripFrames(rolls) };
+  const config = normalizeHomeConfig(homeConfig || {});
+  const rolls = buildHomeRolls(config, { music, portrait, video });
+  const coverGridSrcs = resolveCoverGridSrcs(config, rolls);
+  const reelRows = buildReelRowFrames(config, rolls);
+  const frames = reelRows[0] || [];
+  return {
+    rolls,
+    coverGridSrcs,
+    reelRows,
+    frames,
+    heroSrc: config.heroSrc || '',
+    gallerySrcs: config.gallerySrcs || { music: '', video: '', portrait: '' },
+    coverIndices: frames.map((_, index) => index)
+  };
 }

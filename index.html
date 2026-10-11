@@ -8,8 +8,11 @@
 <link rel="icon" href="assets/favicon.svg?v=20260813j" type="image/svg+xml">
 <link rel="icon" href="assets/favicon.png?v=20260813j" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260813j">
-<link rel="stylesheet" href="css/style.css?v=20261007e">
-<link rel="stylesheet" href="css/home-filmstrip.css?v=20261007g">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261011b">
+<link rel="stylesheet" href="css/home-filmstrip.css?v=20261011e">
 <style>.page-loader{position:fixed;inset:0;z-index:10050;background:#fff}body.is-booting{overflow:hidden}</style>
 </head>
 <body class="page-home is-booting">
@@ -24,47 +27,65 @@
   <a class="wordmark" href="index.html"><span class="wordmark-deco">✮⋆˙</span> <span class="wordmark-name">Amy MyAn</span> <span class="wordmark-deco">˙⋆✮</span></a>
   <div class="nav-links">
     <a href="music.html">music</a>
-    <a href="video.html">video</a>
     <a href="portrait.html">portrait</a>
+    <a href="video.html">video</a>
     <a href="about.html">about</a>
   </div>
 </nav>
 
 <main id="home-film" class="home-film">
+  <section class="home-hero" aria-label="Amy MyAn">
+    <img class="home-hero-photo" alt="" hidden>
+    <img class="home-hero-mark" src="assets/home/amy-myan-mark.png" width="858" height="209" alt="Amy MyAn">
+  </section>
+
   <p class="home-film-loading">loading film…</p>
 
-  <div class="home-film-hero">
-    <div class="home-film-stage">
-      <div class="home-film-assembly">
-          <div class="home-film-viewport">
-            <div class="home-film-roll">
-            <div class="home-film-track">
-              <div class="home-film-edge home-film-edge--top">
-                <div class="home-film-sprocket home-film-sprocket--top" aria-hidden="true"></div>
-              </div>
-              <div class="home-film-strip" aria-live="polite"></div>
-              <div class="home-film-edge home-film-edge--bottom">
-                <div class="home-film-sprocket home-film-sprocket--bottom" aria-hidden="true"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+  <div class="home-under">
+  <section class="home-galleries" aria-label="Galleries">
+    <h2 class="home-galleries-title">galleries</h2>
+    <div class="home-galleries-row">
+      <div class="home-gallery-col">
+        <a class="home-gallery" href="music.html">
+          <span class="home-gallery-frame">
+            <img class="home-gallery-photo" data-gallery="music" alt="" hidden>
+          </span>
+          <span class="home-gallery-num">01</span>
+          <span class="home-gallery-label"><span class="home-gallery-name">music</span> <span class="home-gallery-symbol">♪‧₊˚</span></span>
+        </a>
       </div>
-
-      <div class="home-film-controls">
-        <button type="button" class="home-film-transport home-film-transport--prev" aria-label="Previous section">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></svg>
-        </button>
-        <button type="button" class="home-film-transport home-film-transport--toggle is-playing" aria-label="Pause filmstrip">
-          <svg class="home-film-icon home-film-icon--play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5z"/></svg>
-          <svg class="home-film-icon home-film-icon--pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/></svg>
-        </button>
-        <button type="button" class="home-film-transport home-film-transport--next" aria-label="Next section">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2V6zM6 6l8.5 6L6 18V6z"/></svg>
-        </button>
+      <div class="home-gallery-col">
+        <a class="home-gallery" href="portrait.html">
+          <span class="home-gallery-frame">
+            <img class="home-gallery-photo" data-gallery="portrait" alt="" hidden>
+          </span>
+          <span class="home-gallery-num">02</span>
+          <span class="home-gallery-label"><span class="home-gallery-name">portrait</span> <span class="home-gallery-symbol">✶⋆.˚</span></span>
+        </a>
+      </div>
+      <div class="home-gallery-col">
+        <div class="home-gallery-shot">
+        <a class="home-gallery" href="video.html">
+          <span class="home-gallery-frame">
+            <img class="home-gallery-photo" data-gallery="video" alt="" hidden>
+          </span>
+        </a>
+        <a class="home-about-star" href="about.html">
+          <span class="home-about-star-spin" aria-hidden="true">
+            <svg class="home-about-star-shape" viewBox="0 0 100 100" focusable="false">
+              <polygon points="50,4.5 62.9,32.2 93.3,35.9 70.9,56.8 76.7,86.8 50,72 23.3,86.8 29.1,56.8 6.7,35.9 37.1,32.2"></polygon>
+            </svg>
+          </span>
+          <span class="home-about-star-label">about<br>me</span>
+        </a>
+        </div>
+        <a class="home-gallery" href="video.html">
+          <span class="home-gallery-num">03</span>
+          <span class="home-gallery-label"><span class="home-gallery-name">video</span> <span class="home-gallery-symbol">˚˖𓍢ִ໋❀</span></span>
+        </a>
       </div>
     </div>
-  </div>
+  </section>
 
   <div class="home-film-credits" aria-label="Artists">
       <svg class="home-film-credits-svg" viewBox="0 0 1200 128" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
@@ -75,47 +96,53 @@
       </svg>
   </div>
 
-  <div class="home-cover-grid" id="home-cover-grid" aria-label="Film cover photos"></div>
+  <div class="home-film-hero">
+    <div class="home-film-stage">
+      <div class="home-film-assembly">
+          <div class="home-film-viewport">
+            <div class="home-film-rows">
+            <div class="home-film-roll">
+            <div class="home-film-track">
+              <div class="home-film-edge home-film-edge--top">
+                <div class="home-film-sprocket home-film-sprocket--top" aria-hidden="true"></div>
+              </div>
+              <div class="home-film-strip" aria-live="polite"></div>
+              <div class="home-film-edge home-film-edge--bottom">
+                <div class="home-film-sprocket home-film-sprocket--bottom" aria-hidden="true"></div>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <nav class="home-section-links" aria-label="Portfolio sections">
-    <a class="home-section-link" href="music.html">music ♪‧₊˚</a>
-    <a class="home-section-link" href="video.html">video ˚˖𓍢ִ໋❀</a>
-    <a class="home-section-link" href="portrait.html">portrait ✶⋆.˚</a>
-  </nav>
+  <footer class="site-footer">
+    <span>&copy; <span id="year"></span> Amy MyAn</span>
+    <span>
+      <a href="http://instagram.com/amymyan" target="_blank" rel="noopener">instagram</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.linkedin.com/in/amymyan/" target="_blank" rel="noopener">linkedin</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:hello@amymyan.com">email</a>
+    </span>
+  </footer>
+  </div>
 
-  <p class="home-work-cta-wrap">
-    <a class="home-work-cta" href="about.html">
-      <span class="home-work-cta-ghost" aria-hidden="true">let's work!</span>
-      <span class="home-work-cta-text" aria-hidden="true"></span>
-      <span class="visually-hidden">let's work!</span>
-    </a>
-  </p>
-
+  <div class="home-reveal-spacer" aria-hidden="true"></div>
   <div class="home-film-grain" aria-hidden="true"></div>
 </main>
 
-<footer class="site-footer">
-  <span>&copy; <span id="year"></span> Amy MyAn</span>
-  <span>
-    <a href="http://instagram.com/amymyan" target="_blank" rel="noopener">instagram</a>
-    &nbsp;·&nbsp;
-    <a href="https://www.linkedin.com/in/amymyan/" target="_blank" rel="noopener">linkedin</a>
-    &nbsp;·&nbsp;
-    <a href="mailto:hello@amymyan.com">email</a>
-  </span>
-</footer>
-
 <script src="js/config.js?v=20260808"></script>
 <script src="js/amy-media.js?v=20260930c"></script>
-<script src="js/page-loader.js?v=20261005f"></script>
-<script src="js/home-data.js?v=20261008a"></script>
-<script src="js/home-filmstrip.js?v=20261007g"></script>
+<script src="js/page-loader.js?v=20261010b"></script>
+<script src="js/home-data.js?v=20261010ab"></script>
+<script src="js/home-filmstrip.js?v=20261010ab"></script>
+<script src="js/home-hero.js?v=20261011a"></script>
 <script src="js/home-credits.js?v=20261008a"></script>
-<script src="js/home-cover-grid.js?v=20260930b"></script>
-<script src="js/home-section-links.js?v=20260811h"></script>
-<script src="js/home-work-cta.js?v=20260813h"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
-<script src="js/cursor-glow.js" defer></script>
-<script src="js/galaxy.js?v=20260812v" defer></script>
+<script src="js/cursor-glow.js?v=20261009e" defer></script>
+<script src="js/galaxy.js?v=20261009e" defer></script>
 </body>
 </html>

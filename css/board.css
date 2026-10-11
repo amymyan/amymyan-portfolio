@@ -42,7 +42,7 @@
 .board-marquee{
   position:absolute;
   border:1px solid var(--flash);
-  background:rgba(255,20,147,0.15);
+  background:rgba(228,208,242,0.15);
   pointer-events:none;
   z-index:500;
 }
@@ -108,7 +108,7 @@
 }
 .video-btn:hover,
 .video-btn:focus-visible{
-  background:rgba(255,20,147,0.92);
+  background:rgba(228,208,242,0.92);
   outline:none;
 }
 .video-btn--play{
@@ -179,9 +179,11 @@
 .polaroid .video-caption{
   display:block;
   text-align:center;
-  font-family:var(--body);
-  font-size:clamp(1.05rem, 2.4vw, 1.2rem);
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight:700;
+  font-size:clamp(0.85rem, 1.7vw, 0.95rem);
   letter-spacing:0.03em;
+  text-transform:uppercase;
   color:var(--ink);
   opacity:1;
   margin:0.35rem 0 0;

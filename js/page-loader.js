@@ -89,7 +89,12 @@ function fillStarConstellation(orbit) {
   function shouldWaitFor(el) {
     if (!el || el.closest('#page-loader')) return false;
     if (el.closest('.lightbox-overlay, .hover-preview')) return false;
-    if (el.closest('.home-film-strip, .home-cover-grid, .contact-sheet-board, .video-grid, .about-wrap')) {
+    if (el.closest('.home-film-strip')) {
+      const rect = el.getBoundingClientRect();
+      if (!rect.width && !rect.height) return el.loading !== 'lazy';
+      return rect.left < window.innerWidth && rect.right > 0 && rect.top < window.innerHeight * 1.35;
+    }
+    if (el.closest('.home-cover-grid, .contact-sheet-board, .video-grid, .about-wrap')) {
       return true;
     }
     const src = el.currentSrc || el.getAttribute('src') || el.src;

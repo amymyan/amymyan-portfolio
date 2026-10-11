@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>organizer (private) — Amy MyAn</title>
-<link rel="stylesheet" href="css/style.css?v=20261007e">
-<link rel="stylesheet" href="css/video-grid.css?v=20261007e">
+<link rel="stylesheet" href="css/style.css?v=20261011b">
+<link rel="stylesheet" href="css/video-grid.css?v=20261011d">
 <link rel="stylesheet" href="css/contact-sheet.css?v=20260921c">
 <link rel="stylesheet" href="css/portrait-grid.css?v=20261007e">
 <style>
@@ -117,7 +117,7 @@
   .board-marquee{
     position:absolute;
     border:1px solid var(--flash);
-    background:rgba(255,20,147,0.15);
+    background:rgba(228,208,242,0.15);
     pointer-events:none;
     z-index:500;
   }
@@ -246,11 +246,11 @@
   }
   .home-roll-pick.is-cover{
     border-color:var(--flash);
-    box-shadow:0 0 0 2px rgba(255,20,147,0.35);
+    box-shadow:0 0 0 2px rgba(228,208,242,0.35);
   }
   .home-roll-pick.is-pool{
     border-color:var(--flash);
-    box-shadow:0 0 0 2px rgba(255,20,147,0.35);
+    box-shadow:0 0 0 2px rgba(228,208,242,0.35);
   }
   .home-roll-pick.is-scrub:not(.is-cover){
     border-color:var(--ink);
@@ -333,6 +333,97 @@
     object-fit:cover;
     display:block;
     pointer-events:none;
+  }
+  .home-reel-library,
+  .home-reel-row-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(88px, 1fr));
+    gap:0.45rem;
+  }
+  .home-reel-library{
+    margin-bottom:1.5rem;
+    min-height:4rem;
+  }
+  .home-reel-rows{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:0.75rem;
+  }
+  .home-reel-row{
+    border:2px dashed var(--line);
+    border-radius:8px;
+    padding:0.7rem;
+    min-height:9rem;
+    background:rgba(255,255,255,0.35);
+  }
+  .home-reel-row h3{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:1.15rem;
+    margin:0 0 0.15rem;
+  }
+  .home-reel-row.is-over,
+  .home-reel-library.is-over{
+    border-color:var(--flash);
+    background:rgba(228,208,242,0.28);
+  }
+  .home-reel-thumb{
+    position:relative;
+    aspect-ratio:3/2;
+    overflow:hidden;
+    border:2px solid var(--line);
+    border-radius:4px;
+    cursor:grab;
+    background:var(--paper);
+  }
+  .home-reel-thumb.is-assigned{
+    opacity:0.45;
+  }
+  .home-reel-thumb.is-dragging{
+    opacity:0.55;
+    cursor:grabbing;
+    border-color:var(--flash);
+  }
+  .home-reel-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    pointer-events:none;
+  }
+  .home-reel-badge{
+    position:absolute;
+    left:0.25rem;
+    bottom:0.25rem;
+    font-family:var(--mono);
+    font-size:0.62rem;
+    letter-spacing:0.04em;
+    background:var(--ink);
+    color:var(--paper);
+    padding:0.1rem 0.3rem;
+    border-radius:2px;
+  }
+  .home-reel-remove{
+    position:absolute;
+    top:0.15rem;
+    right:0.15rem;
+    width:1.2rem;
+    height:1.2rem;
+    padding:0;
+    border:none;
+    border-radius:2px;
+    background:var(--ink);
+    color:var(--paper);
+    font-size:0.85rem;
+    line-height:1;
+  }
+  .home-reel-drop-hint{
+    grid-column:1 / -1;
+    margin:1.25rem 0;
+    text-align:center;
+  }
+  @media (max-width:720px){
+    .home-reel-rows{ grid-template-columns:1fr; }
   }
   .snap-guides{
     position:absolute;
@@ -450,7 +541,7 @@
     margin:0;
     -webkit-appearance:none;
     appearance:none;
-    background:rgba(255,20,147,0.4);
+    background:rgba(228,208,242,0.4);
     border-radius:999px;
     cursor:pointer;
   }
@@ -476,7 +567,7 @@
     margin:0;
     -webkit-appearance:none;
     appearance:none;
-    background:rgba(255,20,147,0.4);
+    background:rgba(228,208,242,0.4);
     border-radius:999px;
     cursor:pointer;
   }
@@ -491,7 +582,7 @@
   }
   .mini-polaroid .size-control input[type="range"]::-moz-range-track{
     height:3px;
-    background:rgba(255,20,147,0.4);
+    background:rgba(228,208,242,0.4);
     border-radius:999px;
     border:none;
   }
@@ -594,6 +685,71 @@
     line-height:1.55;
   }
   .about-edit textarea{ resize:vertical; min-height:6rem; }
+  .home-hero-organizer{
+    margin:0 0 1.4rem;
+    padding-bottom:1.15rem;
+    border-bottom:1px solid var(--line);
+  }
+  .home-hero-organizer h3{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:1.15rem;
+    margin:0 0 0.3rem;
+  }
+  .home-hero-note{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    opacity:0.7;
+    line-height:1.5;
+    margin:0;
+  }
+  .home-hero-preview{
+    display:block;
+    width:min(100%, 420px);
+    height:180px;
+    object-fit:cover;
+    background:#000;
+    margin:0.75rem 0 0;
+    border-radius:6px;
+  }
+  .home-hero-upload-row{
+    display:flex;
+    gap:0.5rem;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:0.75rem;
+  }
+  .home-galleries-organizer{
+    margin:0 0 1.4rem;
+    padding-bottom:1.15rem;
+    border-bottom:1px solid var(--line);
+  }
+  .home-galleries-organizer h3{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:1.15rem;
+    margin:0 0 0.3rem;
+  }
+  .home-gallery-upload-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:0.85rem;
+    margin-top:0.85rem;
+  }
+  .home-gallery-upload-label{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    margin:0;
+  }
+  .home-gallery-upload-preview{
+    display:block;
+    width:100%;
+    height:140px;
+    object-fit:cover;
+    background:#ececec;
+    margin-top:0.45rem;
+    border-radius:6px;
+  }
 </style>
 </head>
 <body class="organizer">
@@ -634,9 +790,14 @@
       <button type="button" id="home-roll-refresh-btn" class="ghost" style="font-family:var(--mono);font-size:0.72rem;">refresh covers</button>
     </div>
     <p style="font-family:var(--mono);font-size:0.78rem;opacity:0.7;line-height:1.55;margin:0 0 1.25rem;">
-      select which photos can appear as each roll’s cover. the homepage picks one at random on every visit.
-      order: music → video → portrait.
+      drag photos into row 1, row 2, or row 3. each homepage film row plays only the photos in that group.
     </p>
+    <div id="home-hero-organizer">
+      <p class="home-roll-loading">connect your project folder above to set the hero photo…</p>
+    </div>
+    <div id="home-galleries-organizer">
+      <p class="home-roll-loading">connect your project folder above to set the gallery photos…</p>
+    </div>
     <div id="home-artists-organizer">
       <p class="home-roll-loading">connect your project folder above to edit artists…</p>
     </div>
@@ -728,9 +889,9 @@
 <script src="js/organizer-video.js?v=20260919f"></script>
 <script src="js/about.js?v=20260919g"></script>
 <script src="js/organizer-about.js?v=20260919h"></script>
-<script src="js/home-data.js?v=20261008a"></script>
-<script src="js/organizer-home.js?v=20261008a"></script>
-<script src="js/cursor-glow.js" defer></script>
-<script src="js/galaxy.js?v=20260812v" defer></script>
+<script src="js/home-data.js?v=20261010ab"></script>
+<script src="js/organizer-home.js?v=20261010ac"></script>
+<script src="js/cursor-glow.js?v=20261009e" defer></script>
+<script src="js/galaxy.js?v=20261009e" defer></script>
 </body>
 </html>
