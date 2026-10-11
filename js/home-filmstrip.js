@@ -160,8 +160,8 @@
 
     el.style.width = `calc(var(--frame-w) * ${frameCount})`;
 
+    const holesThisFrame = window.innerWidth < 700 ? 6 : 12;
     for (let f = 0; f < frameCount; f++) {
-      const holesThisFrame = 12;
       for (let h = 0; h < holesThisFrame; h++) {
         const hole = document.createElement('span');
         hole.className = 'home-film-sprocket-hole';
@@ -271,9 +271,12 @@
   function copiesFor(count) {
     if (!count) return 0;
     const step = Math.max(72, frameStep || parseFloat(getComputedStyle(root).getPropertyValue('--frame-w')) || 200);
-    const wide = Math.max(rollEl?.clientWidth || 0, window.innerWidth || 0, 2800);
+    const viewW = Math.max(rollEl?.clientWidth || 0, window.innerWidth || 0, 1);
+    const narrow = viewW < 700;
+    const wide = narrow ? viewW : Math.max(viewW, 2800);
     const visible = Math.ceil(wide / step) + 2;
-    return Math.min(14, Math.max(3, Math.ceil(visible / count) + 4));
+    const buffer = narrow ? 1 : 4;
+    return Math.min(14, Math.max(3, Math.ceil(visible / count) + buffer));
   }
 
   function measureFrameStep() {
@@ -665,7 +668,12 @@
       updatePlayPauseButton();
 
       let resizeTimer;
+      let lastResizeW = window.innerWidth;
       const onResize = () => {
+        // Phone browsers fire resize when the address bar shows or hides.
+        // Rebuilding the filmstrip then freezes the scroll.
+        if (window.innerWidth === lastResizeW) return;
+        lastResizeW = window.innerWidth;
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
           measureFrameStep();
@@ -683,6 +691,17 @@
         }, 80);
       };
       window.addEventListener('resize', onResize);
+
+      if (window.matchMedia('(pointer: coarse)').matches) {
+        let scrollIdle = 0;
+        window.addEventListener('scroll', () => {
+          pauseAutoScroll();
+          clearTimeout(scrollIdle);
+          scrollIdle = setTimeout(() => {
+            if (isPlaying) resumeAutoScroll();
+          }, 180);
+        }, { passive: true });
+      }
 
       decodeCoverImages().then(() => syncRollScaleSoon());
       if (isPlaying) startAutoScroll();

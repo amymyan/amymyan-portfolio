@@ -43,7 +43,10 @@
   let scrollRafId = null;
   let offset = 0;
   let halfLen = 0;
+  let speed = 0;
   let last = 0;
+  let userScrolling = false;
+  let scrollIdle = 0;
   let resizeTimer = null;
   let lastViewportW = window.innerWidth;
   let lastViewportH = window.innerHeight;
@@ -94,11 +97,10 @@
     return pathMeasured > 0 ? pathMeasured : pathEstimate;
   }
 
-  function getScrollSpeed() {
+  function refreshSpeed() {
     const scale = getSvgUserScale();
     const pxPerSec = mobileQuery.matches ? 115 : 95;
-    if (scale > 0) return pxPerSec / scale;
-    return (14 * halfLen) / run.length;
+    speed = scale > 0 ? pxPerSec / scale : (halfLen ? (14 * halfLen) / run.length : 0);
   }
 
   function applyOffset() {
@@ -117,6 +119,7 @@
       offset = -progress * halfLen;
     }
     applyOffset();
+    refreshSpeed();
     return true;
   }
 
@@ -126,10 +129,16 @@
       return;
     }
 
-    const pxPerSec = getScrollSpeed();
+    if (userScrolling) {
+      last = now;
+      scrollRafId = requestAnimationFrame(tick);
+      return;
+    }
+
+    if (!speed) refreshSpeed();
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
     last = now;
-    offset -= pxPerSec * dt;
+    offset -= speed * dt;
     if (offset <= -halfLen) offset += halfLen;
     textPath.setAttribute('startOffset', offset);
     scrollRafId = requestAnimationFrame(tick);
@@ -147,15 +156,22 @@
 
   function onViewportChange() {
     const w = window.innerWidth;
-    const h = window.innerHeight;
-    if (w === lastViewportW && h === lastViewportH) return;
+    if (w === lastViewportW) return;
     lastViewportW = w;
-    lastViewportH = h;
+    lastViewportH = window.innerHeight;
 
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       remeasure({ preserveOffset: true });
     }, 250);
+  }
+
+  if (window.matchMedia('(pointer: coarse)').matches) {
+    window.addEventListener('scroll', () => {
+      userScrolling = true;
+      clearTimeout(scrollIdle);
+      scrollIdle = setTimeout(() => { userScrolling = false; }, 160);
+    }, { passive: true });
   }
 
   if (reducedMotion) {
