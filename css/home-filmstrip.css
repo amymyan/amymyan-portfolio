@@ -928,6 +928,45 @@
   text-decoration-color: var(--flash);
 }
 
+.home-screen-gap {
+  display: none;
+}
+
+/* Skinny browsers: galleries span the width and sit in the middle
+   of the screen, with equal white space above and below. */
+@media (max-width: 700px) {
+  .home-screen {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    box-sizing: border-box;
+  }
+
+  .home-screen-gap {
+    display: block;
+    flex: 1 1 0;
+    min-height: 1.15rem;
+  }
+
+  .home-galleries {
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0.7rem;
+    padding-right: 1.7rem;
+  }
+
+  .home-galleries-row {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .home-film-credits {
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
