@@ -97,9 +97,12 @@
       "assets/portrait/DSC07498.jpg",
       "assets/music/Chitra_9.24.38.jpg",
       "assets/music/DSC00251.jpg",
-      "assets/music/DSC03936-2.jpg",
       "assets/music/DSC01006.jpg",
-      "assets/music/Chitra_9.24.39.jpg"
+      "assets/music/Chitra_9.24.39.jpg",
+      "assets/music/jungle12.jpg",
+      "assets/music/jungle10.jpg",
+      "assets/music/jungle3.jpg",
+      "assets/music/Chitra_9.24.47.jpg"
     ],
     [
       "assets/music/DSC09616.jpg",
@@ -116,7 +119,10 @@
       "assets/music/haileypicardi1.jpg",
       "assets/music/DSC03798.jpg",
       "assets/music/IMG_5657.jpg",
-      "assets/portrait/DSC05716.jpg"
+      "assets/portrait/DSC05716.jpg",
+      "assets/music/jungle8.jpg",
+      "assets/music/jungle4.jpg",
+      "assets/music/Chitra-85.jpg"
     ],
     [
       "assets/music/DSC03802.jpg",
@@ -125,15 +131,17 @@
       "assets/music/DSC00796.jpg",
       "assets/music/haileypicardi7.jpg",
       "assets/portrait/DSC05619.jpg",
-      "assets/portrait/DSC05148.jpg",
       "assets/portrait/AMY483037148-R1-020.jpg",
-      "assets/portrait/DSC05708.jpg",
       "assets/portrait/BTS of LW x AB-35.jpg",
       "assets/music/DSC09624.jpg",
       "assets/portrait/DSC07439.jpg",
       "assets/music/DSC01010.jpg",
       "assets/music/DSC03948.jpg",
-      "assets/music/DSC00109.jpg"
+      "assets/music/DSC00109.jpg",
+      "assets/music/Chitra-88.jpg",
+      "assets/music/haileypicardi3.jpg",
+      "assets/portrait/DSC05708.jpg",
+      "assets/portrait/DSC05148.jpg"
     ]
   ],
   "artists": [
@@ -162,7 +170,7 @@
     "alexandra davis",
     "naomi sato"
   ],
-  "heroSrc": "assets/home/1791663976749-DSC09541.jpg",
+  "heroSrc": "assets/home/DSC01437.jpg",
   "gallerySrcs": {
     "music": "assets/home/1791668784331-DSC03802.jpg",
     "video": "assets/home/DSC09136.jpg",

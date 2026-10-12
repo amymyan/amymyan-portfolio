@@ -451,6 +451,25 @@ async function pruneBrokenHomeRollSources() {
   return broken.length;
 }
 
+function photoFileName(src) {
+  const path = String(src || '').split('?')[0].split('#')[0];
+  const name = path.split('/').pop() || path;
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
+function comparePhotoFileNames(a, b) {
+  const byName = photoFileName(a).localeCompare(photoFileName(b), undefined, {
+    numeric: true,
+    sensitivity: 'base'
+  });
+  if (byName) return byName;
+  return String(a).localeCompare(String(b));
+}
+
 function renderHomeReelBoard(container, config, rolls) {
   const library = [];
   const seen = new Set();
@@ -461,6 +480,7 @@ function renderHomeReelBoard(container, config, rolls) {
       library.push(src);
     });
   });
+  library.sort(comparePhotoFileNames);
 
   const claimed = new Set();
   config.reelRows = [0, 1, 2].map(i => uniqueSrcs(config.reelRows?.[i] || []).filter(src => {
@@ -586,7 +606,7 @@ function renderHomeReelBoard(container, config, rolls) {
       hint.textContent = 'drop photos here';
       grid.appendChild(hint);
     } else {
-      config.reelRows[i].forEach(src => grid.appendChild(makeThumb(src, { inRow: true })));
+      [...config.reelRows[i]].sort(comparePhotoFileNames).forEach(src => grid.appendChild(makeThumb(src, { inRow: true })));
     }
     zone.appendChild(grid);
     bindDrop(zone, i);
