@@ -61,8 +61,8 @@
   let lastScrubbing = false;
   let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let isPlaying = !reduceMotion;
-  const AUTO_SCROLL_INDEX_PER_SEC = 0.72;
-  const MIDDLE_SCROLL_SCALE = 0.48;
+  const AUTO_SCROLL_INDEX_PER_SEC = 0.5;
+  const MIDDLE_SCROLL_INDEX_PER_SEC = 0.3456;
   const rowTravel = [0, 0, 0];
   let autoScrollPaused = false;
   let autoScrollRaf = null;
@@ -125,7 +125,7 @@
     filmRows.forEach((row, i) => {
       if (!row.frameCount) return;
       const rate = row.reverse
-        ? AUTO_SCROLL_INDEX_PER_SEC * MIDDLE_SCROLL_SCALE
+        ? MIDDLE_SCROLL_INDEX_PER_SEC
         : AUTO_SCROLL_INDEX_PER_SEC;
       rowTravel[i] += rate * dt;
       if (rowTravel[i] >= row.frameCount) rowTravel[i] -= row.frameCount;
