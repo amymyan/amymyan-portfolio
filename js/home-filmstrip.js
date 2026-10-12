@@ -84,11 +84,17 @@
 
   function pauseAutoScroll() {
     autoScrollPaused = true;
+    stopAutoScroll();
+    if (lastScrubbing) {
+      filmRows.forEach(row => row.track.classList.remove('is-scrubbing'));
+      lastScrubbing = false;
+    }
   }
 
   function resumeAutoScroll() {
     autoScrollPaused = false;
     lastAutoScrollTime = performance.now();
+    startAutoScroll();
   }
 
   function wrapScrollIndex(index) {
@@ -103,8 +109,10 @@
     currentRollIndex = (rounded - 1 + rollCount) % rollCount;
   }
 
+  let cachedRollWidth = 0;
+
   function tickAutoScroll(now) {
-    autoScrollRaf = requestAnimationFrame(tickAutoScroll);
+    autoScrollRaf = 0;
     const anyFrames = filmRows.some(row => row.frameCount);
     if (animating || reduceMotion || autoScrollPaused || !anyFrames) {
       lastAutoScrollTime = now;
@@ -123,11 +131,13 @@
       if (rowTravel[i] >= row.frameCount) rowTravel[i] -= row.frameCount;
     });
 
+    if (autoScrollPaused) return;
     setStripPosition(currentIndex, { scrubbing: true });
+    autoScrollRaf = requestAnimationFrame(tickAutoScroll);
   }
 
   function startAutoScroll() {
-    if (reduceMotion || autoScrollRaf) return;
+    if (reduceMotion || autoScrollRaf || autoScrollPaused) return;
     lastAutoScrollTime = performance.now();
     autoScrollRaf = requestAnimationFrame(tickAutoScroll);
   }
@@ -259,6 +269,7 @@
   function updateFrameWidth() {
     if (!rollEl) return;
     const rollW = rollEl.clientWidth;
+    cachedRollWidth = rollW;
     const gap = parseFloat(getComputedStyle(root).getPropertyValue('--film-frame-gap')) || 14;
     const visible = framesVisibleTarget();
     const fw = Math.max(72, (rollW - gap) / visible);
@@ -293,7 +304,7 @@
 
   function centerOffsetForIndex(index) {
     const step = frameStep || measureFrameStep();
-    const viewportW = rollEl.clientWidth;
+    const viewportW = cachedRollWidth || rollEl.clientWidth;
     const frameCenter = index * step + step / 2;
     return viewportW / 2 - frameCenter;
   }
@@ -692,16 +703,34 @@
       };
       window.addEventListener('resize', onResize);
 
-      if (window.matchMedia('(pointer: coarse)').matches) {
-        let scrollIdle = 0;
-        window.addEventListener('scroll', () => {
-          pauseAutoScroll();
+      const pauseDuringScroll = window.matchMedia('(pointer: coarse), (max-width: 700px)');
+      let scrollIdle = 0;
+      let scrollHoldBound = false;
+      const holdFilmForScroll = () => {
+        pauseAutoScroll();
+        clearTimeout(scrollIdle);
+        scrollIdle = setTimeout(() => {
+          if (isPlaying) resumeAutoScroll();
+        }, 220);
+      };
+      const syncFilmScrollHold = () => {
+        const want = pauseDuringScroll.matches;
+        if (want && !scrollHoldBound) {
+          window.addEventListener('scroll', holdFilmForScroll, { passive: true });
+          window.addEventListener('touchstart', holdFilmForScroll, { passive: true });
+          window.addEventListener('touchmove', holdFilmForScroll, { passive: true });
+          scrollHoldBound = true;
+        } else if (!want && scrollHoldBound) {
+          window.removeEventListener('scroll', holdFilmForScroll);
+          window.removeEventListener('touchstart', holdFilmForScroll);
+          window.removeEventListener('touchmove', holdFilmForScroll);
+          scrollHoldBound = false;
           clearTimeout(scrollIdle);
-          scrollIdle = setTimeout(() => {
-            if (isPlaying) resumeAutoScroll();
-          }, 180);
-        }, { passive: true });
-      }
+          if (isPlaying) resumeAutoScroll();
+        }
+      };
+      if (pauseDuringScroll.addEventListener) pauseDuringScroll.addEventListener('change', syncFilmScrollHold);
+      syncFilmScrollHold();
 
       decodeCoverImages().then(() => syncRollScaleSoon());
       if (isPlaying) startAutoScroll();

@@ -123,14 +123,17 @@
     return true;
   }
 
-  function tick(now) {
-    if (!halfLen && !remeasure()) {
-      scrollRafId = requestAnimationFrame(tick);
-      return;
-    }
+  function stopTick() {
+    if (scrollRafId) cancelAnimationFrame(scrollRafId);
+    scrollRafId = null;
+    last = 0;
+  }
 
-    if (userScrolling) {
-      last = now;
+  function tick(now) {
+    scrollRafId = null;
+    if (userScrolling) return;
+
+    if (!halfLen && !remeasure()) {
       scrollRafId = requestAnimationFrame(tick);
       return;
     }
@@ -140,6 +143,7 @@
     last = now;
     offset -= speed * dt;
     if (offset <= -halfLen) offset += halfLen;
+    if (userScrolling) return;
     textPath.setAttribute('startOffset', offset);
     scrollRafId = requestAnimationFrame(tick);
   }
@@ -166,13 +170,36 @@
     }, 250);
   }
 
-  if (window.matchMedia('(pointer: coarse)').matches) {
-    window.addEventListener('scroll', () => {
-      userScrolling = true;
-      clearTimeout(scrollIdle);
-      scrollIdle = setTimeout(() => { userScrolling = false; }, 160);
-    }, { passive: true });
+  const pauseWhileScrolling = window.matchMedia('(pointer: coarse), (max-width: 700px)');
+  let scrollHoldBound = false;
+  function holdCreditsForScroll() {
+    userScrolling = true;
+    stopTick();
+    clearTimeout(scrollIdle);
+    scrollIdle = setTimeout(() => {
+      userScrolling = false;
+      if (!reducedMotion) startScroll();
+    }, 220);
   }
+  function syncCreditsScrollHold() {
+    const want = pauseWhileScrolling.matches;
+    if (want && !scrollHoldBound) {
+      window.addEventListener('scroll', holdCreditsForScroll, { passive: true });
+      window.addEventListener('touchstart', holdCreditsForScroll, { passive: true });
+      window.addEventListener('touchmove', holdCreditsForScroll, { passive: true });
+      scrollHoldBound = true;
+    } else if (!want && scrollHoldBound) {
+      window.removeEventListener('scroll', holdCreditsForScroll);
+      window.removeEventListener('touchstart', holdCreditsForScroll);
+      window.removeEventListener('touchmove', holdCreditsForScroll);
+      scrollHoldBound = false;
+      clearTimeout(scrollIdle);
+      userScrolling = false;
+      if (!reducedMotion) startScroll();
+    }
+  }
+  if (pauseWhileScrolling.addEventListener) pauseWhileScrolling.addEventListener('change', syncCreditsScrollHold);
+  syncCreditsScrollHold();
 
   if (reducedMotion) {
     textPath.setAttribute('startOffset', '0');
