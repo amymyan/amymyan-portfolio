@@ -98,6 +98,7 @@
   height: auto;
   pointer-events: none;
   user-select: none;
+  filter: brightness(1.5);
 }
 
 .home-film-hero {

@@ -703,35 +703,6 @@
       };
       window.addEventListener('resize', onResize);
 
-      const pauseDuringScroll = window.matchMedia('(pointer: coarse), (max-width: 700px)');
-      let scrollIdle = 0;
-      let scrollHoldBound = false;
-      const holdFilmForScroll = () => {
-        pauseAutoScroll();
-        clearTimeout(scrollIdle);
-        scrollIdle = setTimeout(() => {
-          if (isPlaying) resumeAutoScroll();
-        }, 220);
-      };
-      const syncFilmScrollHold = () => {
-        const want = pauseDuringScroll.matches;
-        if (want && !scrollHoldBound) {
-          window.addEventListener('scroll', holdFilmForScroll, { passive: true });
-          window.addEventListener('touchstart', holdFilmForScroll, { passive: true });
-          window.addEventListener('touchmove', holdFilmForScroll, { passive: true });
-          scrollHoldBound = true;
-        } else if (!want && scrollHoldBound) {
-          window.removeEventListener('scroll', holdFilmForScroll);
-          window.removeEventListener('touchstart', holdFilmForScroll);
-          window.removeEventListener('touchmove', holdFilmForScroll);
-          scrollHoldBound = false;
-          clearTimeout(scrollIdle);
-          if (isPlaying) resumeAutoScroll();
-        }
-      };
-      if (pauseDuringScroll.addEventListener) pauseDuringScroll.addEventListener('change', syncFilmScrollHold);
-      syncFilmScrollHold();
-
       decodeCoverImages().then(() => syncRollScaleSoon());
       if (isPlaying) startAutoScroll();
     } catch (err) {
