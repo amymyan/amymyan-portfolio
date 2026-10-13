@@ -80,13 +80,17 @@ button{
 .site-nav .wordmark{
   font-family:var(--display);
   font-style:normal;
-  font-weight:bold;
-  font-size:var(--nav-wordmark-size);
+  font-weight:normal;
+  font-size:clamp(1.25rem, 3vw, 1.7rem);
   letter-spacing:0.02em;
   white-space:nowrap;
   text-transform:none;
-  display:inline-block;
-  line-height:1.2;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4rem;
+  max-width:100%;
+  line-height:1;
   color:var(--ink);
 }
 
@@ -94,7 +98,7 @@ body .site-nav a.wordmark,
 body .site-nav a.wordmark:link,
 body .site-nav a.wordmark:visited,
 body .site-nav a.wordmark:active{
-  font-size:clamp(2.45rem, 6vw, 3.35rem);
+  font-size:clamp(1.25rem, 3vw, 1.7rem);
   color:var(--ink);
   -webkit-text-fill-color:var(--ink);
 }
@@ -108,10 +112,16 @@ body .site-nav a.wordmark:active{
 }
 
 .site-nav .wordmark-name{
-  font-family:Arial, Helvetica, sans-serif;
-  font-weight:700;
-  text-transform:uppercase;
-  color:inherit;
+  display:block;
+  flex:0 1 auto;
+  width:min(58vw, 16.5rem);
+  aspect-ratio:944 / 206;
+  background:currentColor;
+  -webkit-mask:url("../assets/amy-myan-wordmark.png?v=20261013a") center / contain no-repeat;
+  mask:url("../assets/amy-myan-wordmark.png?v=20261013a") center / contain no-repeat;
+  text-indent:-9999px;
+  overflow:hidden;
+  white-space:nowrap;
 }
 
 /* Decorative stars — use text font so color stays white on mobile */
