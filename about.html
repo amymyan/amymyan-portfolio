@@ -199,17 +199,34 @@
     flex:0 0 auto;
     color:#e4d0f2;
   }
-  .about-frame{
+  .about-frame-slot{
+    --bubble-w:16.75rem;
+    --bubble-overlap:calc(var(--photo) * 0.42);
+    --bubble-hang:calc(var(--bubble-w) - var(--bubble-overlap));
+    --bubble-safe:1.15rem;
+    --need:calc(var(--photo) + 2 * (var(--bubble-hang) + var(--bubble-safe)));
+    --fit:min(1, calc((100vw - 0.5rem) / var(--need)));
     position:relative;
     z-index:4;
     flex:0 0 auto;
-    pointer-events:auto;
+    width:calc(var(--photo) * var(--fit));
+    height:calc(var(--photo) * var(--fit));
+    pointer-events:none;
+  }
+  .about-frame{
+    position:absolute;
+    left:0;
+    top:0;
+    z-index:1;
     width:var(--photo);
-    max-width:100%;
-    min-width:0;
+    height:var(--photo);
+    margin:0;
     padding:0;
     background:transparent;
     overflow:visible;
+    pointer-events:auto;
+    transform:scale(var(--fit));
+    transform-origin:top left;
   }
   .stone{
     position:absolute;
@@ -231,6 +248,65 @@
     object-fit:cover;
     object-position:center 88%;
     background:#efe8f4;
+  }
+  .about-frame:focus{ outline:none; }
+  .about-frame:focus-visible{
+    outline:1.5px solid #000;
+    outline-offset:5px;
+  }
+
+  .photo-bubble{
+    position:absolute;
+    z-index:8;
+    top:-30%;
+    left:calc(var(--bubble-overlap) - var(--bubble-w));
+    width:var(--bubble-w);
+    margin:0;
+    padding:1.3rem 1.9rem 1.35rem 1.85rem;
+    background:transparent;
+    color:#000;
+    border:0;
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:0.74rem;
+    font-weight:700;
+    line-height:1.32;
+    letter-spacing:0;
+    text-align:center;
+    text-transform:lowercase;
+    text-wrap:pretty;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(6px);
+    transition:opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+  }
+  .photo-bubble .bubble-brand{ text-transform:none; }
+  .photo-bubble-shape{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:visible;
+    pointer-events:none;
+    z-index:-1;
+  }
+  .about-mid:hover,
+  .about-mid:focus-within,
+  .about-mid:has(.is-speaking){
+    z-index:20;
+  }
+  .about-frame-slot:hover,
+  .about-frame-slot:focus-within,
+  .about-frame-slot:has(.is-speaking){
+    z-index:30;
+  }
+  .about-frame:hover .photo-bubble,
+  .about-frame:focus-within .photo-bubble,
+  .about-frame.is-speaking .photo-bubble{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:none;
   }
 
   body.page-about .site-footer{ border-top:0.5px solid #000; }
@@ -254,6 +330,11 @@
     .ph-world{ left:2%; top:calc(4.3em + 8px); }
     .ph-press{ right:5%; top:5.38em; }
     .about-mid{ --photo:min(36vh, 78vw, 320px); }
+    .photo-bubble{ font-size:0.7rem; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .photo-bubble{ transition:none; }
   }
 </style>
 </head>
@@ -287,8 +368,42 @@
   <div class="about-mid">
     <span class="dot-art dot-vine" aria-hidden="true"></span>
     <span class="dot-art dot-cluster" aria-hidden="true"></span>
-    <figure class="about-frame">
+    <div class="about-frame-slot">
+    <figure class="about-frame" tabindex="0" aria-describedby="about-bubble">
       <img src="assets/about/IMG_7598.png" width="2788" height="3456" alt="Amy MyAn holding a camera">
+      <p class="photo-bubble" id="about-bubble" role="tooltip">
+        <svg class="photo-bubble-shape" overflow="visible" aria-hidden="true">
+          <defs>
+            <filter id="cloud-stroke" x="-20%" y="-40%" width="155%" height="180%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse">
+              <feMorphology in="SourceAlpha" operator="dilate" radius="1.5" result="dilated"></feMorphology>
+              <feFlood flood-color="#000" result="flood"></feFlood>
+              <feComposite in="flood" in2="dilated" operator="in" result="outline"></feComposite>
+              <feMerge>
+                <feMergeNode in="outline"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+              </feMerge>
+            </filter>
+          </defs>
+          <g fill="#fff" filter="url(#cloud-stroke)">
+            <rect x="4%" y="12%" width="92%" height="76%" rx="36"></rect>
+            <circle cx="22%" cy="28%" r="48"></circle>
+            <circle cx="24%" cy="32%" r="42"></circle>
+            <circle cx="46%" cy="24%" r="44"></circle>
+            <circle cx="68%" cy="26%" r="42"></circle>
+            <circle cx="12%" cy="54%" r="44"></circle>
+            <circle cx="88%" cy="52%" r="44"></circle>
+            <circle cx="32%" cy="72%" r="42"></circle>
+            <circle cx="56%" cy="76%" r="44"></circle>
+            <circle cx="78%" cy="70%" r="42"></circle>
+            <svg x="100%" y="72%" overflow="visible">
+              <circle cx="-30" cy="48" r="8"></circle>
+              <circle cx="-12" cy="56" r="5.5"></circle>
+              <circle cx="2" cy="62" r="3.2"></circle>
+            </svg>
+          </g>
+        </svg>
+        hi! i’m amy, a freelance photographer, videographer, and camera operator. i primarily cover live music shows, tours, and sets. i am also an experienced camera operator for <span class="bubble-brand">B1G+</span> covering d1 sports. i would love to work together and create something special &lt;3
+      </p>
 <i class="stone" style="--x:0.00%;--y:0.00%;--s:3.14%;--r:37deg;--img:url('assets/about/stone-4.png?v=20261010r')"></i>
       <i class="stone" style="--x:0.00%;--y:100.00%;--s:3.24%;--r:32deg;--img:url('assets/about/stone-1.png?v=20261010r')"></i>
       <i class="stone" style="--x:3.45%;--y:0.00%;--s:3.21%;--r:330deg;--img:url('assets/about/stone-1.png?v=20261010r')"></i>
@@ -406,6 +521,7 @@
       <i class="stone" style="--x:100.00%;--y:0.00%;--s:3.33%;--r:111deg;--img:url('assets/about/stone-2.png?v=20261010r')"></i>
       <i class="stone" style="--x:100.00%;--y:100.00%;--s:3.35%;--r:193deg;--img:url('assets/about/stone-5.png?v=20261010r')"></i>
     </figure>
+    </div>
     <span class="heart-anchor" aria-hidden="true"><img class="stipple stipple-heart" src="assets/about/stipple-scroll.png" alt=""></span>
   </div>
 
@@ -432,6 +548,20 @@
 <script src="js/about.js?v=20260919g"></script>
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
+
+(function () {
+  var frame = document.querySelector('.about-frame');
+  if (!frame) return;
+  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  frame.addEventListener('click', function (event) {
+    if (finePointer.matches) return;
+    if (event.target.closest('a')) return;
+    frame.classList.toggle('is-speaking');
+  });
+  document.addEventListener('click', function (event) {
+    if (!frame.contains(event.target)) frame.classList.remove('is-speaking');
+  });
+})();
 </script>
 <script src="js/cursor-glow.js?v=20261009e" defer></script>
 </body>
